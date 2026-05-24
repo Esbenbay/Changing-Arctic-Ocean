@@ -3,6 +3,8 @@ import gsap from 'gsap';
 import { zoomToLayer } from './Svg.jsx';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
 
+const BASE = import.meta.env.BASE_URL;
+
 gsap.registerPlugin(MotionPathPlugin);
 
 const TOTAL_STEPS   = 10;
@@ -24,7 +26,7 @@ export default function PhotosynthesisPanel({ stepIndex, active }) {
     const container = containerRef.current;
     if (!container) return;
 
-    fetch('/Phytosynthesis_Arctic_summer.svg')
+    fetch(`${BASE}Phytosynthesis_Arctic_summer.svg`)
       .then(r => r.text())
       .then(svgText => {
         if (!containerRef.current) return;

@@ -5,6 +5,7 @@ import { track } from "../tracker.js";
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
+const BASE  = import.meta.env.BASE_URL;
 
 const alterSpeed = 0.8;
 const alterPitch = 2;
@@ -483,7 +484,7 @@ export default function NewMap({ cameraKey, quizMode, embed = false }) {
         ))}
 
         {/* Arctic coastline — drawn on via line-gradient animation when camera enters */}
-        <Source id="arctic-coastline" type="geojson" data="/arctic-ocean-coastline.geojson" lineMetrics={true}>
+        <Source id="arctic-coastline" type="geojson" data={`${BASE}arctic-ocean-coastline.geojson`} lineMetrics={true}>
           <Layer
             id="arctic-coastline-glow"
             type="line"
@@ -506,7 +507,7 @@ export default function NewMap({ cameraKey, quizMode, embed = false }) {
         </Source>
 
         {/* Glacier retreat lines — only visible on the greenland-glaciers camera */}
-        <Source id="glacier-retreat" type="geojson" data="/Glacier_retreat_greenland.geojson">
+        <Source id="glacier-retreat" type="geojson" data={`${BASE}Glacier_retreat_greenland.geojson`}>
           <Layer
             id="glacier-retreat-line"
             type="line"

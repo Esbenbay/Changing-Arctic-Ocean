@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Plot from 'react-plotly.js';
 import { track } from '../tracker.js';
 
+const BASE = import.meta.env.BASE_URL;
+
 const QUIZ_OPTIONS = [
   { label: 'Arctic',        correct: true  },
   { label: 'Europe',        correct: false },
@@ -63,9 +65,9 @@ const MARGIN  = { l: 50, r: 12, t: 36, b: 44 };
 const CHART_H = 340;
 
 const REGION_LINES = {
-  'Europe':       { file: '/average_temp_europe.json',       color: '#e67e22', width: 2 },
-  'Antarctica':   { file: '/average_temp_antarctic.json',    color: '#00bcd4', width: 2 },
-  'North America':{ file: '/average_temp_north_america.json',color: '#9b59b6', width: 2 },
+  'Europe':       { file: `${BASE}average_temp_europe.json`,       color: '#e67e22', width: 2 },
+  'Antarctica':   { file: `${BASE}average_temp_antarctic.json`,    color: '#00bcd4', width: 2 },
+  'North America':{ file: `${BASE}average_temp_north_america.json`,color: '#9b59b6', width: 2 },
 };
 
 export default function TemperatureLineChart({ step, currentYear, startYear = 1885, endYear = 2025, onYearSelect, arcticRevealed = false, showAllRegions = false }) {
@@ -117,9 +119,9 @@ export default function TemperatureLineChart({ step, currentYear, startYear = 18
         acc.x.push(Number(y)); acc.y.push(v.departure); return acc;
       }, { x: [], y: [] });
 
-    fetch('/average_temp_world.json').then(r => r.json()).then(d => setWorldData(parse(d)));
+    fetch(`${BASE}average_temp_world.json`).then(r => r.json()).then(d => setWorldData(parse(d)));
     Promise.all([
-      fetch('/average_temp_arctic.json').then(r => r.json()).then(d => ['__arctic__', parse(d)]),
+      fetch(`${BASE}average_temp_arctic.json`).then(r => r.json()).then(d => ['__arctic__', parse(d)]),
       ...Object.entries(REGION_LINES).map(([name, cfg]) =>
         fetch(cfg.file).then(r => r.json()).then(d => [name, parse(d)])
       ),

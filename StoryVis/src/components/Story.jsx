@@ -23,13 +23,15 @@ function AutoChart({ Chart, height = 400 }) {
   return <div ref={ref} style={{ width: '95%' }}><Chart parentWidth={width} parentHeight={height} /></div>;
 }
 
+const BASE = import.meta.env.BASE_URL;
+
 // ── Season SVG sources ────────────────────────────────────────────────────────
 const SEASONS = [
-  { label: 'Arctic Night', src: '/SVG/Arctic_night.svg' },
-  { label: 'Early Spring', src: '/SVG/Early_spring.svg' },
-  { label: 'Late Spring',  src: '/SVG/Late_spring.svg'  },
-  { label: 'Early Summer', src: '/SVG/Early_Summer.svg' },
-  { label: 'Late Summer',  src: '/SVG/Late_summer.svg'  },
+  { label: 'Arctic Night', src: `${BASE}SVG/Arctic_night.svg` },
+  { label: 'Early Spring', src: `${BASE}SVG/Early_spring.svg` },
+  { label: 'Late Spring',  src: `${BASE}SVG/Late_spring.svg`  },
+  { label: 'Early Summer', src: `${BASE}SVG/Early_Summer.svg` },
+  { label: 'Late Summer',  src: `${BASE}SVG/Late_summer.svg`  },
 ];
 
 // ── Full-bleed season display with cross-fade transition ──────────────────────
@@ -421,7 +423,7 @@ const STEPS = [
   },
 ];
 
-const ICE_EXTENT_URL  = year => `/Ice_extent/N_${year}09_extent_v4.0.tif`;
+const ICE_EXTENT_URL  = year => `${BASE}Ice_extent/N_${year}09_extent_v4.0.tif`;
 const COG_START_YEAR  = 1880;
 const COG_END_YEAR    = 2025;
 const COG_YEAR_STEP   = 10;
@@ -493,7 +495,7 @@ export default function StoryScene() {
       transition:   'opacity 900ms ease',
     }}>
       <CogTemperatureMap
-        getUrl={year => `/tif_data/anom_${year}.tif`}
+        getUrl={year => `${BASE}tif_data/anom_${year}.tif`}
         startYear={COG_START_YEAR}
         endYear={COG_END_YEAR}
         yearStep={COG_YEAR_STEP}
@@ -550,7 +552,7 @@ export default function StoryScene() {
             transition: 'opacity 800ms ease',
           }}>
             <SvgPanel
-              src="/SVG/Late_summer.svg"
+              src={`${BASE}SVG/Late_summer.svg`}
               activeLayerId={activeLayerId}
               iceYear={iceYear}
             />

@@ -4,6 +4,8 @@ import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
 
 gsap.registerPlugin(MotionPathPlugin);
 
+const BASE = import.meta.env.BASE_URL;
+
 const SR_PREFIX = 'sr__';
 
 const srGetEl = (svg, label) =>
@@ -99,7 +101,7 @@ export default function ShippingRoutesPanel({ active, stepIndex }) {
     const container = containerRef.current;
     if (!container) return;
 
-    fetch('/Transpolar_shipping_routes.svg')
+    fetch(`${BASE}Transpolar_shipping_routes.svg`)
       .then(r => r.text())
       .then(svgText => {
         if (!containerRef.current) return;
