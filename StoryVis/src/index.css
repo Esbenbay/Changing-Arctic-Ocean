@@ -9,6 +9,11 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes lightPulse {
+  0%, 100% { opacity: 0.4; filter: brightness(1);   }
+  50%       { opacity: 1;   filter: brightness(1.2) drop-shadow(0 0 6px rgba(255,220,80,0.4)); }
+}
+
 @keyframes dragPulse {
   0%, 100% { box-shadow: 0 0 4px 1px rgba(243,156,18,0.4); opacity: 0.85; }
   50%       { box-shadow: 0 0 12px 4px rgba(243,156,18,0.8); opacity: 1; }
@@ -208,6 +213,9 @@
 .scrolly-layout.is-svg .scrolly-right {
   flex: 0 0 calc(35% - (var(--col-gap) / 2));
 }
+
+/* Hide SVG bubble-anchor markers — visible in Inkscape, invisible in browser */
+[inkscape\:label="bubble_anchor"] { opacity: 0 !important; pointer-events: none; }
 
 /* --- Mobile: stack columns --- */
 @media (max-width: 900px) {

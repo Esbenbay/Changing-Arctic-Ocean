@@ -149,6 +149,25 @@ export default function CogTemperatureMap({
 
   useEffect(() => () => resizeObserverRef.current?.disconnect(), []);
 
+  // Pre-decode all years in the background after a short delay
+  useEffect(() => {
+    const cache = tifCacheRef.current;
+    const years = [];
+    for (let y = startYear; y <= endYear; y += yearStep) years.push(y);
+    let cancelled = false;
+    const run = async () => {
+      for (const y of years) {
+        if (cancelled) break;
+        if (cache.has(y)) continue;
+        await decodeCOG(getUrl(y), y, vmin, vmax, colorFn)
+          .then(r => cache.set(y, r))
+          .catch(() => {});
+      }
+    };
+    const t = setTimeout(run, 800);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [startYear, endYear, yearStep, getUrl, vmin, vmax, mode]);
+
   // When scroll drives the year externally, debounce-snap to nearest yearStep
   useEffect(() => {
     if (externalYear == null) return;

@@ -186,20 +186,16 @@ export default function NewMap({ cameraKey, quizMode, embed = false }) {
         const tail = 0.05;
         const from = Math.max(0, t - tail);
 
-        map.setPaintProperty('arctic-coastline-line', 'line-gradient', [
-          'interpolate', ['linear'], ['line-progress'],
-          0,    'rgba(0,191,255,1)',
-          from, 'rgba(0,191,255,1)',
-          t,    'rgba(0,191,255,0)',
-          1,    'rgba(0,191,255,0)',
-        ]);
-        map.setPaintProperty('arctic-coastline-glow', 'line-gradient', [
-          'interpolate', ['linear'], ['line-progress'],
-          0,    'rgba(0,191,255,0.3)',
-          from, 'rgba(0,191,255,0.3)',
-          t,    'rgba(0,191,255,0)',
-          1,    'rgba(0,191,255,0)',
-        ]);
+        // When from === 0, omit the redundant first stop so all inputs are strictly ascending.
+        const lineStops = from > 0
+          ? [0, 'rgba(0,191,255,1)', from, 'rgba(0,191,255,1)', t, 'rgba(0,191,255,0)', 1, 'rgba(0,191,255,0)']
+          : [0, 'rgba(0,191,255,1)',                             t, 'rgba(0,191,255,0)', 1, 'rgba(0,191,255,0)'];
+        const glowStops = from > 0
+          ? [0, 'rgba(0,191,255,0.3)', from, 'rgba(0,191,255,0.3)', t, 'rgba(0,191,255,0)', 1, 'rgba(0,191,255,0)']
+          : [0, 'rgba(0,191,255,0.3)',                               t, 'rgba(0,191,255,0)', 1, 'rgba(0,191,255,0)'];
+
+        map.setPaintProperty('arctic-coastline-line', 'line-gradient', ['interpolate', ['linear'], ['line-progress'], ...lineStops]);
+        map.setPaintProperty('arctic-coastline-glow', 'line-gradient', ['interpolate', ['linear'], ['line-progress'], ...glowStops]);
 
         if (t < 1) coastlineAnimRef.current = requestAnimationFrame(animate);
         else coastlineAnimRef.current = null;
@@ -248,6 +244,11 @@ export default function NewMap({ cameraKey, quizMode, embed = false }) {
     const observer = new ResizeObserver(() => mapRef.current?.getMap().resize());
     observer.observe(map.getContainer());
     resizeObserverRef.current = observer;
+
+    map.on('error', ({ error }) => {
+      if (error?.status === 404) return;
+      console.error(error);
+    });
 
     setStyleLoaded(true);
   }, []);
