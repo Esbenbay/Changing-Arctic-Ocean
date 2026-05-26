@@ -27,17 +27,19 @@ export default function ScrollamaDemo({
     const entry = textInput[stepIndex];
     return (
       <Step data={stepIndex} key={stepIndex}>
-        <div style={{ margin: '80vh 0', textAlign: 'center', opacity: currentStepIndex === stepIndex ? 1 : 0.1 }}>
-          {entry && typeof entry === 'object' && !Array.isArray(entry) && entry.body ? (
+        <div style={{ margin: '80vh 0', minHeight: 1, textAlign: 'center', opacity: currentStepIndex === stepIndex ? 1 : 0.1 }}>
+          {entry && typeof entry === 'object' && !Array.isArray(entry) ? (
             <div style={{ textAlign: 'left', width: '100%' }}>
               {entry.title && (
                 <div style={{ fontWeight: 700, fontSize: '2rem', marginBottom: 10, color: '#222' }}>
                   {entry.title}
                 </div>
               )}
-              <div style={{ fontSize: '1.5rem', color: '#444', lineHeight: 1.75 }}>
-                {entry.body}
-              </div>
+              {entry.body && (
+                <div style={{ fontSize: '1.5rem', color: '#444', lineHeight: 1.75 }}>
+                  {entry.body}
+                </div>
+              )}
               {entry.figure && (
                 <div style={{ marginTop: 12 }}>
                   {typeof entry.figure === 'string'

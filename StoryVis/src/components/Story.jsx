@@ -1,5 +1,6 @@
 import { trackStepEnter } from '../tracker.js';
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import ScrollamaDemo from '../components/Scrollytelling.jsx';
 import NewMap from '../components/Map.jsx';
 import ScatterPlot from '../components/Barchart.jsx';
@@ -24,6 +25,64 @@ function AutoChart({ Chart, height = 400 }) {
 }
 
 const BASE = import.meta.env.BASE_URL;
+
+// ── CSS arrow tip for text bubbles ───────────────────────────────────────────
+// `direction` is where the tip POINTS: 'right' | 'left' | 'bottom' | 'top'
+function ArrowTip({ direction }) {
+  if (!direction) return null;
+  const fill = 'rgba(255,255,255,0.97)';
+  const s = 9; // half-width of base
+  const base = { position: 'absolute', width: 0, height: 0 };
+  const tips = {
+    right:  { ...base, right:  -(s * 2), top: '50%', marginTop:  -s, borderTop: `${s}px solid transparent`, borderBottom: `${s}px solid transparent`, borderLeft:  `${s * 2}px solid ${fill}` },
+    left:   { ...base, left:   -(s * 2), top: '50%', marginTop:  -s, borderTop: `${s}px solid transparent`, borderBottom: `${s}px solid transparent`, borderRight: `${s * 2}px solid ${fill}` },
+    bottom: { ...base, bottom: -(s * 2), left: '50%', marginLeft: -s, borderLeft: `${s}px solid transparent`, borderRight: `${s}px solid transparent`, borderTop:   `${s * 2}px solid ${fill}` },
+    top:    { ...base, top:    -(s * 2), left: '50%', marginLeft: -s, borderLeft: `${s}px solid transparent`, borderRight: `${s}px solid transparent`, borderBottom:`${s * 2}px solid ${fill}` },
+  };
+  return <div style={tips[direction] ?? null} />;
+}
+
+// ── Text bubble overlay for full-screen SVG chapter ──────────────────────────
+// `bubble` shape: { x, y, align, arrow?, title, text, figure? }
+// Multiple bubbles per step: pass step.bubble as an array in STEPS.
+// Renders only when an anchor position is known — x/y come directly from the SVG dot.
+function TextBubble({ title, text, x, y, arrow, figure, width }) {
+  const hasFigure = Boolean(figure);
+  const w = width ?? (hasFigure ? 340 : undefined);
+  return (
+    <div style={{
+      position:             'fixed',
+      left:                 `${x}%`,
+      top:                  `${y}%`,
+      transform:            'translate(-50%, -50%)',
+      zIndex:               20,
+      width:                w,
+      maxWidth:             w ?? 440,
+      background:           'rgba(255,255,255,0.95)',
+      backdropFilter:       'blur(14px)',
+      WebkitBackdropFilter: 'blur(14px)',
+      borderRadius:         14,
+      padding:              '18px 22px',
+      boxShadow:            '0 4px 24px rgba(0,0,0,0.14), 0 1px 4px rgba(0,0,0,0.08)',
+      borderTop:            '3px solid #2c7fb8',
+      pointerEvents:        hasFigure ? 'auto' : 'none',
+      animation:            'story-fade-in 400ms ease forwards',
+    }}>
+      <ArrowTip direction={arrow} />
+      {title && (
+        <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 7, color: '#12263a', letterSpacing: '-0.01em' }}>
+          {title}
+        </div>
+      )}
+      {text && <div style={{ fontSize: '0.97rem', lineHeight: 1.65, color: '#3d5166', marginBottom: hasFigure ? 14 : 0 }}>{text}</div>}
+      {hasFigure && (
+        <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 12 }}>
+          {figure}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ── Season SVG sources ────────────────────────────────────────────────────────
 const SEASONS = [
@@ -196,92 +255,102 @@ const STEPS = [
     title:       'Early Summer',
     text:        'Open water and continuous daylight sustain peak biological productivity. But warming is pushing the bloom earlier each year, disrupting the precise seasonal timing that Arctic animals have evolved over millennia to depend on.',
   },
-  // {
-  //   chapter:     'seasons',
-  //   seasonIndex: 4,
-  //   title:       'Late Summer',
-  //   text:        'As summer wanes, nutrients are depleted and the bloom fades. Sea ice begins to reform at the edges. The window of biological abundance is closing — and with each passing decade, its timing shifts in ways the Arctic ecosystem is struggling to absorb.',
-  // },
+  {
+    chapter:     'seasons',
+    seasonIndex: 4,
+    title:       'Late Summer',
+    text:        'As summer wanes, nutrients are depleted and the bloom fades. Sea ice begins to reform at the edges. The window of biological abundance is closing — and with each passing decade, its timing shifts in ways the Arctic ecosystem is struggling to absorb.',
+  },
 
   // ── SVG infographic chapter ───────────────────────────────────────────────
-{
+  {
     chapter: 'svg',
     layerId: null,
     title:   null,
-    text:    'From drifting sea ice to sun-lit ocean floors, the Arctic summer ecosystem is a web of life increasingly disrupted by a warming climate. Scroll to explore each layer of change.',
+    // bubble:  { x: 50, y: 50, align: 'center' },
+    text:    null,
   },
-
-   {
+  {
     chapter: 'svg',
     layerId: 'Sea_ice_early',
     title:   'Sea Ice',
+    bubble:  { arrow: 'right' },
     text:    'Arctic sea ice extent has declined ~13% per decade since satellite records began. The loss of multi-year ice fundamentally restructures the ecosystem that depends on it.',
   },
-
   {
     chapter: 'svg',
-    layerId: 'Sun',
-    title:   'Increasing Pan-Arctic productivity',
+    layerId: 'Light_production',
+    title:   'Increasing Pan-Arctic Productivity',
+    bubble:  { arrow: 'right' },
     text:    'As ice retreats, unprecedented amounts of sunlight reach previously shaded Arctic waters, fuelling new biological productivity but also accelerating ocean warming.',
   },
   {
     chapter: 'svg',
     layerId: 'productive_ocean',
     title:   'Complex Ecosystem Response',
+    bubble:  { arrow: 'left' },
     text:    'With increasing light in the ocean a surge in photosynthesis would be natural — Nature is although not so simple and the response of the ecosystem is complex and not fully understood.',
   },
 
 
+  // {
+  //   chapter: 'svg',
+  //   layerId: null,
+  //   title:   null,
+  //   bubble:  { x: 50, y: 55, align: 'center' },
+  //   text:    'From drifting sea ice to sun-lit ocean floors, the Arctic summer ecosystem is a web of life increasingly disrupted by a warming climate. Scroll to explore each layer of change.',
+  // },
   {
-    chapter: 'svg',
-    layerId: null,
-    title:   null,
-    text:    'From drifting sea ice to sun-lit ocean floors, the Arctic summer ecosystem is a web of life increasingly disrupted by a warming climate. Scroll to explore each layer of change.',
-  },
-
-
-  {
-    chapter:      'svg',
-    layerId:      'Mountain',
+    chapter:       'svg',
+    layerId:       'Mountain',
     glacierCamera: 'greenland-overview',
-    title:        'Glaciers & Mountains',
-    text:         "Greenland's ice sheet and Arctic glaciers are losing mass at record rates, contributing ~1 mm per year to global sea level rise and reshaping coastal landscapes.",
+    title:         'Glaciers & Mountains',
+    bubble:        { arrow: 'left' },
+    text:          "Greenland's ice sheet and Arctic glaciers are losing mass at record rates, contributing ~1 mm per year to global sea level rise and reshaping coastal landscapes.",
   },
   {
-    chapter:      'svg',
-    layerId:      'Mountain',
+    chapter:       'svg',
+    layerId:       'Mountain',
     glacierCamera: 'greenland-glaciers',
-    title:        'Retreating Ice Fronts',
-    text:         "Each coloured line marks a historic glacier terminus — yellow lines show the oldest recorded positions, red the most recent. Decades of retreat visible in a single view.",
+    title:         'Retreating Ice Fronts',
+    bubble:        { arrow: 'left' },
+    text:          "Each coloured line marks a historic glacier terminus — yellow lines show the oldest recorded positions, red the most recent. Decades of retreat visible in a single view.",
   },
-    {
+  {
     chapter: 'svg',
     layerId: 'River',
     title:   'Rivers & Freshwater',
+    bubble:  { arrow: 'left' },
     text:    'Accelerating permafrost thaw drives increased freshwater and nutrient runoff into coastal waters, altering salinity, turbidity, and the Arctic nutrient balance.',
   },
   
-//   {
-//     chapter: 'svg',
-//     layerId: 'SaltMarch',
-//     title:   'Salt Marsh',
-//     text:    'Coastal wetlands act as blue carbon sinks, sequestering carbon at rates up to 10× higher than terrestrial forests. Their persistence is critical for climate mitigation.',
-//   },
-
   {
     chapter: 'svg',
-    layerId: 'Erosion',
+    layerId: 'SaltMarch',
+    title:   'Salt Marsh',
+    text:    'Coastal wetlands act as blue carbon sinks, sequestering carbon at rates up to 10× higher than terrestrial forests. Their persistence is critical for climate mitigation.',
+  },
+
+  // {
+  //   chapter: 'svg',
+  //   layerId: 'Low_erosion',
+  //   title:   'Coastal Erosion',
+  //   bubble:  { x: 18, y: 64, align: 'right', arrow: 'right' },
+  //   text:    'Permafrost thaw and increased wave action are consuming Arctic coastlines at up to 20 metres per year — threatening communities and releasing stored carbon.',
+  // },
+   {
+    chapter: 'svg',
+    layerId: 'Turbid_erosion',
     title:   'Coastal Erosion',
+    bubble:  { arrow: 'right' },
     text:    'Permafrost thaw and increased wave action are consuming Arctic coastlines at up to 20 metres per year — threatening communities and releasing stored carbon.',
   },
-  
-  
- 
   {
     chapter: 'svg',
     layerId: 'Waves',
     title:   'Waves',
-    text:    'Increased cloud-cover and waves further complecates the and alter the light availability in the water.',
+    bubble:  { arrow: 'left' },
+    text:    'Increased cloud-cover and waves further complicate and alter the light availability in the water.',
   },
 //   {
 //     chapter: 'svg',
@@ -323,17 +392,18 @@ const STEPS = [
 //     text:    'Deep cold-water coral reefs are threatened by ocean acidification driven by rising CO₂ absorption. Their calcium carbonate skeletons dissolve as seawater pH drops.',
 //   },
 
-{
-    chapter: 'svg',
-    layerId: null,
-    title:   null,
-    text:    'Our research is focusing on how the Arctic seafloor is adapting to this complex web of change. Lets dive into how we try to undercover these changes.',
-  },
-
-    {
+  {
     chapter: 'svg',
     layerId: 'kelp_highlight',
-    title:   'How is the Arctic seafloor adapting to these changes?',
+    title:   'How is the Arctic Seafloor Adapting?',
+    bubble:  { arrow: 'bottom' },
+    text:    'Our research is focusing on how the Arctic seafloor is adapting to this complex web of change. Lets dive into how we try to uncover these changes.',
+  },
+  {
+    chapter: 'svg',
+    layerId: 'kelp_highlight',
+    title:   'How is the Arctic Seafloor Adapting?',
+    bubble:  { arrow: 'left' },
     text:    'Kelp forests are expanding into newly ice-free coastal zones, creating complex new habitats — but also competing with native seabed communities adapted to the cold.',
   },
 
@@ -436,6 +506,8 @@ export default function StoryScene() {
   const [scrollYear,     setScrollYear]     = useState(null);
   const [arcticRevealed, setArcticRevealed] = useState(false);
   const [showAllRegions, setShowAllRegions] = useState(false);
+  const [anchorPos,      setAnchorPos]      = useState(null);
+
   const step = STEPS[viewPoint] ?? STEPS[0];
 
   // Derive layout flags directly from the step's chapter — no magic offsets
@@ -451,6 +523,7 @@ export default function StoryScene() {
                     : -1;
 
   const activeLayerId = step.chapter === 'svg' ? step.layerId : undefined;
+
 
   // Steps with a title or figure use the structured card layout (left-aligned);
   // plain intro/map steps render as centred text.
@@ -478,8 +551,71 @@ export default function StoryScene() {
 
   const leftClass = `scrolly-left ${sceneStarted ? 'show' : 'hide'} ${inWideChapter ? 'is-svg' : ''}`;
 
+  // Map a layer ID to a figure component for that bubble.
+  // Add entries here whenever a bubble should contain an interactive figure.
+  const bubbleFigure = step.layerId === 'Sea_ice_early'
+    ? <IceExtentMap getUrl={ICE_EXTENT_URL} onYearChange={setIceYear} />
+    : null;
+
+  const bubbleConfig = !inSvgChapter || !anchorPos || !step.bubble ? null
+    : Array.isArray(step.bubble) ? step.bubble[0]
+    : step.bubble;
+  const bubbles = bubbleConfig ? [{
+    title:  bubbleConfig.title ?? step.title,
+    text:   bubbleConfig.text  ?? step.text,
+    arrow:  bubbleConfig.arrow,
+    figure: bubbleFigure,
+    width:  step.layerId === 'Sea_ice_early' ? 480 : undefined,
+    x:      anchorPos.x,
+    y:      anchorPos.y,
+  }] : [];
+
   return (
     <>
+    {createPortal(
+      <>
+        {/* Full-screen SVG overlay — circle-reveals in when svg chapter starts */}
+        <div style={{
+          position:      'fixed', inset: 0, zIndex: 5,
+          opacity:       inSvgChapter ? 1 : 0,
+          transition:    'opacity 900ms ease',
+          pointerEvents: inSvgChapter ? 'auto' : 'none',
+          background:    'white',
+        }}>
+          <SvgPanel
+            src={`${BASE}SVG/Late_summer.svg`}
+            activeLayerId={activeLayerId}
+            iceYear={iceYear}
+            onAnchorPosition={setAnchorPos}
+          />
+        </div>
+        {/* Full-screen Photosynthesis overlay */}
+        <div style={{
+          position:      'fixed', inset: 0, zIndex: 5,
+          opacity:       inPhotoChapter ? 1 : 0,
+          transition:    'opacity 900ms ease',
+          pointerEvents: inPhotoChapter ? 'auto' : 'none',
+          background:    'white',
+        }}>
+          <PhotosynthesisPanel stepIndex={step.stepIndex ?? 0} active={inPhotoChapter} />
+        </div>
+
+        {/* Text bubbles on top of the overlay — supports 1 or multiple per step */}
+        {bubbles.map((b, i) => (
+          <TextBubble
+            key={`${viewPoint}-${i}`}
+            title={b.title}
+            text={b.text}
+            x={b.x}
+            y={b.y}
+            arrow={b.arrow}
+            figure={b.figure}
+            width={b.width}
+          />
+        ))}
+      </>,
+      document.body
+    )}
     <div style={{
       position:     'fixed',
       top:          '5vh',
@@ -506,7 +642,12 @@ export default function StoryScene() {
     </div>
     <div
       className={`scrolly-layout ${sceneStarted ? 'is-split' : 'is-intro'} ${inWideChapter ? 'is-svg' : ''}`}
-      style={!sceneStarted ? { position: 'relative', zIndex: 1 } : undefined}
+      style={{
+        ...(!sceneStarted ? { position: 'relative', zIndex: 1 } : undefined),
+        opacity:       (inSvgChapter || inPhotoChapter) ? 0 : 1,
+        transition:    'opacity 500ms ease',
+        pointerEvents: (inSvgChapter || inPhotoChapter) ? 'none' : 'auto',
+      }}
     >
       <aside className={leftClass}>
 
@@ -535,37 +676,17 @@ export default function StoryScene() {
           background:    'white',
         }}>
 
-          {/* Season display */}
+          {/* Season display — hidden once SVG or Photosynthesis full-screen portal takes over */}
           <div style={{
             position:      'absolute', inset: 0,
-            opacity:       inSvgChapter ? 0 : 1,
+            opacity:       (inSvgChapter || inPhotoChapter || inShippingChapter) ? 0 : 1,
             transition:    'opacity 800ms ease',
-            pointerEvents: inSvgChapter ? 'none' : 'auto',
+            pointerEvents: (inSvgChapter || inPhotoChapter || inShippingChapter) ? 'none' : 'auto',
           }}>
             <SeasonDisplay activeIndex={seasonIndex} />
           </div>
 
-          {/* SVG infographic */}
-          <div style={{
-            position:   'absolute', inset: 0,
-            opacity:    inSvgChapter && !inPhotoChapter ? 1 : 0,
-            transition: 'opacity 800ms ease',
-          }}>
-            <SvgPanel
-              src={`${BASE}SVG/Late_summer.svg`}
-              activeLayerId={activeLayerId}
-              iceYear={iceYear}
-            />
-          </div>
-
-          {/* Photosynthesis animation */}
-          <div style={{
-            position:   'absolute', inset: 0,
-            opacity:    inPhotoChapter ? 1 : 0,
-            transition: 'opacity 800ms ease',
-          }}>
-            <PhotosynthesisPanel stepIndex={step.stepIndex ?? 0} active={inPhotoChapter} />
-          </div>
+          {/* SVG infographic + Photosynthesis — rendered in full-screen portal above */}
 
           {/* Shipping routes — ending chapter */}
           <div style={{

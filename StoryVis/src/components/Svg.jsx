@@ -1,30 +1,30 @@
 import { useRef, useEffect } from 'react';
-import gsap from 'gsap';
 
 const INTERACTIVE_LAYERS = {
   Sea_ice_early:     { name: 'Sea Ice',              description: 'Arctic sea ice extent has declined ~13% per decade since satellite records began. The loss of multi-year ice fundamentally restructures the ecosystem that depends on it.' },
-  Coulds:      { name: 'Atmosphere & Clouds',  description: 'Reduced ice cover lowers the surface albedo — more solar energy is absorbed by the dark ocean, creating a self-reinforcing warming feedback loop.' },
-  Sun:         { name: 'Solar Radiation',      description: 'As ice retreats, unprecedented amounts of sunlight reach previously shaded Arctic waters, fuelling new biological productivity but also accelerating ocean warming.' },
+  Clouds:      { name: 'Atmosphere & Clouds',  description: 'Reduced ice cover lowers the surface albedo — more solar energy is absorbed by the dark ocean, creating a self-reinforcing warming feedback loop.' },
+  Light_production:         { name: 'Solar Radiation',      description: 'As ice retreats, unprecedented amounts of sunlight reach previously shaded Arctic waters, fuelling new biological productivity but also accelerating ocean warming.', noHighlight: true, fadeIn: true, fadeWithLayer: 'Light_production', pulseAnimation: 'lightPulse 3.5s ease-in-out infinite', oneWay: true },
   Phytoplankton: { name: 'Phytoplankton',      description: 'Phytoplankton blooms are expanding northward and occurring weeks earlier each season. These microscopic primary producers underpin the entire Arctic food web.' },
   Fish:        { name: 'Fish',                 description: 'Sub-Arctic species such as Atlantic cod and mackerel are moving north as waters warm, competing with endemic species and disrupting indigenous hunting practices.' },
   Sea_weed:    { name: 'Seaweed & Kelp',       description: 'Kelp forests are expanding into newly ice-free coastal zones, creating complex new habitats — but also competing with native seabed communities adapted to the cold.' },
   Corals:      { name: 'Cold-Water Corals',    description: 'Deep cold-water coral reefs are threatened by ocean acidification driven by rising CO₂ absorption. Their calcium carbonate skeletons dissolve as seawater pH drops.' },
   Waves:       { name: 'Waves',               description: 'Longer ice-free seasons mean longer fetch for wind-driven waves. Increased wave action accelerates coastal erosion and disrupts nearshore Arctic habitats.' },
-  Erosion:          { name: 'Coastal Erosion',  description: 'Permafrost thaw and increased wave action are consuming Arctic coastlines at up to 20 metres per year — threatening communities and releasing stored carbon.', fadeOutWithLayer: 'River', zoomTarget: 'SaltMarch', noHighlight: true, oneWay: true },
+  Low_erosion:          { name: 'Coastal Erosion',  description: 'Permafrost thaw and increased wave action are consuming Arctic coastlines at up to 20 metres per year — threatening communities and releasing stored carbon.', fadeOutWithLayer: 'River',  noHighlight: true, oneWay: true  },
   Erosion_turbid:   { name: 'Turbid Erosion',  description: '', fadeIn: true, noHighlight: true, fadeWithLayer: 'River', oneWay: true },
-  Erosion_off:      { name: 'Erosion Off',      description: '', fadeOutWithLayer: 'Erosion', noHighlight: true, fadeOutTransition: 'opacity 2000ms ease 1000ms' },
+  Erosion_off:      { name: 'Erosion Off',      description: '', fadeOutWithLayer: 'SaltMarch', noHighlight: true, fadeOutTransition: 'opacity 2000ms ease 1000ms' },
   SaltMarch:   { name: 'Salt Marsh',           description: 'Coastal wetlands act as blue carbon sinks, sequestering carbon at rates up to 10× higher than terrestrial forests. Their persistence is critical for climate mitigation.' },
   River:       { name: 'Rivers & Freshwater',  description: 'Accelerating permafrost thaw drives increased freshwater and nutrient runoff into coastal waters, altering salinity, turbidity, and the Arctic nutrient balance.' },
   Mountain:    { name: 'Glaciers & Mountains', description: "Greenland's ice sheet and Arctic glaciers are losing mass at record rates, contributing ~1 mm per year to global sea level rise and reshaping coastal landscapes." },
   Eddy:       { name: 'Eddy', description: "Eddies are swirling currents that can transport heat and nutrients throughout the Arctic Ocean, influencing local ecosystems and climate." },
   Instruments: { name: 'Instruments', description: "Instruments are essential for monitoring and understanding the changing Arctic environment. They provide critical data on temperature, ice thickness, and ecosystem health.", maxZoom: 10 },
-  'Ship-1':         { name: 'Ship', description: '', maxZoom: 12, noHighlight: true, useGsap: true },
-  'kelp_highlight':     { name: 'Kelp Highlight',      description: '', maxZoom: 12, noHighlight: true, useGsap: true },
+  'Ship-1':         { name: 'Ship', description: '', maxZoom: 12, noHighlight: true },
+  'kelp_highlight': { name: 'Kelp Highlight', description: '', maxZoom: 9, noHighlight: true },
   Microphytobenthos:    { name: 'Microphytobenthos',   description: '', fadeIn: true, noHighlight: true, fadeWithLayer: 'kelp_highlight', fadeInTransition: 'opacity 1000ms ease 2000ms' },
-  productive_ocean: { name: 'Productive Ocean', description: 'As sea ice retreats, sunlit open water expands the zone of primary productivity across the Arctic Ocean.', fadeIn: true, noHighlight: true, fadeWithLayer: 'Sun' },
+  Sun_rays:         { name: 'Sun Rays',          description: '', fadeIn: true, noHighlight: true, fadeWithLayer: 'Light_production', pulseAnimation: 'lightPulse 2.8s ease-in-out infinite', oneWay: true },
+  productive_ocean: { name: 'Productive Ocean', description: 'As sea ice retreats, sunlit open water expands the zone of primary productivity across the Arctic Ocean.', fadeIn: true, noHighlight: true, fadeWithLayer: 'Light_production' },
 };
 
-const HIGHLIGHT_COLOR = '#fff70073';
+const HIGHLIGHT_COLOR = '#00000073';
 
 // Add/remove an outline stroke on every shape in the layer.
 // vector-effect: non-scaling-stroke keeps the width constant in screen pixels at any zoom.
@@ -60,16 +60,32 @@ export const getLayerEl = (svg, label) =>
   svg.querySelector(`[inkscape\\:label="${label}"]`) ??
   svg.querySelector(`#${label}`);
 
-export function zoomToLayer(svg, containerEl, labelOrEl, { maxZoom: maxZoomOverride, noTransition = false, transition = '1500ms ease', useGsap = false, gsapDuration = 2.5 } = {}) {
-  gsap.killTweensOf(svg, 'x,y,scale');
+// Find the bubble_anchor closest to layerEl in the tree (shallowest depth).
+// This picks layerEl's own anchor rather than one from a nested child layer.
+const findAnchor = (layerEl) => {
+  let best = null, bestDepth = Infinity;
+  for (const a of layerEl.querySelectorAll('[inkscape\\:label="bubble_anchor"]')) {
+    let depth = 0, el = a.parentElement;
+    while (el && el !== layerEl) { depth++; el = el.parentElement; }
+    if (el === layerEl && depth < bestDepth) { best = a; bestDepth = depth; }
+  }
+  return best;
+};
+
+export function zoomToLayer(svg, containerEl, labelOrEl, opts = {}) {
+  const { maxZoom: maxZoomOverride, noTransition = false, transition = '1500ms ease', anchorEl, onAnchorPosition } = opts;
 
   if (!labelOrEl) {
-    if (useGsap) {
-      gsap.to(svg, { x: 0, y: 0, scale: 1, duration: gsapDuration, ease: 'power2.inOut', overwrite: true });
+    svg.style.transition      = 'none';
+    svg.style.transformOrigin = '0 0';
+    if (onAnchorPosition) onAnchorPosition(null);
+    if (noTransition) {
+      svg.style.transform = 'scale(1) translate(0px, 0px)';
     } else {
-      svg.style.transition = noTransition ? 'none' : `transform ${transition}`;
-      svg.style.transformOrigin = '0 0';
-      svg.style.transform = 'none';
+      requestAnimationFrame(() => {
+        svg.style.transition = `transform ${transition}`;
+        svg.style.transform  = 'scale(1) translate(0px, 0px)';
+      });
     }
     return;
   }
@@ -82,6 +98,10 @@ export function zoomToLayer(svg, containerEl, labelOrEl, { maxZoom: maxZoomOverr
 
   const cW = containerEl.clientWidth;
   const cH = containerEl.clientHeight;
+  if (!cW || !cH) {
+    requestAnimationFrame(() => zoomToLayer(svg, containerEl, labelOrEl, opts));
+    return;
+  }
   const vb = svg.viewBox.baseVal;
   if (!vb || !vb.width || !vb.height) return;
 
@@ -131,23 +151,50 @@ export function zoomToLayer(svg, containerEl, labelOrEl, { maxZoom: maxZoomOverr
   ty = Math.min(ty, -offY);
   ty = Math.max(ty, -(offY + svgPixH) + cH / zoom);
 
-  if (useGsap) {
-    const method = noTransition ? gsap.set : gsap.to;
-    method(svg, { x: tx * zoom, y: ty * zoom, scale: zoom, transformOrigin: '0 0',
-      duration: noTransition ? 0 : gsapDuration, ease: 'power2.inOut', overwrite: true });
-  } else {
-    svg.style.transition      = noTransition ? 'none' : `transform ${transition}`;
-    svg.style.transformOrigin = '0 0';
+  // Freeze any in-flight transition so the new one starts from the current
+  // committed position — avoids a one-frame jump when interrupting mid-animation.
+  svg.style.transition = 'none';
+  void svg.offsetWidth; // force reflow — getScreenCTM below reflects committed state
+
+  // Compute the anchor dot's post-zoom screen position synchronously.
+  // The dot's SVG coordinate is fixed; we apply the target transform mathematically
+  // so the bubble can appear immediately without waiting for transitionend.
+  if (onAnchorPosition) {
+    const svgCtm = svg.getScreenCTM();
+    if (anchorEl && svgCtm) {
+      const rect = anchorEl.getBoundingClientRect();
+      const pt   = svg.createSVGPoint();
+      pt.x = rect.left + rect.width  / 2;
+      pt.y = rect.top  + rect.height / 2;
+      const { x: vx, y: vy } = pt.matrixTransform(svgCtm.inverse());
+      const cRect = containerEl.getBoundingClientRect();
+      onAnchorPosition({
+        x: (cRect.left + zoom * (vx * s + offX + tx)) / window.innerWidth  * 100,
+        y: (cRect.top  + zoom * (vy * s + offY + ty)) / window.innerHeight * 100,
+      });
+    } else {
+      onAnchorPosition(null);
+    }
+  }
+
+  if (noTransition) {
     svg.style.transform = `scale(${zoom}) translate(${tx}px, ${ty}px)`;
+  } else {
+    const targetTransform = `scale(${zoom}) translate(${tx}px, ${ty}px)`;
+    requestAnimationFrame(() => {
+      svg.style.transition = `transform ${transition}`;
+      svg.style.transform  = targetTransform;
+    });
   }
 }
 
-export default function SvgPanel({ src, activeLayerId, iceYear }) {
+export default function SvgPanel({ src, activeLayerId, iceYear, onAnchorPosition }) {
   const containerRef   = useRef(null);
   const svgRef         = useRef(null);
   const activeLayerIdRef = useRef(activeLayerId);
-  const iceShapesRef   = useRef([]);
-  const fadeLayersRef  = useRef({});
+  const iceShapesRef        = useRef([]);
+  const fadeLayersRef       = useRef({});
+  const highlightedLayerRef = useRef(null);
 
   // Keep ref in sync so fetch callback can read latest value
   activeLayerIdRef.current = activeLayerId;
@@ -157,13 +204,15 @@ export default function SvgPanel({ src, activeLayerId, iceYear }) {
 
   // Helper: apply current scroll-driven highlight state to the loaded SVG
   const applyHighlight = (svg, label) => {
-    Object.keys(INTERACTIVE_LAYERS).forEach(key => {
-      const l = getLayerEl(svg, key);
-      if (l) setOutline(l, null);
-    });
+    // Only clear the one layer that actually has an outline — not all layers.
+    if (highlightedLayerRef.current) {
+      const prev = getLayerEl(svg, highlightedLayerRef.current);
+      if (prev) setOutline(prev, null);
+      highlightedLayerRef.current = null;
+    }
     if (label && !INTERACTIVE_LAYERS[label]?.noHighlight) {
       const l = getLayerEl(svg, label);
-      if (l) setOutline(l, HIGHLIGHT_COLOR);
+      if (l) { setOutline(l, HIGHLIGHT_COLOR); highlightedLayerRef.current = label; }
     }
   };
 
@@ -180,6 +229,8 @@ export default function SvgPanel({ src, activeLayerId, iceYear }) {
         if (!svg) return;
         svg.style.width = '100%';
         svg.style.height = '100%';
+        svg.style.backfaceVisibility = 'hidden';
+        svg.style.webkitBackfaceVisibility = 'hidden';
         svgRef.current = svg;
 
         // Register fade-controlled layers
@@ -206,8 +257,13 @@ export default function SvgPanel({ src, activeLayerId, iceYear }) {
         // Apply whatever highlight + zoom is already active (handles late SVG load)
         if (activeLayerIdRef.current !== undefined) {
           applyHighlight(svg, activeLayerIdRef.current);
-          const fallbackCfg = INTERACTIVE_LAYERS[activeLayerIdRef.current] ?? {};
-          zoomToLayer(svg, containerRef.current, fallbackCfg.zoomTarget ?? activeLayerIdRef.current, { useGsap: fallbackCfg.useGsap });
+          const fallbackCfg  = INTERACTIVE_LAYERS[activeLayerIdRef.current] ?? {};
+          const zoomLabel    = fallbackCfg.zoomTarget ?? activeLayerIdRef.current;
+          const fallbackLayer = getLayerEl(svg, zoomLabel);
+          const anchorEl     = onAnchorPosition
+            ? (fallbackLayer ? findAnchor(fallbackLayer) : null)
+            : null;
+          zoomToLayer(svg, containerRef.current, zoomLabel, { noTransition: true, anchorEl, onAnchorPosition });
         }
 
 
@@ -222,20 +278,45 @@ export default function SvgPanel({ src, activeLayerId, iceYear }) {
     applyHighlight(svg, activeLayerId);
     const cfg       = INTERACTIVE_LAYERS[activeLayerId] ?? {};
     const zoomLabel = cfg.zoomTarget ?? activeLayerId;
-    zoomToLayer(svg, containerRef.current, zoomLabel, { transition: cfg.zoomTransition, useGsap: cfg.useGsap });
+    const layerEl   = getLayerEl(svg, zoomLabel);
+    const anchorEl  = onAnchorPosition
+      ? (layerEl ? findAnchor(layerEl) : null)
+      : null;
+    zoomToLayer(svg, containerRef.current, zoomLabel, {
+      transition: cfg.zoomTransition,
+      anchorEl,
+      onAnchorPosition,
+    });
     // Fade layers in or out based on their trigger
     Object.entries(fadeLayersRef.current).forEach(([label, entry]) => {
       const { el, inverted } = entry;
       const cfg         = INTERACTIVE_LAYERS[label];
       const trigger     = cfg?.fadeWithLayer ?? cfg?.fadeOutWithLayer ?? label;
       const triggerActive = trigger === activeLayerId;
-      if (cfg?.oneWay && entry.triggered) return; // permanent — never reverse
       if (triggerActive) entry.triggered = true;
       const isVisible = inverted ? !triggerActive : triggerActive;
-      el.style.transition = isVisible
-        ? (cfg?.fadeInTransition  ?? 'opacity 1500ms ease 600ms')
-        : (cfg?.fadeOutTransition ?? 'opacity 1500ms ease');
-      el.style.opacity = isVisible ? '1' : '0';
+      if (cfg?.pulseAnimation) {
+        if (isVisible) {
+          el.style.transition = 'none';
+          el.style.opacity    = '1';
+          el.style.animation  = cfg.pulseAnimation;
+        } else if (cfg?.oneWay && entry.triggered) {
+          // stop pulsing but stay visible
+          el.style.animation  = 'none';
+          el.style.transition = 'none';
+          el.style.opacity    = '1';
+        } else {
+          el.style.animation  = 'none';
+          el.style.transition = cfg?.fadeOutTransition ?? 'opacity 1500ms ease';
+          el.style.opacity    = '0';
+        }
+      } else {
+        if (cfg?.oneWay && entry.triggered) return; // permanent — never reverse
+        el.style.transition = isVisible
+          ? (cfg?.fadeInTransition  ?? 'opacity 1500ms ease 600ms')
+          : (cfg?.fadeOutTransition ?? 'opacity 1500ms ease');
+        el.style.opacity = isVisible ? '1' : '0';
+      }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeLayerId]);
@@ -249,5 +330,5 @@ export default function SvgPanel({ src, activeLayerId, iceYear }) {
     });
   }, [iceYear]);
 
-  return <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />;
+  return <div ref={containerRef} style={{ position: 'absolute', inset: 0, overflow: 'hidden' }} />;
 }

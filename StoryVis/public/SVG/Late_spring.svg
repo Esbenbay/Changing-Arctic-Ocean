@@ -21,15 +21,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
-     inkscape:zoom="1.9299006"
-     inkscape:cx="539.14695"
-     inkscape:cy="550.02834"
+     inkscape:zoom="0.3754976"
+     inkscape:cx="832.22902"
+     inkscape:cy="30.626028"
      inkscape:window-width="2560"
-     inkscape:window-height="1292"
+     inkscape:window-height="1412"
      inkscape:window-x="1728"
-     inkscape:window-y="30"
+     inkscape:window-y="28"
      inkscape:window-maximized="0"
-     inkscape:current-layer="g9355" />
+     inkscape:current-layer="Ilustração" />
   <defs
      id="defs69">
     <inkscape:perspective
@@ -19033,35 +19033,59 @@
          id="polygon11699"
          style="display:inline;fill:#f9f9f9" />
       <g
-         id="g11704"
+         id="g11704-5-4-1"
          style="display:inline"
-         transform="matrix(19.953777,0.13573697,-0.04400671,4.4611322,-15777.68,-2347.8251)">
-        <polygon
+         transform="matrix(19.513598,0.16282556,-0.04303596,5.351426,-15355.701,-2946.2269)"
+         inkscape:transform-center-x="-60.383288"
+         inkscape:transform-center-y="-20.232057">
+        <path
+           id="polygon11700-4-1-8"
+           style="display:inline;fill:#ffffff"
            class="cls-58"
-           points="882.18,648.74 868.06,649.45 859.88,645.92 873.25,643.16 883.72,645.39 "
-           id="polygon11700"
-           style="display:inline" />
-        <polygon
+           d="M 882.24336,648.61059 868.06,649.45 859.90704,643.60378 873.25,643.16 l 10.92273,-0.29088 z"
+           sodipodi:nodetypes="cccccc" />
+        <path
+           id="polygon11701-9-8-4"
+           style="display:inline;fill:#ffffff;stroke-width:1.00853"
            class="cls-58"
-           points="868.06,649.45 859.88,645.92 860.02,648.73 867.79,652.37 882.49,651.59 883.86,648.14 883.72,645.39 882.18,648.74 "
-           id="polygon11701"
-           style="display:inline" />
-        <polygon
+           d="m 884.16453,651.75524 0.0358,-3.87495 -0.002,-5.07983 -1.98106,5.58113 -14.15751,1.0185 -8.18354,-4.81905 8.19298,7.79441 z"
+           sodipodi:nodetypes="cccccccc" />
+        <path
+           id="polygon11702-1-8-3"
+           style="display:inline;opacity:0.9;fill:#6fffff"
            class="cls-120"
-           points="868.06,649.45 867.79,652.37 860.02,648.73 859.88,645.92 "
-           id="polygon11702"
-           style="display:inline" />
-        <polygon
+           d="m 868.06,649.45 -0.009,2.94091 -8.18353,-7.76606 -0.0118,-1.00281 z"
+           sodipodi:nodetypes="ccccc" />
+        <path
+           id="polygon11703-7-3-7"
+           style="display:inline;opacity:0.7;fill:#6ff6ff"
            class="cls-121"
-           points="882.49,651.59 867.79,652.37 868.06,649.45 882.18,648.74 "
-           id="polygon11703"
-           style="display:inline" />
-        <polygon
-           class="cls-122"
-           points="883.72,645.39 883.86,648.14 882.49,651.59 882.18,648.74 "
-           id="polygon11704"
-           style="display:inline" />
+           d="m 884.19438,651.72864 -16.15183,0.64763 0.0124,-2.95521 16.13198,-0.43127 z"
+           sodipodi:nodetypes="ccccc" />
       </g>
+      <path
+         id="path28-7"
+         style="display:inline;fill:#00ffff;stroke-width:0.698507"
+         d="m 1662.5111,652.6559 c -10e-5,0.57693 -2.2987,3.35908 -9.7272,3.35909 -7.4284,0 -18.7838,-1.67524 -18.7838,-2.25217 0,-0.57693 2.8019,-1.74903 10.2304,-1.74903 7.4285,0 18.2806,0.0652 18.2806,0.64211 z"
+         sodipodi:nodetypes="sssss" />
+      <path
+         id="path28-7-1"
+         style="display:inline;fill:#00ffff;stroke-width:0.982773"
+         transform="scale(-1,1)"
+         d="m -1689.5448,647.61005 c 0,0.66134 3.7022,3.34628 -9.126,3.34627 -12.8283,0 -44.9845,1.47841 -44.9845,0.81708 0,-0.66134 18.5918,-3.61488 31.42,-3.61488 12.8283,0 22.6905,-1.20981 22.6905,-0.54847 z"
+         sodipodi:nodetypes="sssss" />
+      <ellipse
+         style="display:inline;fill:#00ffff;fill-opacity:1;stroke-width:0.725753"
+         id="path28-7-0"
+         cx="1832.5203"
+         cy="646.76282"
+         rx="14.520222"
+         ry="1.0446256" />
+      <path
+         id="path28-7-3"
+         style="display:inline;fill:#00ffff;stroke-width:1.33773"
+         d="m 1578.7403,646.73489 c 0,1.08016 -12.5961,1.4511 -27.1485,1.4511 -14.5524,0 -18.3584,-2.76824 -18.3583,-3.84839 0,-1.08015 13.4793,0.56769 28.0316,0.56769 14.5523,-1e-5 17.4751,0.74945 17.4752,1.8296 z"
+         sodipodi:nodetypes="sssss" />
     </g>
     <g
        id="Setas_e_Caixas"
