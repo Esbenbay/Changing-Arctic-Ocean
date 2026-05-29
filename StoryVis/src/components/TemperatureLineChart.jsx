@@ -83,6 +83,8 @@ export default function TemperatureLineChart({ step, currentYear, startYear = 18
   const [displayYear, setDisplayYear]   = useState(null);
   const [isDragging,  setIsDragging]    = useState(false);
 
+  const dragYearRef = useRef(null);
+
   const handleDragMove = useCallback((e) => {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -90,12 +92,15 @@ export default function TemperatureLineChart({ step, currentYear, startYear = 18
     const t  = Math.max(0, Math.min(1, (e.clientX - rect.left - MARGIN.l) / pw));
     const yr = Math.min(endYear, Math.max(startYear, Math.round(startYear + t * (endYear - startYear))));
     onYearSelect?.(yr);
-    track('chart_drag', { year: yr });
+    dragYearRef.current = yr;
   }, [width, startYear, endYear, onYearSelect]);
 
   useEffect(() => {
     if (!isDragging) return;
-    const onUp = () => setIsDragging(false);
+    const onUp = () => {
+      setIsDragging(false);
+      if (dragYearRef.current != null) track('chart_drag_complete', { year: dragYearRef.current });
+    };
     window.addEventListener('mousemove', handleDragMove);
     window.addEventListener('mouseup',  onUp);
     return () => {
