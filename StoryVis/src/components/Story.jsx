@@ -541,15 +541,24 @@ const STEPS = [
     chapter: 'photosynthesis',
     layerId: 'Sea_weed',
     title:   'Arctic Seafloor Photosynthesis',
-    text:    'Beneath the Arctic summer sun, a hidden world of light and chemistry sustains all marine life. Scroll to watch photosynthesis unfold.',
-  },
-  {
+    bubble:  { arrow: 'right' },
+    text:    'In the Arctic, photosynthesis isn\'t just a surface phenomenon. As sea ice retreats, sunlight penetrates deeper, reaching the seafloor and transforming benthic ecosystems.',},
+   {
     chapter:         'photosynthesis',
     layerId:         'Sun',
     isErosionSlider: true,
+    bubble:          { arrow: 'right' },
     title:           'From Ice to Eroded Coast',
     text:            'Drag the slider to see how retreating sea ice exposes the coastline to wave-driven erosion.',
   },
+    {
+    chapter: 'photosynthesis',
+    layerId: 'Eddy',
+    bubble:  { arrow: 'right' },
+    title:   'Oxygen Rising',
+    text:    'Oxygen produced by phytoplankton bubbles upward through the water column, eventually reaching the atmosphere — the Arctic Ocean is a net source of oxygen for the planet.',
+  },
+   
   {
     chapter: 'photosynthesis',
     layerId: 'Light_ray',
@@ -578,13 +587,7 @@ const STEPS = [
     title:   'Oxygen Rising',
     text:    'Oxygen produced by phytoplankton bubbles upward through the water column, eventually reaching the atmosphere — the Arctic Ocean is a net source of oxygen for the planet.',
   },
-  {
-    chapter: 'photosynthesis',
-    layerId: 'Eddy',
-    bubble:  { arrow: 'right' },
-    title:   'Oxygen Rising',
-    text:    'Oxygen produced by phytoplankton bubbles upward through the water column, eventually reaching the atmosphere — the Arctic Ocean is a net source of oxygen for the planet.',
-  },
+  
   {
     chapter: 'photosynthesis',
     layerId: 'Eddy',
@@ -704,7 +707,9 @@ export default function StoryScene() {
   // Add entries here whenever a bubble should contain an interactive figure.
   const bubbleFigure = step.layerId === 'Sea_ice_early'
     ? <IceExtentMap getUrl={ICE_EXTENT_URL} onYearChange={setIceYear} />
-    : null;
+    : step.isErosionSlider
+      ? <ErosionSlider onChange={setErosionProgress} />
+      : null;
 
   const effectiveAnchorPos = inSvgChapter ? anchorPos : inPhotoChapter ? photoAnchorPos : null;
   const bubbleConfig = !effectiveAnchorPos || !step.bubble ? null
@@ -715,7 +720,7 @@ export default function StoryScene() {
     text:   bubbleConfig.text  ?? step.text,
     arrow:  bubbleConfig.arrow,
     figure: bubbleFigure,
-    width:  step.layerId === 'Sea_ice_early' ? 480 : undefined,
+    width:  step.layerId === 'Sea_ice_early' ? 480 : step.isErosionSlider ? 460 : undefined,
     x:      effectiveAnchorPos.x,
     y:      effectiveAnchorPos.y,
   }] : [];
@@ -749,22 +754,6 @@ export default function StoryScene() {
           background:    'white',
         }}>
           <PhotosynthesisPanel activeLayerId={inPhotoChapter ? step.layerId : undefined} active={inPhotoChapter} erosionProgress={erosionProgress} onAnchorPosition={setPhotoAnchorPos} />
-          {step.isErosionSlider && (
-            <div style={{
-              position: 'absolute', bottom: '8%', left: '50%', transform: 'translateX(-50%)',
-              width: '40%', minWidth: 280, maxWidth: 480,
-              background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(10px)',
-              borderRadius: 14, padding: '18px 24px',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.14)',
-              borderTop: '3px solid #2c7fb8',
-              zIndex: 10,
-            }}>
-              <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 6, color: '#12263a' }}>
-                From Ice to Eroded Coast
-              </div>
-              <ErosionSlider onChange={setErosionProgress} />
-            </div>
-          )}
         </div>
 
         {/* Text bubbles on top of the overlay — supports 1 or multiple per step */}

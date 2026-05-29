@@ -9,18 +9,19 @@ gsap.registerPlugin(MotionPathPlugin);
 
 // Layers visible at each step — cumulative: once shown, stays shown
 const PHOTO_LAYERS = {
+   g84:          { show: ['g84'] },
   Sea_weed:          { show: ['Sea_weed'] },
   O2_micro:          { show: ['O2_micro'] },
-  Sun:               { show: [], zoomTarget: null },
+  Sun:               { show: ['Eddy'], zoomTarget: 'g84' },
   Light_ray:         { show: ['Light_ray'] },
   Carbon_non_turbid: { show: ['Light_ray', 'Carbon_non_turbid'] },
   O2:                { show: ['Light_ray', 'Carbon_non_turbid', 'O2'] },
-  Eddy:              { show: ['Light_ray', 'Carbon_non_turbid', 'O2', 'Eddy'] },
-  Ship_1:            { show: ['Light_ray', 'Carbon_non_turbid', 'O2', 'Eddy', 'Ship_1', 'Ship_2'] },
-  Oil:               { show: ['Light_ray', 'Carbon_non_turbid', 'O2', 'Eddy', 'Ship_1', 'Ship_2', 'Oil'] },
+  Eddy:              { show: ['Eddy'] },
+  Ship_1:            { show: ['Light_ray', 'Carbon_non_turbid', 'O2', 'Ship_1', 'Ship_2'] },
+  Oil:               { show: ['Light_ray', 'Carbon_non_turbid', 'O2', 'Ship_1', 'Ship_2', 'Oil'] },
 };
 
-const ALL_FADE_LAYERS = ['O2', 'Eddy', 'Ship_1', 'Ship_2', 'Oil'];
+const ALL_FADE_LAYERS = ['Carbon_non_turbid','Light_ray','O2', 'Eddy', 'Ship_1', 'Ship_2', 'Oil'];
 
 // Trigger-based fade layers — fire when `trigger` step becomes active.
 //   trigger:         layerId string that activates this layer
@@ -38,6 +39,18 @@ const RANDOM_FADE_LAYERS = [
   'Carbon_non_turbid',
 ];
 
+// ── Motion-path animations ─────────────────────────────────────────────────────
+// Add entries here to wire up new motion-path loops.
+//   elementLabel: inkscape:label (or id) of the element to move
+//   pathLabel:    inkscape:label (or id) of the <path> (or group containing one)
+//   triggerStep:  activeLayerId value that starts the animation
+//   duration:     seconds per loop
+//   repeat:       GSAP repeat count (-1 = infinite)
+const MOTION_PATH_ANIMS = {
+  O2_micro: { elementLabel: 'O2_micro',  pathLabel: 'Micro_path_', triggerStep: 'Sea_weed', duration: 6, repeat: -1 },
+  Eddy:     { elementLabel: 'Eddy',      pathLabel: 'Eddy_path',   triggerStep: 'Sun',      duration: 3, repeat: 0 },
+};
+
 export default function PhotosynthesisPanel({ activeLayerId, active, erosionProgress, onAnchorPosition }) {
   const containerRef      = useRef(null);
   const svgRef            = useRef(null);
@@ -46,7 +59,7 @@ export default function PhotosynthesisPanel({ activeLayerId, active, erosionProg
   const zoomTimerRef      = useRef(null);
   const fadeLayersRef     = useRef({});   // PHOTO_FADE_LAYERS runtime state
   const randomFadeRef     = useRef({});   // active setInterval IDs keyed by layer name
-  const microTweenRef     = useRef(null); // O2_micro looping motion-path tween
+  const motionTweensRef   = useRef({});   // keyed by MOTION_PATH_ANIMS key
   const quickSettersRef   = useRef({});   // gsap.quickSetter functions for erosion slider
 
   useEffect(() => {
@@ -131,25 +144,26 @@ export default function PhotosynthesisPanel({ activeLayerId, active, erosionProg
           });
         }
 
-        // O2_micro loops along Micro_path while visible
-        const microEl     = getEl('O2_micro');
-        const microPathEl = getEl('Micro_path_');
-        const microPath   = microPathEl?.tagName?.toLowerCase() === 'path'
-          ? microPathEl : microPathEl?.querySelector('path');
-        if (microEl && microPath) {
+        // Motion-path animations — driven by MOTION_PATH_ANIMS config
+        motionTweensRef.current = {};
+        Object.entries(MOTION_PATH_ANIMS).forEach(([key, animCfg]) => {
+          const el     = getEl(animCfg.elementLabel);
+          const pathEl = getEl(animCfg.pathLabel);
+          const path   = pathEl?.tagName?.toLowerCase() === 'path' ? pathEl : pathEl?.querySelector('path');
+          if (!el || !path) return;
           const w = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-          microEl.parentNode.insertBefore(w, microEl);
-          w.appendChild(microEl);
-          microTweenRef.current = gsap.to(w, {
-            motionPath: { path: microPath, align: microPath, alignOrigin: [0.5, 0.5], autoRotate: false },
-            duration: 6, ease: 'none', repeat: -1, paused: true, immediateRender: true,
+          el.parentNode.insertBefore(w, el);
+          w.appendChild(el);
+          motionTweensRef.current[key] = gsap.to(w, {
+            motionPath: { path, align: path, alignOrigin: [0.5, 0.5], autoRotate: false },
+            duration: animCfg.duration, ease: 'none', repeat: animCfg.repeat, paused: true, immediateRender: true,
           });
-        }
+        });
       });
 
     return () => {
       iceTweenRef.current?.kill();
-      microTweenRef.current?.kill();
+      Object.values(motionTweensRef.current).forEach(t => t.kill());
       Object.values(randomFadeRef.current).forEach(clearInterval);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -159,7 +173,7 @@ export default function PhotosynthesisPanel({ activeLayerId, active, erosionProg
   useEffect(() => {
     if (!active) {
       hasInitialZoomRef.current = false;
-      microTweenRef.current?.pause();
+      Object.values(motionTweensRef.current).forEach(t => t.pause());
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
@@ -228,7 +242,7 @@ export default function PhotosynthesisPanel({ activeLayerId, active, erosionProg
       // stayVisible && !isActive: already at 1, GSAP leaves it alone
     });
 
-    // ── Build combined visible set for O2_micro tween and random fades ────────
+    // ── Build combined visible set for random fades ───────────────────────────
     const allVisible = new Set(visible);
     Object.entries(fadeLayersRef.current).forEach(([name, entry]) => {
       const isActive = entry.cfg.trigger === activeLayerId;
@@ -236,12 +250,18 @@ export default function PhotosynthesisPanel({ activeLayerId, active, erosionProg
       if (isActive || stayVis) allVisible.add(name);
     });
 
-    // ── Play/pause O2_micro loop ───────────────────────────────────────────────
-    if (allVisible.has('O2_micro')) {
-      microTweenRef.current?.play();
-    } else {
-      microTweenRef.current?.pause();
-    }
+    // ── Play/pause motion-path loops ──────────────────────────────────────────
+    // Infinite loops resume from pause; one-shot anims restart from the beginning.
+    Object.entries(MOTION_PATH_ANIMS).forEach(([key, animCfg]) => {
+      const tween = motionTweensRef.current[key];
+      if (!tween) return;
+      if (animCfg.triggerStep === activeLayerId) {
+        if (animCfg.repeat >= 0) tween.restart();
+        else tween.play();
+      } else {
+        tween.pause();
+      }
+    });
 
     // ── Random sub-layer blinking — only start/stop on visibility change ──────
     RANDOM_FADE_LAYERS.forEach(name => {
