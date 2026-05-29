@@ -9,6 +9,7 @@ const events = [];
 export function trackEvent(type, data = {}) {
   events.push({ t: new Date().toISOString(), type, ...data });
 }
+export const track = trackEvent;
 
 // ── Send compiled session JSON when story is complete ─────────────────────────
 export function flushToSheet() {
