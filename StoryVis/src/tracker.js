@@ -31,8 +31,9 @@ export function flushToSheet() {
   console.log('[tracker] flushing', payload);
   fetch(SHEET_URL, {
     method: 'POST',
+    mode:   'no-cors',
     body:   JSON.stringify(payload),
-  }).then(r => r.json()).then(r => console.log('[tracker] sheet response', r)).catch(err => console.error('[tracker] fetch error', err));
+  }).then(() => console.log('[tracker] sent')).catch(err => console.error('[tracker] fetch error', err));
 }
 
 trackEvent('session_start');
