@@ -1,4 +1,4 @@
-import { trackEvent, flushToSheet } from '../tracker.js';
+import { trackEvent, trackStep, flushToSheet } from '../tracker.js';
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import ScrollamaDemo from '../components/Scrollytelling.jsx';
@@ -876,6 +876,7 @@ export default function StoryScene() {
         <ScrollamaDemo
           handleUpdate={({ viewPoint: vp }) => {
             setViewPoint(vp);
+            trackStep(STEPS[vp]?.chapter);
             if (vp === STEPS.length - 1) flushToSheet();
           }}
           textInput={textInput}

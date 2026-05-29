@@ -5,27 +5,37 @@ const sessionStart = new Date().toISOString();
 export const sessionId = Math.random().toString(36).slice(2, 10);
 
 const events = [];
+let lastChapter = null;
 
 export function trackEvent(type, data = {}) {
   events.push({ t: new Date().toISOString(), type, ...data });
 }
 export const track = trackEvent;
 
-// ── Send compiled session JSON when story is complete ─────────────────────────
-export function flushToSheet() {
-  if (!SHEET_URL) return;
-  const payload = {
-    sessionId,
-    sessionStart,
-    completedAt:  new Date().toISOString(),
-    events,
-  };
-  fetch(SHEET_URL, {
-    method:    'POST',
-    body:      JSON.stringify(payload),
-    keepalive: true,
-  }).catch(() => {});
+// Call on every step change — records chapter transitions only
+export function trackStep(chapter) {
+  if (chapter !== lastChapter) {
+    lastChapter = chapter;
+    trackEvent('chapter_enter', { chapter });
+  }
 }
+
+// ── Send compiled session JSON when story is complete ─────────────────────────
+let flushed = false;
+export function flushToSheet() {
+  if (!SHEET_URL) { console.warn('[tracker] VITE_SHEET_URL not defined'); return; }
+  if (flushed) return;
+  flushed = true;
+  trackEvent('story_complete');
+  const payload = { sessionId, sessionStart, completedAt: new Date().toISOString(), events };
+  console.log('[tracker] flushing', payload);
+  fetch(SHEET_URL, {
+    method: 'POST',
+    body:   JSON.stringify(payload),
+  }).then(r => r.json()).then(r => console.log('[tracker] sheet response', r)).catch(err => console.error('[tracker] fetch error', err));
+}
+
+trackEvent('session_start');
 
 // ── Local CSV/JSON download ───────────────────────────────────────────────────
 function triggerDownload(content, filename, mime) {
