@@ -1,4 +1,4 @@
-import { trackStepEnter } from '../tracker.js';
+import { trackEvent, flushToSheet } from '../tracker.js';
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import ScrollamaDemo from '../components/Scrollytelling.jsx';
@@ -122,6 +122,9 @@ function ErosionSlider({ onChange }) {
     setValue(Number(e.target.value));
     onChange(v);
   };
+  const handleDragEnd = () => {
+    trackEvent('erosion_drag_complete', { value });
+  };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#555' }}>
@@ -131,6 +134,8 @@ function ErosionSlider({ onChange }) {
         type="range" min={0} max={100} value={value}
         onMouseDown={() => setHasDragged(true)}
         onTouchStart={() => setHasDragged(true)}
+        onMouseUp={handleDragEnd}
+        onTouchEnd={handleDragEnd}
         onChange={handle}
         style={{
           width: '100%',
@@ -674,7 +679,7 @@ export default function StoryScene() {
     const figure = s.layerId === 'Sea_ice_early'
       ? <IceExtentMap getUrl={ICE_EXTENT_URL} onYearChange={setIceYear} />
       : s.lineChartStep === 'quiz'
-        ? <TempQuiz onCorrectAnswer={() => { setArcticRevealed(true); }} onAnswer={() => setShowAllRegions(true)} />
+        ? <TempQuiz onCorrectAnswer={() => { setArcticRevealed(true); trackEvent('quiz_correct'); }} onAnswer={answer => { setShowAllRegions(true); trackEvent('quiz_answer', { answer }); }} />
         : s.isErosionSlider
           ? <ErosionSlider onChange={setErosionProgress} />
           : s.figure;
@@ -869,7 +874,10 @@ export default function StoryScene() {
 
       <main className="scrolly-right">
         <ScrollamaDemo
-          handleUpdate={({ viewPoint: vp }) => { trackStepEnter(vp, STEPS[vp]); setViewPoint(vp); }}
+          handleUpdate={({ viewPoint: vp }) => {
+            setViewPoint(vp);
+            if (vp === STEPS.length - 1) flushToSheet();
+          }}
           textInput={textInput}
           stickyStartIndex={stickyStartIndex}
           stickyEndIndex={stickyEndIndex}
