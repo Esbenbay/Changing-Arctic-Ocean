@@ -29,10 +29,12 @@ export function flushToSheet() {
   trackEvent('story_complete');
   const payload = { sessionId, sessionStart, completedAt: new Date().toISOString(), events };
   console.log('[tracker] flushing', payload);
+  const form = new URLSearchParams();
+  form.append('data', JSON.stringify(payload));
   fetch(SHEET_URL, {
     method: 'POST',
     mode:   'no-cors',
-    body:   JSON.stringify(payload),
+    body:   form,
   }).then(() => console.log('[tracker] sent')).catch(err => console.error('[tracker] fetch error', err));
 }
 
