@@ -30,6 +30,7 @@ jobs:
         working-directory: StoryVis
         env:
           VITE_MAPBOX_TOKEN: ${{ secrets.VITE_MAPBOX_TOKEN }}
+          VITE_SHEET_URL: ${{ secrets.VITE_SHEET_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: StoryVis/dist

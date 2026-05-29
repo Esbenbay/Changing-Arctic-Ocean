@@ -9,6 +9,13 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+
+@keyframes waveDrift {
+  0%, 100% { transform: translateX(0px);  }
+  30%       { transform: translateX(6px);  }
+  70%       { transform: translateX(-5px); }
+}
+
 @keyframes lightPulse {
   0%, 100% { opacity: 0.4; filter: brightness(1);   }
   50%       { opacity: 1;   filter: brightness(1.2) drop-shadow(0 0 6px rgba(255,220,80,0.4)); }
@@ -23,6 +30,7 @@
   --page-pad: 18px;
   --col-gap: 2vh;
   --row-gap: 2vh;
+  --timeline-h: 68px;
 }
 
 .hero {
@@ -80,8 +88,8 @@
 
   position: sticky;
   top: 5vh;
-  bottom: 5vh;
-  height: 90vh;
+  bottom: calc(var(--timeline-h) + 10px);
+  height: calc(95vh - var(--timeline-h) - 10px);
 
   display: flex;
   flex-direction: column;
@@ -103,7 +111,7 @@
 .scrolly-right {
   flex: 0 0 calc(40% - (var(--col-gap) / 2));
   min-height: 100%;
-  padding: 14px 0;
+  padding: 14px 0 68px;
 }
 .left-bottom {
   /* In the flex flow — physically pushes the map up when visible */
@@ -168,7 +176,7 @@
 .left-top {
   /* Fixed height — map canvas never resizes when bottom panel opens/closes */
   flex: none;
-  height: 90vh;
+  height: calc(95vh - var(--timeline-h) - 10px);
   position: relative;
   overflow: hidden;     /* clips the map canvas */
   border-radius: 12px;
@@ -206,8 +214,8 @@
   flex: 0 0 calc(60% - (var(--col-gap) / 2));
   position: sticky;
   top: 5vh;
-  bottom: 5vh;
-  height: 90vh;
+  bottom: calc(var(--timeline-h) + 10px);
+  height: calc(95vh - var(--timeline-h) - 10px);
 }
 
 .scrolly-layout.is-svg .scrolly-right {
