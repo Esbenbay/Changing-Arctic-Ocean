@@ -27,7 +27,7 @@ export default function ScrollamaDemo({
     const entry = textInput[stepIndex];
     return (
       <Step data={stepIndex} key={stepIndex}>
-        <div style={{ margin: '80vh 0', minHeight: 1, textAlign: 'center', opacity: currentStepIndex === stepIndex ? 1 : 0.1 }}>
+        <div data-step={stepIndex} style={{ margin: '80vh 0', minHeight: 1, textAlign: 'center', opacity: currentStepIndex === stepIndex ? 1 : 0.1 }}>
           {entry && typeof entry === 'object' && !Array.isArray(entry) ? (
             <div style={{ textAlign: 'left', width: '100%' }}>
               {entry.title && (

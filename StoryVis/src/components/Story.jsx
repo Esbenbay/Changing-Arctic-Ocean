@@ -11,6 +11,93 @@ import ShippingRoutesPanel from '../components/ShippingRoutesPanel.jsx';
 import CogTemperatureMap from '../components/CogTemperatureMap.jsx';
 import TemperatureLineChart, { TempQuiz } from '../components/TemperatureLineChart.jsx';
 
+const TIMELINE_H = 68; // px — height of the bottom chapter bar
+
+// ── Chapter timeline (bottom of screen) ──────────────────────────────────────
+const CHAPTERS = [
+  { id: 'intro',          label: 'Introduction'   },
+  { id: 'map',            label: 'Arctic Ocean'   },
+  { id: 'seasons',        label: 'Seasons'        },
+  { id: 'svg',            label: 'Ecosystem'      },
+  { id: 'photosynthesis', label: 'Seafloor'       },
+  { id: 'shipping',       label: 'Shipping'       },
+];
+
+function ChapterTimeline({ currentChapter, onNavigate }) {
+  const [hoveredId, setHoveredId] = useState(null);
+  const currentIndex = CHAPTERS.findIndex(c => c.id === currentChapter);
+  return (
+    <div style={{
+      position:       'fixed',
+      bottom:         0,
+      left:           0,
+      right:          0,
+      zIndex:         200,
+      display:        'flex',
+      alignItems:     'center',
+      justifyContent: 'space-evenly',
+      background:     '#ffffff',
+      borderTop:      '2px solid #e8e8e8',
+      padding:        '14px 90px',
+      userSelect:     'none',
+    }}>
+      {CHAPTERS.map((ch, i) => {
+        const isActive  = i === currentIndex;
+        const isPast    = i < currentIndex;
+        const isHovered = hoveredId === ch.id;
+        const dotColor   = isActive || isHovered ? '#2c7fb8' : isPast ? '#90bcd8' : '#d0d0d0';
+        const labelColor = isActive ? '#12263a' : isHovered ? '#2c7fb8' : isPast ? '#7fa8c0' : '#b0b0b0';
+        return [
+          i > 0 && (
+            <div key={`line-${ch.id}`} style={{
+              flex:       1,
+              height:     1.5,
+              background: isPast || isActive ? '#90bcd8' : '#ddd',
+              transition: 'background 500ms ease',
+            }} />
+          ),
+          <div
+            key={ch.id}
+            onClick={() => onNavigate(ch.id)}
+            onMouseEnter={() => setHoveredId(ch.id)}
+            onMouseLeave={() => setHoveredId(null)}
+            style={{
+              display:       'flex',
+              flexDirection: 'column',
+              alignItems:    'center',
+              gap:           6,
+              cursor:        'pointer',
+              transform:     isHovered ? 'translateY(-3px)' : 'translateY(0)',
+              transition:    'transform 200ms ease',
+              flexShrink:    0,
+            }}
+          >
+            <div style={{
+              width:        isActive || isHovered ? 13 : 9,
+              height:       isActive || isHovered ? 13 : 9,
+              borderRadius: '50%',
+              background:   dotColor,
+              boxShadow:    isActive ? '0 0 0 4px rgba(44,127,184,0.18)' : isHovered ? '0 0 0 3px rgba(44,127,184,0.12)' : 'none',
+              transition:   'all 250ms ease',
+            }} />
+            <span style={{
+              fontSize:      '0.68rem',
+              fontWeight:    isActive || isHovered ? 700 : 400,
+              color:         labelColor,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              whiteSpace:    'nowrap',
+              transition:    'all 250ms ease',
+            }}>
+              {ch.label}
+            </span>
+          </div>,
+        ];
+      })}
+    </div>
+  );
+}
+
 // ── Auto-sizing chart wrapper ─────────────────────────────────────────────────
 function AutoChart({ Chart, height = 400 }) {
   const ref = useRef(null);
@@ -25,6 +112,37 @@ function AutoChart({ Chart, height = 400 }) {
 }
 
 const BASE = import.meta.env.BASE_URL;
+
+// ── Sea-ice / erosion transition slider ──────────────────────────────────────
+function ErosionSlider({ onChange }) {
+  const [value, setValue] = useState(0);
+  const [hasDragged, setHasDragged] = useState(false);
+  const handle = e => {
+    const v = Number(e.target.value) / 100;
+    setValue(Number(e.target.value));
+    onChange(v);
+  };
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#555' }}>
+        <span>Sea Ice</span><span>Erosion</span>
+      </div>
+      <input
+        type="range" min={0} max={100} value={value}
+        onMouseDown={() => setHasDragged(true)}
+        onTouchStart={() => setHasDragged(true)}
+        onChange={handle}
+        style={{
+          width: '100%',
+          animation: !hasDragged ? 'dragPulse 1.4s ease-in-out infinite' : 'none',
+        }}
+      />
+      <div style={{ textAlign: 'center', fontSize: '0.85rem', color: '#888' }}>
+        {value}% eroded
+      </div>
+    </div>
+  );
+}
 
 // ── CSS arrow tip for text bubbles ───────────────────────────────────────────
 // `direction` is where the tip POINTS: 'right' | 'left' | 'bottom' | 'top'
@@ -288,7 +406,7 @@ const STEPS = [
     chapter: 'svg',
     layerId: 'productive_ocean',
     title:   'Complex Ecosystem Response',
-    bubble:  { arrow: 'left' },
+    bubble:  { arrow: 'right' },
     text:    'With increasing light in the ocean a surge in photosynthesis would be natural — Nature is although not so simple and the response of the ecosystem is complex and not fully understood.',
   },
 
@@ -409,66 +527,81 @@ const STEPS = [
 
   // ── Photosynthesis chapter ────────────────────────────────────────────────
   {
-    chapter:   'photosynthesis',
-    stepIndex: 0,
-    title:     'Arctic Seafloor Photosynthesis',
-    text:      'Beneath the Arctic summer sun, a hidden world of light and chemistry sustains all marine life. Scroll to watch photosynthesis unfold.',
+    chapter: 'photosynthesis',
+    layerId: null,
+    title:   'Arctic Seafloor Photosynthesis',
+    text:    'Beneath the Arctic summer sun, a hidden world of light and chemistry sustains all marine life. Scroll to watch photosynthesis unfold.',
   },
   {
-    chapter:   'photosynthesis',
-    stepIndex: 0,
-    title:     'Arctic Seafloor Photosynthesis',
-    text:      'Beneath the Arctic summer sun, a hidden world of light and chemistry sustains all marine life. Scroll to watch photosynthesis unfold.',
+    chapter: 'photosynthesis',
+    layerId: 'Sea_weed',
+    title:   'Arctic Seafloor Photosynthesis',
+    text:    'Beneath the Arctic summer sun, a hidden world of light and chemistry sustains all marine life. Scroll to watch photosynthesis unfold.',
   },
   {
-    chapter:   'photosynthesis',
-    stepIndex: 1,
-    title:     'The Midnight Sun',
-    text:      'During the Arctic summer the sun never sets, flooding the ocean surface with continuous light — the energy source that drives the entire ecosystem.',
+    chapter:         'photosynthesis',
+    layerId:         'Sun',
+    isErosionSlider: true,
+    title:           'From Ice to Eroded Coast',
+    text:            'Drag the slider to see how retreating sea ice exposes the coastline to wave-driven erosion.',
   },
   {
-    chapter:   'photosynthesis',
-    stepIndex: 2,
-    title:     'Light Penetration',
-    text:      'Sunlight penetrates the clear Arctic water, reaching phytoplankton and sea plants below. In ice-free waters light now reaches depths it never could before.',
+    chapter: 'photosynthesis',
+    layerId: 'Light_ray',
+    bubble:  { arrow: 'right' },
+    title:   'The Midnight Sun',
+    text:    'During the Arctic summer the sun never sets, flooding the ocean surface with continuous light — the energy source that drives the entire ecosystem.',
   },
   {
-    chapter:   'photosynthesis',
-    stepIndex: 3,
-    title:     'Oxygen & Carbon',
-    text:      'Phytoplankton and seagrass convert CO₂ and sunlight into oxygen and organic carbon — the base of the food web and a critical carbon sink for the planet.',
+    chapter: 'photosynthesis',
+    layerId: 'Light_ray',
+    bubble:  { arrow: 'right' },
+    title:   'Light Penetration',
+    text:    'Sunlight penetrates the clear Arctic water, reaching phytoplankton and sea plants below. In ice-free waters light now reaches depths it never could before.',
   },
   {
-    chapter:   'photosynthesis',
-    stepIndex: 4,
-    title:     'Oxygen Rising',
-    text:      'Oxygen produced by phytoplankton bubbles upward through the water column, eventually reaching the atmosphere — the Arctic Ocean is a net source of oxygen for the planet.',
+    chapter: 'photosynthesis',
+    layerId: 'Carbon_non_turbid',
+    bubble:  { arrow: 'right' },
+    title:   'Oxygen & Carbon',
+    text:    'Phytoplankton and seagrass convert CO₂ and sunlight into oxygen and organic carbon — the base of the food web and a critical carbon sink for the planet.',
   },
   {
-    chapter:   'photosynthesis',
-    stepIndex: 5,
-    title:     'Oxygen Rising',
-    text:      'Oxygen produced by phytoplankton bubbles upward through the water column, eventually reaching the atmosphere — the Arctic Ocean is a net source of oxygen for the planet.',
-  },
-
-  {
-    chapter:   'photosynthesis',
-    stepIndex: 8,
-    title:     'A Changing Cycle',
-    text:      'As the Arctic warms, longer ice-free seasons extend the window for photosynthesis — but also alter nutrient cycles, ocean chemistry, and the balance of the entire ecosystem.',
+    chapter: 'photosynthesis',
+    layerId: 'O2',
+    bubble:  { arrow: 'right' },
+    title:   'Oxygen Rising',
+    text:    'Oxygen produced by phytoplankton bubbles upward through the water column, eventually reaching the atmosphere — the Arctic Ocean is a net source of oxygen for the planet.',
   },
   {
-    chapter:   'photosynthesis',
-    stepIndex: 9,
-    title:     'A New Presence',
-    text:      'For the first time in history, industrial vessels navigate waters that were impassable just decades ago. The Arctic is no longer beyond reach.',
+    chapter: 'photosynthesis',
+    layerId: 'Eddy',
+    bubble:  { arrow: 'right' },
+    title:   'Oxygen Rising',
+    text:    'Oxygen produced by phytoplankton bubbles upward through the water column, eventually reaching the atmosphere — the Arctic Ocean is a net source of oxygen for the planet.',
   },
   {
-    chapter:   'photosynthesis',
-    stepIndex: 10,
-    title:     'A New Threat',
-    text:      'But a new chapter is beginning. These vessels bring oil, noise, and geopolitical ambition to one of the last great wildernesses — accelerating the very changes that opened the route.',
+    chapter: 'photosynthesis',
+    layerId: 'Eddy',
+    bubble:  { arrow: 'right' },
+    title:   'A Changing Cycle',
+    text:    'As the Arctic warms, longer ice-free seasons extend the window for photosynthesis — but also alter nutrient cycles, ocean chemistry, and the balance of the entire ecosystem.',
   },
+  {
+    chapter: 'photosynthesis',
+    layerId: 'Ship_1',
+    bubble:  { arrow: 'left' },
+    title:   'A New Presence',
+    text:    'For the first time in history, industrial vessels navigate waters that were impassable just decades ago. The Arctic is no longer beyond reach.',
+  },
+  {
+    chapter: 'photosynthesis',
+    layerId: 'Oil',
+    bubble:  { arrow: 'left' },
+    title:   'A New Threat',
+    text:    "But a new chapter is beginning. These vessels bring oil, noise, and geopolitical ambition to one of the last great wildernesses — accelerating the very changes that opened the route.",
+  },
+ 
 
   // ── Shipping routes chapter (ending) ─────────────────────────────────────
   {
@@ -507,8 +640,17 @@ export default function StoryScene() {
   const [arcticRevealed, setArcticRevealed] = useState(false);
   const [showAllRegions, setShowAllRegions] = useState(false);
   const [anchorPos,      setAnchorPos]      = useState(null);
+  const [photoAnchorPos, setPhotoAnchorPos] = useState(null);
+  const [erosionProgress, setErosionProgress] = useState(0);
 
   const step = STEPS[viewPoint] ?? STEPS[0];
+
+  const navigateToChapter = (chapterId) => {
+    const stepIndex = STEPS.findIndex(s => s.chapter === chapterId);
+    if (stepIndex < 0) return;
+    const el = document.querySelector(`[data-step="${stepIndex}"]`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
 
   // Derive layout flags directly from the step's chapter — no magic offsets
   const sceneStarted    = step.chapter !== 'intro';
@@ -533,7 +675,9 @@ export default function StoryScene() {
       ? <IceExtentMap getUrl={ICE_EXTENT_URL} onYearChange={setIceYear} />
       : s.lineChartStep === 'quiz'
         ? <TempQuiz onCorrectAnswer={() => { setArcticRevealed(true); }} onAnswer={() => setShowAllRegions(true)} />
-        : s.figure;
+        : s.isErosionSlider
+          ? <ErosionSlider onChange={setErosionProgress} />
+          : s.figure;
     return (s.title !== undefined || figure)
       ? { title: s.title, body: s.text, figure }
       : s.text;
@@ -557,7 +701,8 @@ export default function StoryScene() {
     ? <IceExtentMap getUrl={ICE_EXTENT_URL} onYearChange={setIceYear} />
     : null;
 
-  const bubbleConfig = !inSvgChapter || !anchorPos || !step.bubble ? null
+  const effectiveAnchorPos = inSvgChapter ? anchorPos : inPhotoChapter ? photoAnchorPos : null;
+  const bubbleConfig = !effectiveAnchorPos || !step.bubble ? null
     : Array.isArray(step.bubble) ? step.bubble[0]
     : step.bubble;
   const bubbles = bubbleConfig ? [{
@@ -566,8 +711,8 @@ export default function StoryScene() {
     arrow:  bubbleConfig.arrow,
     figure: bubbleFigure,
     width:  step.layerId === 'Sea_ice_early' ? 480 : undefined,
-    x:      anchorPos.x,
-    y:      anchorPos.y,
+    x:      effectiveAnchorPos.x,
+    y:      effectiveAnchorPos.y,
   }] : [];
 
   return (
@@ -576,9 +721,9 @@ export default function StoryScene() {
       <>
         {/* Full-screen SVG overlay — circle-reveals in when svg chapter starts */}
         <div style={{
-          position:      'fixed', inset: 0, zIndex: 5,
+          position:      'fixed', top: 0, left: 0, right: 0, bottom: TIMELINE_H, zIndex: 5,
           opacity:       inSvgChapter ? 1 : 0,
-          transition:    'opacity 900ms ease',
+          transition:    'opacity 1200ms cubic-bezier(0.4, 0, 0.2, 1)',
           pointerEvents: inSvgChapter ? 'auto' : 'none',
           background:    'white',
         }}>
@@ -586,18 +731,35 @@ export default function StoryScene() {
             src={`${BASE}SVG/Late_summer.svg`}
             activeLayerId={activeLayerId}
             iceYear={iceYear}
+            erosionProgress={erosionProgress}
             onAnchorPosition={setAnchorPos}
           />
         </div>
         {/* Full-screen Photosynthesis overlay */}
         <div style={{
-          position:      'fixed', inset: 0, zIndex: 5,
+          position:      'fixed', top: 0, left: 0, right: 0, bottom: TIMELINE_H, zIndex: 5,
           opacity:       inPhotoChapter ? 1 : 0,
           transition:    'opacity 900ms ease',
           pointerEvents: inPhotoChapter ? 'auto' : 'none',
           background:    'white',
         }}>
-          <PhotosynthesisPanel stepIndex={step.stepIndex ?? 0} active={inPhotoChapter} />
+          <PhotosynthesisPanel activeLayerId={inPhotoChapter ? step.layerId : undefined} active={inPhotoChapter} erosionProgress={erosionProgress} onAnchorPosition={setPhotoAnchorPos} />
+          {step.isErosionSlider && (
+            <div style={{
+              position: 'absolute', bottom: '8%', left: '50%', transform: 'translateX(-50%)',
+              width: '40%', minWidth: 280, maxWidth: 480,
+              background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(10px)',
+              borderRadius: 14, padding: '18px 24px',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.14)',
+              borderTop: '3px solid #2c7fb8',
+              zIndex: 10,
+            }}>
+              <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 6, color: '#12263a' }}>
+                From Ice to Eroded Coast
+              </div>
+              <ErosionSlider onChange={setErosionProgress} />
+            </div>
+          )}
         </div>
 
         {/* Text bubbles on top of the overlay — supports 1 or multiple per step */}
@@ -613,6 +775,8 @@ export default function StoryScene() {
             width={b.width}
           />
         ))}
+
+        <ChapterTimeline currentChapter={step.chapter} onNavigate={navigateToChapter} />
       </>,
       document.body
     )}

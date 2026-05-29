@@ -8,10 +8,10 @@ const INTERACTIVE_LAYERS = {
   Fish:        { name: 'Fish',                 description: 'Sub-Arctic species such as Atlantic cod and mackerel are moving north as waters warm, competing with endemic species and disrupting indigenous hunting practices.' },
   Sea_weed:    { name: 'Seaweed & Kelp',       description: 'Kelp forests are expanding into newly ice-free coastal zones, creating complex new habitats — but also competing with native seabed communities adapted to the cold.' },
   Corals:      { name: 'Cold-Water Corals',    description: 'Deep cold-water coral reefs are threatened by ocean acidification driven by rising CO₂ absorption. Their calcium carbonate skeletons dissolve as seawater pH drops.' },
-  Waves:       { name: 'Waves',               description: 'Longer ice-free seasons mean longer fetch for wind-driven waves. Increased wave action accelerates coastal erosion and disrupts nearshore Arctic habitats.' },
+  Waves:       { name: 'Waves',               description: 'Longer ice-free seasons mean longer fetch for wind-driven waves. Increased wave action accelerates coastal erosion and disrupts nearshore Arctic habitats.', activeAnimation: 'waveDrift 2s ease-in-out infinite', noHighlight: true },
   Low_erosion:          { name: 'Coastal Erosion',  description: 'Permafrost thaw and increased wave action are consuming Arctic coastlines at up to 20 metres per year — threatening communities and releasing stored carbon.', fadeOutWithLayer: 'River',  noHighlight: true, oneWay: true  },
-  Erosion_turbid:   { name: 'Turbid Erosion',  description: '', fadeIn: true, noHighlight: true, fadeWithLayer: 'River', oneWay: true },
-  Erosion_off:      { name: 'Erosion Off',      description: '', fadeOutWithLayer: 'SaltMarch', noHighlight: true, fadeOutTransition: 'opacity 2000ms ease 1000ms' },
+  // Erosion_turbid:   { name: 'Turbid Erosion',  description: '', noHighlight: true, fadeWithLayer: 'River', oneWay: true },
+  Erosion_off:      { name: 'Erosion Off',      description: '', fadeOutWithLayer: 'Waves', noHighlight: true, fadeOutTransition: 'opacity 2000ms ease 1000ms' },
   SaltMarch:   { name: 'Salt Marsh',           description: 'Coastal wetlands act as blue carbon sinks, sequestering carbon at rates up to 10× higher than terrestrial forests. Their persistence is critical for climate mitigation.' },
   River:       { name: 'Rivers & Freshwater',  description: 'Accelerating permafrost thaw drives increased freshwater and nutrient runoff into coastal waters, altering salinity, turbidity, and the Arctic nutrient balance.' },
   Mountain:    { name: 'Glaciers & Mountains', description: "Greenland's ice sheet and Arctic glaciers are losing mass at record rates, contributing ~1 mm per year to global sea level rise and reshaping coastal landscapes." },
@@ -62,7 +62,7 @@ export const getLayerEl = (svg, label) =>
 
 // Find the bubble_anchor closest to layerEl in the tree (shallowest depth).
 // This picks layerEl's own anchor rather than one from a nested child layer.
-const findAnchor = (layerEl) => {
+export const findAnchor = (layerEl) => {
   let best = null, bestDepth = Infinity;
   for (const a of layerEl.querySelectorAll('[inkscape\\:label="bubble_anchor"]')) {
     let depth = 0, el = a.parentElement;
@@ -195,6 +195,7 @@ export default function SvgPanel({ src, activeLayerId, iceYear, onAnchorPosition
   const iceShapesRef        = useRef([]);
   const fadeLayersRef       = useRef({});
   const highlightedLayerRef = useRef(null);
+  const activeAnimLayerRef  = useRef(null);
 
   // Keep ref in sync so fetch callback can read latest value
   activeLayerIdRef.current = activeLayerId;
@@ -287,6 +288,36 @@ export default function SvgPanel({ src, activeLayerId, iceYear, onAnchorPosition
       anchorEl,
       onAnchorPosition,
     });
+    // Apply / remove activeAnimation on the current layer
+    if (activeAnimLayerRef.current) {
+      const prev = getLayerEl(svg, activeAnimLayerRef.current);
+      if (prev) {
+        prev.style.animation = 'none';
+        prev.style.transformBox = '';
+        prev.style.maskImage        = '';
+        prev.style.webkitMaskImage  = '';
+        prev.style.maskRepeat       = '';
+        prev.style.webkitMaskRepeat = '';
+        prev.style.maskSize         = '';
+        prev.style.webkitMaskSize   = '';
+      }
+      activeAnimLayerRef.current = null;
+    }
+    const activeAnim = cfg.activeAnimation;
+    if (activeAnim && layerEl) {
+      layerEl.style.transformBox    = 'fill-box';
+      layerEl.style.transformOrigin = 'center';
+      if (cfg.activeMask) {
+        layerEl.style.maskImage         = cfg.activeMask;
+        layerEl.style.webkitMaskImage   = cfg.activeMask;
+        layerEl.style.maskRepeat        = 'no-repeat';
+        layerEl.style.webkitMaskRepeat  = 'no-repeat';
+        layerEl.style.maskSize          = '100% 300%';
+        layerEl.style.webkitMaskSize    = '100% 300%';
+      }
+      layerEl.style.animation       = activeAnim;
+      activeAnimLayerRef.current    = zoomLabel;
+    }
     // Fade layers in or out based on their trigger
     Object.entries(fadeLayersRef.current).forEach(([label, entry]) => {
       const { el, inverted } = entry;

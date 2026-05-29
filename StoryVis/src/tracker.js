@@ -1,12 +1,16 @@
 // ── Session tracker for HCI evaluation ───────────────────────────────────────
 // Usage: import { track, trackStepEnter, downloadExport } from '../tracker.js'
 
+const SHEET_URL = import.meta.env.VITE_SHEET_URL;
+
 const events       = [];
 const sessionStart = Date.now();
+const sessionId    = Math.random().toString(36).slice(2, 10);
 
 let prevStepIndex  = null;
 let prevStepTime   = null;
 let furthestStep   = 0;
+let flushed        = false;
 
 // ── Core event logger ─────────────────────────────────────────────────────────
 export function track(type, data = {}) {
@@ -43,7 +47,6 @@ export function trackStepEnter(viewPoint, stepConfig) {
 
 // ── Export ────────────────────────────────────────────────────────────────────
 function buildExport() {
-  // Aggregate chapter dwell times
   const chapterDwell = {};
   events.filter(e => e.type === 'step_dwell').forEach(e => {
     const ch = e.chapter ?? 'unknown';
@@ -51,12 +54,29 @@ function buildExport() {
   });
 
   return {
+    sessionId,
     sessionStart:    new Date(sessionStart).toISOString(),
     totalDurationMs: Date.now() - sessionStart,
     furthestStep,
     chapterDwell,
     events,
   };
+}
+
+// ── Flush to Google Sheet (fire-and-forget, safe on page unload) ──────────────
+export function flushToSheet() {
+  if (!SHEET_URL || flushed) return;
+  flushed = true;
+  const payload = JSON.stringify(buildExport());
+  // keepalive: true ensures the request survives tab close / navigation away
+  fetch(SHEET_URL, { method: 'POST', body: payload, keepalive: true }).catch(() => {});
+}
+
+// Auto-flush when the user leaves or hides the tab
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushToSheet();
+  });
 }
 
 function triggerDownload(content, filename, mime) {
