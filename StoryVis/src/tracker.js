@@ -27,15 +27,22 @@ export function flushToSheet() {
   if (flushed) return;
   flushed = true;
   trackEvent('story_complete');
-  const payload = { sessionId, sessionStart, completedAt: new Date().toISOString(), events };
-  console.log('[tracker] flushing', payload);
-  const form = new URLSearchParams();
-  form.append('data', JSON.stringify(payload));
-  fetch(SHEET_URL, {
-    method: 'POST',
-    mode:   'no-cors',
-    body:   form,
-  }).then(() => console.log('[tracker] sent')).catch(err => console.error('[tracker] fetch error', err));
+  const completedAt = new Date().toISOString();
+  const summary = {
+    sessionId,
+    sessionStart,
+    completedAt,
+    chapters:       events.filter(e => e.type === 'chapter_enter').map(e => e.chapter).join(','),
+    quizAnswer:     events.find(e => e.type === 'quiz_answer')?.answer ?? '',
+    quizCorrect:    events.some(e => e.type === 'quiz_correct'),
+    erosionFinal:   events.filter(e => e.type === 'erosion_drag_complete').at(-1)?.value ?? '',
+    chartDragYear:  events.filter(e => e.type === 'chart_drag_complete').at(-1)?.year ?? '',
+    _t:             Date.now(), // cache-buster
+  };
+  console.log('[tracker] flushing', summary);
+  fetch(`${SHEET_URL}?${new URLSearchParams(summary)}`, { mode: 'no-cors' })
+    .then(() => console.log('[tracker] sent'))
+    .catch(err => console.error('[tracker] fetch error', err));
 }
 
 trackEvent('session_start');
