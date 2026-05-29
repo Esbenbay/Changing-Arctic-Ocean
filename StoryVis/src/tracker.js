@@ -10,23 +10,31 @@ const sessionId    = Math.random().toString(36).slice(2, 10);
 let prevStepIndex  = null;
 let prevStepTime   = null;
 let furthestStep   = 0;
-let flushed        = false;
 
 // ── Core event logger ─────────────────────────────────────────────────────────
 export function track(type, data = {}) {
   events.push({ t: Date.now() - sessionStart, type, ...data });
 }
 
+// ── Send a single row to the sheet immediately ────────────────────────────────
+function postRow(row) {
+  if (!SHEET_URL) return;
+  fetch(SHEET_URL, {
+    method:    'POST',
+    body:      JSON.stringify({ sessionId, sessionStart: new Date(sessionStart).toISOString(), ...row }),
+    keepalive: true,
+  }).catch(() => {});
+}
+
 // ── Step tracking (called on every scroll step change) ────────────────────────
 export function trackStepEnter(viewPoint, stepConfig) {
   const now = Date.now();
 
+  // Send dwell for the step we're leaving
   if (prevStepIndex !== null && prevStepTime !== null) {
-    track('step_dwell', {
-      step:    prevStepIndex,
-      chapter: stepConfig?.chapter,
-      dwell:   now - prevStepTime,
-    });
+    const dwellMs = now - prevStepTime;
+    track('step_dwell', { step: prevStepIndex, chapter: stepConfig?.chapter, dwell: dwellMs });
+    postRow({ event: 'step_dwell', step: prevStepIndex, chapter: stepConfig?.chapter, dwellMs });
   }
 
   const direction = prevStepIndex === null ? 'start'
@@ -34,12 +42,8 @@ export function trackStepEnter(viewPoint, stepConfig) {
 
   if (viewPoint > furthestStep) furthestStep = viewPoint;
 
-  track('step_enter', {
-    step:      viewPoint,
-    chapter:   stepConfig?.chapter,
-    title:     stepConfig?.title ?? null,
-    direction,
-  });
+  track('step_enter', { step: viewPoint, chapter: stepConfig?.chapter, title: stepConfig?.title ?? null, direction });
+  postRow({ event: 'step_enter', step: viewPoint, chapter: stepConfig?.chapter, title: stepConfig?.title ?? null, direction });
 
   prevStepIndex = viewPoint;
   prevStepTime  = now;
@@ -63,21 +67,6 @@ function buildExport() {
   };
 }
 
-// ── Flush to Google Sheet (fire-and-forget, safe on page unload) ──────────────
-export function flushToSheet() {
-  if (!SHEET_URL || flushed) return;
-  flushed = true;
-  const payload = JSON.stringify(buildExport());
-  // keepalive: true ensures the request survives tab close / navigation away
-  fetch(SHEET_URL, { method: 'POST', body: payload, keepalive: true }).catch(() => {});
-}
-
-// Auto-flush when the user leaves or hides the tab
-if (typeof document !== 'undefined') {
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') flushToSheet();
-  });
-}
 
 function triggerDownload(content, filename, mime) {
   const blob = new Blob([content], { type: mime });
