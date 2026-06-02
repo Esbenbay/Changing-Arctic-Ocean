@@ -17,11 +17,15 @@ const PHOTO_LAYERS = {
   Carbon_non_turbid: { show: ['Light_ray', 'Carbon_non_turbid'] },
   O2:                { show: ['Light_ray', 'Carbon_non_turbid', 'O2'] },
   Eddy:              { show: ['Eddy'] },
+  Instruments:       { show: ['Eddy'] },
   Ship_1:            { show: ['Light_ray', 'Carbon_non_turbid', 'O2', 'Ship_1', 'Ship_2'] },
   Oil:               { show: ['Light_ray', 'Carbon_non_turbid', 'O2', 'Ship_1', 'Ship_2', 'Oil'] },
+  Benthic_highlight: { show: ['Instruments', 'Eddy', 'fade_in_benthic', 'O_2_benthic'] },
+
+
 };
 
-const ALL_FADE_LAYERS = ['Carbon_non_turbid','Light_ray','O2', 'Eddy', 'Ship_1', 'Ship_2', 'Oil'];
+const ALL_FADE_LAYERS = ['Carbon_non_turbid','Light_ray','O2', 'Eddy', 'Ship_1', 'Ship_2', 'Oil', 'fade_in_benthic', 'O_2_benthic'];
 
 // Trigger-based fade layers — fire when `trigger` step becomes active.
 //   trigger:         layerId string that activates this layer
@@ -37,6 +41,7 @@ const PHOTO_FADE_LAYERS = {
 // Layers whose direct children randomly blink in/out while the layer is visible.
 const RANDOM_FADE_LAYERS = [
   'Carbon_non_turbid',
+  'O_2_benthic'
 ];
 
 // ── Motion-path animations ─────────────────────────────────────────────────────
@@ -275,12 +280,12 @@ export default function PhotosynthesisPanel({ activeLayerId, active, erosionProg
         const children = [...el.querySelectorAll('path, circle, ellipse, rect, polygon')];
         if (!children.length) return;
         randomFadeRef.current[name] = setInterval(() => {
-          const count = Math.ceil(children.length * 0.2);
+          const count = Math.ceil(children.length * 0.9);
           [...children]
             .sort(() => Math.random() - 0.5)
             .slice(0, count)
-            .forEach(c => gsap.to(c, { opacity: Math.random() > 0.5 ? 1 : 0.5, duration: 1.2, ease: 'power1.inOut', overwrite: 'auto' }));
-        }, 2000);
+            .forEach(c => gsap.to(c, { opacity: Math.random() > 0.1 ? 1 : 0, duration: 0.5, ease: 'power1.inOut', overwrite: 'auto' }));
+        }, 1000);
       }
     });
   }, [activeLayerId, onAnchorPosition]);

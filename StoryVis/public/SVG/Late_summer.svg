@@ -21,9 +21,9 @@
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
-     inkscape:zoom="0.90089668"
-     inkscape:cx="1199.3606"
-     inkscape:cy="446.77709"
+     inkscape:zoom="6.3315518"
+     inkscape:cx="973.537"
+     inkscape:cy="601.98512"
      inkscape:window-width="2560"
      inkscape:window-height="1412"
      inkscape:window-x="1728"
@@ -52,11 +52,11 @@
          offset="0"
          id="stop96" />
       <stop
-         style="stop-color:#c87137;stop-opacity:1;"
+         style="stop-color:#c87137;stop-opacity:0.77848101;"
          offset="0.19349621"
          id="stop98" />
       <stop
-         style="stop-color:#c87137;stop-opacity:0.98734176;"
+         style="stop-color:#c87137;stop-opacity:0.55063289;"
          offset="1"
          id="stop97" />
     </linearGradient>
@@ -3218,8 +3218,8 @@
        y2="98.868599" />
     <linearGradient
        id="linear-gradient-6-5"
-       x1="625.0498"
-       y1="749.87909"
+       x1="613.99152"
+       y1="747.22229"
        x2="746.04126"
        y2="744.12555"
        gradientUnits="userSpaceOnUse">
@@ -4448,7 +4448,7 @@
         <g
            id="Low_erosion"
            style="display:inline"
-           transform="matrix(1.636807,0,0,1.0237883,-489.05741,-49.309113)">
+           transform="matrix(1.5186124,0,0,0.90013355,-419.8305,50.071912)">
           <g
              id="Erosion_pearls"
              transform="matrix(0.96387814,0,0,0.77420555,17.404748,171.96804)">
@@ -5190,7 +5190,7 @@
              style="display:inline;fill:url(#linear-gradient-6-5)"
              class="cls-70"
              transform="matrix(3.8204855,0,0,0.89532019,-1573.1215,62.079386)"
-             d="m 568.46387,658.84524 9.63636,35.12722 45.59455,-24.20187 33.11949,-6.36385 34.45899,-21.15312 27.17851,17.35887 7.58823,26.62751 11.45,25.11 17.52454,87.95912 -7.99672,-0.13497 -61.15267,-39.79626 -45.65819,-8.52887 -59.48864,-2.80928 -28.85978,-25.55355 -1.39245,-37.39666 8.5296,-30.64331 -0.0909,-14.94268 3.95677,-1.53321 1.94939,4.83877 z"
+             d="m 568.46387,658.84524 14.94622,-11.04882 40.35114,-2.66452 35.15702,-25.97441 30.38891,-31.13097 25.14132,-32.78047 19.03433,99.35139 10.28374,52.76926 11.24799,91.94242 -7.99672,-0.13497 -61.15267,-39.79626 -45.65819,-8.52887 -44.61187,11.86024 -43.73655,-40.22307 -1.39245,-37.39666 8.5296,-30.64331 -0.0909,-14.94268 3.95677,-1.53321 1.94939,4.83877 z"
              sodipodi:nodetypes="cccccccccccccccccccc" />
           <g
              id="g9634-1"
@@ -6033,8 +6033,8 @@
           <ellipse
              style="display:inline;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.851826;stroke-dasharray:none;stroke-opacity:0.547468"
              id="path91-0-4-3"
-             cx="1022.199"
-             cy="372.66403"
+             cx="1182.1094"
+             cy="366.84964"
              rx="4.3546705"
              ry="4.1098404"
              inkscape:label="bubble_anchor"
@@ -35768,8 +35768,8 @@
           <ellipse
              style="display:inline;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.699999;stroke-dasharray:none;stroke-opacity:0.547468"
              id="path91-0-2-4"
-             cx="1062.0365"
-             cy="736.28583"
+             cx="1094.5654"
+             cy="723.7179"
              rx="4.664"
              ry="2.5912821"
              inkscape:label="bubble_anchor" />

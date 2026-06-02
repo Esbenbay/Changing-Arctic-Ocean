@@ -103,8 +103,8 @@ const CAMERAS = {
   // Map chapter
   'arctic-quiz':    { center: [0, 85], zoom: 2.7,    speed: alterSpeed, pitch: 0, bearing: 0, projection: 'globe' },
   'world-overview': { center: [1,           0        ], zoom: 0.5,  speed: alterSpeed, pitch: alterPitch },
-  'svalbard':       { center: [15.678037,   77.746261], zoom: 14.5, speed: alterSpeed, pitch: alterPitch },
-  'canada-arctic':  { center: [-99.214076,  73.476835], zoom: 3.7,  speed: alterSpeed, pitch: alterPitch },
+  'svalbard':       { center: [16.57969, 77.82355], zoom: 9.508,  projection: 'globe' },
+  'canada-arctic':  { center: [-99.214076,  73.476835], zoom: 3.7,  speed: alterSpeed, pitch: alterPitch, projection: 'globe' },
 
   //'arctic-coastline':  { center: [120.734026, 85.53], zoom: 2.6,    speed: alterSpeed, pitch: 25, duration: 10000},
   'arctic-coastline':  { center: [0, 85], zoom: 2.7,    speed: alterSpeed, pitch: 0 , projection: 'globe'    },
@@ -118,7 +118,7 @@ const CAMERAS = {
 
   // Polar chapter
   'polar-overview': { center: [0, 90], zoom: 2.5, pitch: 0, bearing: 0, projection: 'globe' },
-  'polar-shelf':    { center: [0, 90], zoom: 3.2, pitch: 0, bearing: 0, speed: 0.6, projection: 'globe' },
+  'polar-shelf':    { center: [0, 90], zoom: 2.5, pitch: 0, bearing: 0, speed: 0.6, projection: 'globe' },
 
   // Available for future steps
   'arctic-overview':  { center: [1.558794,    79.96449 ], zoom: 2.3,  speed: alterSpeed, pitch: alterPitch },
@@ -204,7 +204,7 @@ function buildQuizOpacityExpr(found) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeToggle = false, initialViewState, mapRevealed = false, onFlyOutComplete, cogUrl, cogYear, cogOpacity = 0, cogVmin = -3, cogVmax = 3, useLightStyle = false }) {
+export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeToggle = false, initialViewState, mapRevealed = false, introFlyTriggered = false, onFlyOutComplete, cogUrl, cogYear, cogOpacity = 0, cogVmin = -3, cogVmax = 3, useLightStyle = false }) {
   const temperatureMapActive = cogUrl && cogOpacity > 0.3;
   const targetMapStyle = (useLightStyle || temperatureMapActive) ? TEMPERATURE_MAP_STYLE : SATELLITE_MAP_STYLE;
 
@@ -213,7 +213,6 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
   const coastlineAnimRef  = useRef(null);
   const rotateRef         = useRef(null);
   const flyOutTimerRef    = useRef(null);
-  const introTimerRef     = useRef(null);
   const styleReadyTimerRef = useRef(null);
   const flyOutFiredRef    = useRef(false);
   const onFlyOutCompleteRef = useRef(onFlyOutComplete);
@@ -230,6 +229,7 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
   const [styleLoaded, setStyleLoaded]           = useState(false);
   const [globeClicked, setGlobeClicked]         = useState(false);
   const [appliedMapStyle, setAppliedMapStyle]   = useState(targetMapStyle);
+  const [shelfPulse, setShelfPulse]             = useState(false);
 
   // Quiz: which ISO codes the user has clicked so far
   const [quizFound, setQuizFound] = useState(new Set());
@@ -239,6 +239,17 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
   useEffect(() => {
     onFlyOutCompleteRef.current = onFlyOutComplete;
   }, [onFlyOutComplete]);
+
+  useEffect(() => {
+    if (cameraKey !== 'polar-shelf') {
+      setShelfPulse(false);
+      return undefined;
+    }
+    const pulseTimer = setInterval(() => {
+      setShelfPulse(value => !value);
+    }, 2300);
+    return () => clearInterval(pulseTimer);
+  }, [cameraKey]);
 
   const loadCogYear = useCallback((year) => {
     if (!cogUrl) return Promise.reject(new Error('Missing COG URL template'));
@@ -365,15 +376,17 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
     };
   }, [cameraKey, embed, styleLoaded]);
 
-  // ── Intro fly-out: fires exactly once when map is ready and revealed ─────
+  // ── Intro fly-out: triggered by Scrollama, then played by Mapbox ─────────
   useEffect(() => {
     if (flyOutFiredRef.current) return;
-    if (!mapRevealed || !styleLoaded || cameraKey !== 'intro-arctic') return;
+    if (!mapRevealed || !introFlyTriggered || !styleLoaded || cameraKey !== 'intro-arctic') return;
     const map = mapRef.current?.getMap();
     if (!map) return;
+
     flyOutFiredRef.current = true;
     const FLY_DURATION = 9000;
-    map.stop();  // cancel any pending animation before starting
+    map.stop();
+    map.setProjection('mercator');
     map.flyTo({
       center: [0, 20],
       zoom: 1.0,
@@ -383,11 +396,15 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
       easing: introFlyEasing,
       essential: true,
     });
-    introTimerRef.current = setTimeout(() => onFlyOutCompleteRef.current?.(), FLY_DURATION + 200);
+
+    flyOutTimerRef.current = setTimeout(() => onFlyOutCompleteRef.current?.(), FLY_DURATION + 200);
     return () => {
-      clearTimeout(introTimerRef.current);
+      if (flyOutTimerRef.current) {
+        clearTimeout(flyOutTimerRef.current);
+        flyOutTimerRef.current = null;
+      }
     };
-  }, [mapRevealed, styleLoaded, cameraKey]);
+  }, [mapRevealed, introFlyTriggered, styleLoaded, cameraKey]);
 
   // ── COG temperature layer: pre-load all years in background ──────────────
   useEffect(() => {
@@ -530,6 +547,15 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
 
   const tempWashOpacity = temperatureMapActive ? Math.min(0.18, cogOpacity * 0.25) : 0;
   const showTemperatureLegend = cogUrl && cogOpacity > 0.05;
+  const shelfFillOpacity = cameraKey === 'polar-shelf'
+    ? (shelfPulse ? 0.30 : 0.20)
+    : ['polar-overview'].includes(cameraKey) ? 0.08 : 0;
+  const shelfGlowOpacity = cameraKey === 'polar-shelf'
+    ? (shelfPulse ? 0.42 : 0.26)
+    : ['polar-overview'].includes(cameraKey) ? 0.10 : 0;
+  const shelfEdgeOpacity = cameraKey === 'polar-shelf'
+    ? (shelfPulse ? 0.58 : 0.42)
+    : ['polar-overview'].includes(cameraKey) ? 0.12 : 0;
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -547,10 +573,15 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
       onIdle={handleStyleReady}
       interactiveLayerIds={quizMode ? ['arctic-countries-hit'] : []}
       onClick={handleMapClick}
-      scrollZoom={!embed}
+      interactive={!embed}
+      scrollZoom={false}
       doubleClickZoom={!embed}
       touchZoomRotate={!embed}
       dragPan={!embed}
+      dragRotate={!embed}
+      touchPitch={!embed}
+      boxZoom={!embed}
+      keyboard={!embed}
     >
 
       {/* ── Quiz overlay panel ─────────────────────────────────────────────── */}
@@ -800,10 +831,43 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
                   //  2000, "#2980b9",
                   //  1000, "#5baed6",
                   //  200, "#89c5e8",
-                   0, "#fffae1",
+                   0, "#efe8c8",
                     "hsla(100, 23%, 98%, 0.00)"
               ],
-              "fill-opacity": ['polar-overview', 'polar-shelf'].includes(cameraKey) ? 0.20 : 0,
+              "fill-opacity": cameraKey === 'polar-shelf' ? 0.16 : ['polar-overview'].includes(cameraKey) ? 0.18 : 0,
+            }}
+          />
+          <Layer
+            id="bathymetry-shelf-highlight-fill"
+            type="fill"
+            filter={["any", ["==", ["get", "depth"], 0], ["==", ["get", "depth"], "0"]]}
+            paint={{
+              "fill-color": "#e8dfbd",
+              "fill-opacity": shelfFillOpacity,
+              "fill-opacity-transition": { duration: 1500, delay: 0 },
+            }}
+          />
+          <Layer
+            id="bathymetry-shelf-glow"
+            type="line"
+            filter={["any", ["==", ["get", "depth"], 0], ["==", ["get", "depth"], "0"]]}
+            paint={{
+              "line-color": "#d9cfaa",
+              "line-width": cameraKey === 'polar-shelf' ? 8 : 4,
+              "line-blur":  cameraKey === 'polar-shelf' ? 4 : 1.5,
+              "line-opacity": shelfGlowOpacity,
+              "line-opacity-transition": { duration: 1500, delay: 0 },
+            }}
+          />
+          <Layer
+            id="bathymetry-shelf-edge"
+            type="line"
+            filter={["any", ["==", ["get", "depth"], 0], ["==", ["get", "depth"], "0"]]}
+            paint={{
+              "line-color": "#5d777b",
+              "line-width": cameraKey === 'polar-shelf' ? 1.6 : 0.6,
+              "line-opacity": shelfEdgeOpacity,
+              "line-opacity-transition": { duration: 1500, delay: 0 },
             }}
           />
         </Source>
