@@ -7,7 +7,7 @@ const FRAMES = [
   // { src: `${BASE}Images/2022-06-03.jpg`, label: 'June 2'  },
   { src: `${BASE}Images/2022-06-02.jpg`, label: 'June 3'  },
   { src: `${BASE}Images/2022-06-22.jpg`, label: 'June 22' },
-  { src: `${BASE}Images/2022-07-07.jpg`, label: 'July 7'  },
+  // { src: `${BASE}Images/2022-07-07.jpg`, label: 'July 7'  },
   // { src: `${BASE}Images/2022-07-09.jpg`, label: 'July 9'  },
   // { src: `${BASE}Images/2022-08-31.jpg`, label: 'August 31'  },
 ];

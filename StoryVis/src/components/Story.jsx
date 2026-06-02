@@ -435,7 +435,7 @@ const STEPS = [
     chapter: 'svg',
     layerId: 'Erosion_turbid',
     title:   'Coastal Erosion',
-    image:  { src: `${BASE}/Images_out/2022-07-07.jpg`, caption: 'Svalbard, July 2022' },
+    image:  { src: `${BASE}/Images/2022-07-07.jpg`, caption: 'Svalbard, July 2022' },
     bubble:  { arrow: 'bottom' },
     text:    'Permafrost thaw and increased wave action are consuming Arctic coastlines at up to 20 metres per year — threatening communities and releasing stored carbon.',
   },
@@ -472,7 +472,7 @@ const STEPS = [
   {
     chapter: 'photosynthesis',
     layerId: 'Sea_weed',
-    title:   'Arctic Seafloor Photosynthesis',
+    title:   'Arctic Seafloor Photosynthesis (Add images or figure)',
     bubble:  { arrow: 'right' },
     text:    'In the Arctic, photosynthesis isn\'t just a surface phenomenon. As sea ice retreats, sunlight penetrates deeper, reaching the seafloor and transforming benthic ecosystems.',},
    {
