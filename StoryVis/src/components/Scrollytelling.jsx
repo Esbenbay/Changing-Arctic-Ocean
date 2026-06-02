@@ -20,6 +20,17 @@ export default function ScrollamaDemo({
 
   const renderStep = (stepIndex) => {
     const entry = textInput[stepIndex];
+    if (stepIndex === 0) {
+      return (
+        <Step data={stepIndex} key={stepIndex}>
+          <div
+            data-step={stepIndex}
+            style={{ height: '900vh', margin: 0, minHeight: 1, opacity: 0, pointerEvents: 'none' }}
+          />
+        </Step>
+      );
+    }
+
     return (
       <Step data={stepIndex} key={stepIndex}>
         <div data-step={stepIndex} style={{ margin: '80vh 0', minHeight: 1, textAlign: 'center', opacity: currentStepIndex === stepIndex ? 1 : 0.1 }}>
@@ -34,9 +45,11 @@ export default function ScrollamaDemo({
                 const src     = typeof entry.image === 'string' ? entry.image : entry.image.src;
                 const alt     = typeof entry.image === 'string' ? (entry.title ?? '') : (entry.image.alt ?? entry.title ?? '');
                 const caption = typeof entry.image === 'string' ? null : entry.image.caption;
+                const height  = typeof entry.image === 'object' ? entry.image.height : undefined;
+                const width   = typeof entry.image === 'object' ? entry.image.width  : undefined;
                 return (
                   <div style={{ marginBottom: 12 }}>
-                    <img src={src} alt={alt} style={{ width: '100%', borderRadius: 8, display: 'block', objectFit: 'cover' }} />
+                    <img src={src} alt={alt} style={{ width: width ?? '100%', borderRadius: 8, display: 'block', objectFit: 'cover', ...(height ? { height } : {}) }} />
                     {caption && (
                       <div style={{ fontSize: '0.85rem', color: '#888', marginTop: 5, textAlign: 'center', fontStyle: 'italic' }}>
                         {caption}

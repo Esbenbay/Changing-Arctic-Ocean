@@ -4,6 +4,15 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+html, body, #root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
 @keyframes slideUpFade {
   from { opacity: 0; transform: translateY(120px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -52,7 +61,18 @@
   display: grid;
   place-items: center;
 
-  transition: opacity 2000ms ease;
+  transition: opacity 900ms ease-out;
+}
+
+.hero.hero-scroll {
+  position: sticky;
+  top: 0;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .hero.is-fading {
@@ -67,7 +87,7 @@
 }
 
 .story-main {
-  animation: story-fade-in 600ms ease forwards;
+  animation: story-fade-in 400ms ease forwards;
 }
 
 /* Whole page scrolls, so NO overflow: hidden here */
@@ -149,6 +169,44 @@
   transition:
     max-height 400ms ease-in-out,
     opacity 500ms ease 500ms;
+}
+
+/* ---------- Scroll indicator ---------- */
+@keyframes scrollBounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(10px); }
+}
+
+.scroll-indicator {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            10px;
+  color:          rgba(255, 255, 255, 0.72);
+  cursor:         default;
+  user-select:    none;
+  transition:     color 0.3s ease;
+}
+
+.scroll-indicator:hover {
+  color: rgba(255, 255, 255, 1);
+}
+
+.scroll-indicator-label {
+  font-size:      0.95rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight:    500;
+  text-shadow:    0 1px 10px rgba(0, 0, 0, 0.7);
+}
+
+.scroll-chevron {
+  animation: scrollBounce 2.2s ease-in-out infinite;
+  filter:    drop-shadow(0 1px 6px rgba(0, 0, 0, 0.6));
+}
+
+.scroll-indicator:hover .scroll-chevron {
+  animation: scrollBounce 0.85s ease-in-out infinite;
 }
 
 /* ---------- CTA ---------- */

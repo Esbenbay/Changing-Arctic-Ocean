@@ -17,6 +17,9 @@ const INTERACTIVE_LAYERS = {
   River:       { name: 'Rivers & Freshwater',  description: 'Accelerating permafrost thaw drives increased freshwater and nutrient runoff into coastal waters, altering salinity, turbidity, and the Arctic nutrient balance.' },
   Mountain:    { name: 'Glaciers & Mountains', description: "Greenland's ice sheet and Arctic glaciers are losing mass at record rates, contributing ~1 mm per year to global sea level rise and reshaping coastal landscapes." },
   Eddy:       { name: 'Eddy', description: "Eddies are swirling currents that can transport heat and nutrients throughout the Arctic Ocean, influencing local ecosystems and climate." },
+  Benthic_highlight:       { name: 'Benthic Highlight', description: "Benthic highlights are areas of increased biological activity on the seafloor, often associated with underwater features like reefs or shipwrecks.",  },
+  fade_in_benthic:       { name: 'Benthic Highlight_fade', description: "Benthic highlights are areas of increased biological activity on the seafloor, often associated with underwater features like reefs or shipwrecks.", fadeIn: true, noHighlight: true, fadeWithLayer: 'Benthic_highlight', fadeInTransition: 'opacity 1000ms ease 2000ms' },
+  
   Instruments: { name: 'Instruments', description: "Instruments are essential for monitoring and understanding the changing Arctic environment. They provide critical data on temperature, ice thickness, and ecosystem health.", maxZoom: 10 },
   'Ship-1':         { name: 'Ship', description: '', maxZoom: 12, noHighlight: true },
   'kelp_highlight': { name: 'Kelp Highlight', description: '', maxZoom: 9, noHighlight: true, },

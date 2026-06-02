@@ -1,20 +1,20 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import { downloadJSON, downloadCSV } from './tracker.js'
-import FrontPage from './components/FrontPage.jsx'
 import StoryScene from './components/Story.jsx'
 
 function App() {
-  const [fadingLanding, setFadingLanding] = useState(false);
-  const [mapRevealed,   setMapRevealed]   = useState(false);
-  const revealTimerRef = useRef(null);
-
-  const startStory = () => {
-    setFadingLanding(true);
-    clearTimeout(revealTimerRef.current);
-    revealTimerRef.current = setTimeout(() => {
-      setMapRevealed(true);
-    }, 500);
-  };
+  useLayoutEffect(() => {
+    const previousRestoration = window.history.scrollRestoration;
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+    return () => {
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = previousRestoration;
+      }
+    };
+  }, []);
 
   // Ctrl+Shift+E → download JSON, Ctrl+Shift+C → download CSV
   useEffect(() => {
@@ -27,17 +27,10 @@ function App() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  useEffect(() => {
-    return () => clearTimeout(revealTimerRef.current);
-  }, []);
-
   return (
-    <>
-      <main className="story-main">
-        <StoryScene mapRevealed={mapRevealed} landingFading={fadingLanding} />
-      </main>
-      <FrontPage onStart={startStory} fading={fadingLanding} />
-    </>
+    <main className="story-main">
+      <StoryScene />
+    </main>
   );
 }
 
