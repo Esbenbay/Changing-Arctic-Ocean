@@ -153,8 +153,44 @@ function ArrowTip({ direction }) {
 
 // ── Text bubble overlay for full-screen SVG chapter ──────────────────────────
 // `bubble` shape: { x, y, align, arrow?, title, text, figure? }
+// `text` can be a plain string OR an array of strings / { image, alt?, caption? } objects.
 // Multiple bubbles per step: pass step.bubble as an array in STEPS.
 // Renders only when an anchor position is known — x/y come directly from the SVG dot.
+function BubbleContent({ text }) {
+  if (!text) return null;
+  const items = Array.isArray(text) ? text : [text];
+  return (
+    <>
+      {items.map((item, i) => {
+        if (typeof item === 'string') {
+          return (
+            <div key={i} style={{ fontSize: '0.97rem', lineHeight: 1.65, color: '#3d5166', marginBottom: 8 }}>
+              {item}
+            </div>
+          );
+        }
+        if (item?.image) {
+          return (
+            <div key={i} style={{ margin: '10px 0' }}>
+              <img
+                src={item.image}
+                alt={item.alt ?? ''}
+                style={{ width: '100%', borderRadius: 7, display: 'block', objectFit: 'cover' }}
+              />
+              {item.caption && (
+                <div style={{ fontSize: '0.78rem', color: '#888', marginTop: 4, textAlign: 'center', fontStyle: 'italic' }}>
+                  {item.caption}
+                </div>
+              )}
+            </div>
+          );
+        }
+        return null;
+      })}
+    </>
+  );
+}
+
 function TextBubble({ title, text, x, y, arrow, figure, width }) {
   const hasFigure = Boolean(figure);
   const w = width ?? (hasFigure ? 340 : undefined);
@@ -183,7 +219,7 @@ function TextBubble({ title, text, x, y, arrow, figure, width }) {
           {title}
         </div>
       )}
-      {text && <div style={{ fontSize: '0.97rem', lineHeight: 1.65, color: '#3d5166', marginBottom: hasFigure ? 14 : 0 }}>{text}</div>}
+      <BubbleContent text={text} />
       {hasFigure && (
         <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: 12 }}>
           {figure}
@@ -250,6 +286,7 @@ const STEPS = [
     camera:  'intro-arctic',
     title:   'The Global Climate ',
       text:  'The ',
+      image: `${BASE}HomePage.jpeg`,
     },
   {
     chapter:       'intro',
@@ -392,41 +429,38 @@ const STEPS = [
     text:    'Accelerating permafrost thaw drives increased freshwater and nutrient runoff into coastal waters, altering salinity, turbidity, and the Arctic nutrient balance.',
   },
   
-  {
-    chapter: 'svg',
-    layerId: 'SaltMarch',
-    title:   'Salt Marsh',
-    text:    'Coastal wetlands act as blue carbon sinks, sequestering carbon at rates up to 10× higher than terrestrial forests. Their persistence is critical for climate mitigation.',
-  },
+ 
 
   {
     chapter: 'svg',
-    layerId: 'Turbid_erosion',
+    layerId: 'Erosion_turbid',
     title:   'Coastal Erosion',
-    bubble:  { arrow: 'right' },
+    image:  { src: `${BASE}/Images_out/2022-07-07.jpg`, caption: 'Svalbard, July 2022' },
+    bubble:  { arrow: 'bottom' },
     text:    'Permafrost thaw and increased wave action are consuming Arctic coastlines at up to 20 metres per year — threatening communities and releasing stored carbon.',
   },
   {
     chapter: 'svg',
     layerId: 'Waves',
     title:   'Waves',
+    image:  { src: `${BASE}Waves.jpg`, caption: 'North East Greenland, August 2024' },
     bubble:  { arrow: 'left' },
     text:    'Increased cloud-cover and waves further complicate and alter the light availability in the water.',
   },
   {
     chapter: 'svg',
     layerId: 'kelp_highlight',
-    title:   'How is the Arctic Seafloor Adapting?',
+    title:   'How is the Arctic Seafloor Adapting (Add image of the seafloor)?',
     bubble:  { arrow: 'bottom' },
     text:    'Our research is focusing on how the Arctic seafloor is adapting to this complex web of change. Lets dive into how we try to uncover these changes.',
   },
-  {
-    chapter: 'svg',
-    layerId: 'kelp_highlight',
-    title:   'How is the Arctic Seafloor Adapting?',
-    bubble:  { arrow: 'left' },
-    text:    'Kelp forests are expanding into newly ice-free coastal zones, creating complex new habitats — but also competing with native seabed communities adapted to the cold.',
-  },
+  // {
+  //   chapter: 'svg',
+  //   layerId: 'kelp_highlight',
+  //   title:   'How is the Arctic Seafloor Adapting?',
+  //   bubble:  { arrow: 'left' },
+  //   text:    'Kelp forests are expanding into newly ice-free coastal zones, creating complex new habitats — but also competing with native seabed communities adapted to the cold.',
+  // },
 
   // ── Photosynthesis chapter ────────────────────────────────────────────────
   {
@@ -588,8 +622,8 @@ export default function StoryScene({ mapRevealed = false, landingFading = false 
         : s.isErosionSlider
           ? <ErosionSlider onChange={setErosionProgress} />
           : s.figure;
-    return (s.title !== undefined || figure)
-      ? { title: s.title, body: s.text, figure }
+    return (s.title !== undefined || figure || s.image)
+      ? { title: s.title, body: s.text, figure, image: s.image }
       : s.text;
   });
 
@@ -617,9 +651,18 @@ export default function StoryScene({ mapRevealed = false, landingFading = false 
   const bubbleConfig = !effectiveAnchorPos || !step.bubble ? null
     : Array.isArray(step.bubble) ? step.bubble[0]
     : step.bubble;
+  const bubbleImage = step.image
+    ? (typeof step.image === 'string'
+        ? { image: step.image }
+        : { image: step.image.src, alt: step.image.alt, caption: step.image.caption })
+    : null;
+  const bubbleText = bubbleConfig?.text
+    ?? (bubbleImage
+        ? [step.text, bubbleImage].filter(Boolean)
+        : step.text);
   const bubbles = bubbleConfig ? [{
     title:  bubbleConfig.title ?? step.title,
-    text:   bubbleConfig.text  ?? step.text,
+    text:   bubbleText,
     arrow:  bubbleConfig.arrow,
     figure: bubbleFigure,
     width:  step.layerId === 'Sea_ice_early' ? 480 : step.isErosionSlider ? 460 : undefined,
@@ -656,7 +699,8 @@ export default function StoryScene({ mapRevealed = false, landingFading = false 
             onFlyOutComplete={() => setIntroMapShrunk(true)}
             cogUrl={year => `${BASE}tif_data/anom_${year}.tif`}
             cogYear={scrollYear ?? COG_START_YEAR}
-            cogOpacity={!!step.lineChartStep && viewPoint >= 2 ? 0.62 : 0}
+            cogOpacity={!!step.lineChartStep && viewPoint >= 1 ? 0.62 : 0}
+            useLightStyle={introMapShrunk}
           />
         </div>}
 

@@ -10,19 +10,19 @@ const INTERACTIVE_LAYERS = {
   Sea_weed:    { name: 'Seaweed & Kelp',       description: 'Kelp forests are expanding into newly ice-free coastal zones, creating complex new habitats — but also competing with native seabed communities adapted to the cold.' },
   Corals:      { name: 'Cold-Water Corals',    description: 'Deep cold-water coral reefs are threatened by ocean acidification driven by rising CO₂ absorption. Their calcium carbonate skeletons dissolve as seawater pH drops.' },
   Waves:       { name: 'Waves',               description: 'Longer ice-free seasons mean longer fetch for wind-driven waves. Increased wave action accelerates coastal erosion and disrupts nearshore Arctic habitats.', activeAnimation: 'waveDrift 2s ease-in-out infinite', noHighlight: true },
-  Low_erosion:          { name: 'Coastal Erosion',  description: 'Permafrost thaw and increased wave action are consuming Arctic coastlines at up to 20 metres per year — threatening communities and releasing stored carbon.', fadeOutWithLayer: 'River',  noHighlight: true, oneWay: true  },
-  // Erosion_turbid:   { name: 'Turbid Erosion',  description: '', noHighlight: true, fadeWithLayer: 'River', oneWay: true },
-  Erosion_off:      { name: 'Erosion Off',      description: '', fadeOutWithLayer: 'Waves', noHighlight: true, fadeOutTransition: 'opacity 2000ms ease 1000ms' },
+  Low_erosion:          { name: 'Coastal Erosion',  description: 'Permafrost thaw and increased wave action are consuming Arctic coastlines at up to 20 metres per year — threatening communities and releasing stored carbon.', fadeOutWithLayer: 'River',  noHighlight: true, oneWay: true },
+  Erosion_turbid:   { name: 'Turbid Erosion',  description: '', noHighlight: true, fadeIn: true, fadeWithLayer: 'River', pulseAnimation: 'turbidFlow 2.5s ease-in-out infinite',oneWay: true  },
+  Erosion_off:      { name: 'Erosion Off',      description: '', fadeOutWithLayer: 'Waves', noHighlight: false, fadeOutTransition: 'opacity 1000ms ease 500ms' },
   SaltMarch:   { name: 'Salt Marsh',           description: 'Coastal wetlands act as blue carbon sinks, sequestering carbon at rates up to 10× higher than terrestrial forests. Their persistence is critical for climate mitigation.' },
   River:       { name: 'Rivers & Freshwater',  description: 'Accelerating permafrost thaw drives increased freshwater and nutrient runoff into coastal waters, altering salinity, turbidity, and the Arctic nutrient balance.' },
   Mountain:    { name: 'Glaciers & Mountains', description: "Greenland's ice sheet and Arctic glaciers are losing mass at record rates, contributing ~1 mm per year to global sea level rise and reshaping coastal landscapes." },
   Eddy:       { name: 'Eddy', description: "Eddies are swirling currents that can transport heat and nutrients throughout the Arctic Ocean, influencing local ecosystems and climate." },
   Instruments: { name: 'Instruments', description: "Instruments are essential for monitoring and understanding the changing Arctic environment. They provide critical data on temperature, ice thickness, and ecosystem health.", maxZoom: 10 },
   'Ship-1':         { name: 'Ship', description: '', maxZoom: 12, noHighlight: true },
-  'kelp_highlight': { name: 'Kelp Highlight', description: '', maxZoom: 9, noHighlight: true },
+  'kelp_highlight': { name: 'Kelp Highlight', description: '', maxZoom: 9, noHighlight: true, },
   Microphytobenthos:    { name: 'Microphytobenthos',   description: '', fadeIn: true, noHighlight: true, fadeWithLayer: 'kelp_highlight', fadeInTransition: 'opacity 1000ms ease 2000ms' },
   Sun_rays:         { name: 'Sun Rays',          description: '', fadeIn: true, noHighlight: true, fadeWithLayer: 'Light_production', pulseAnimation: 'lightPulse 2.8s ease-in-out infinite', oneWay: true },
-  productive_ocean: { name: 'Productive Ocean', description: 'As sea ice retreats, sunlit open water expands the zone of primary productivity across the Arctic Ocean.', fadeIn: true, noHighlight: true, fadeWithLayer: 'Light_production' },
+  productive_ocean: { name: 'Productive Ocean', description: 'As sea ice retreats, sunlit open water expands the zone of primary productivity across the Arctic Ocean.', fadeIn: true, noHighlight: true, fadeWithLayer: 'Light_production', fadeOutTransition: 'opacity 2000ms ease 1000ms'  },
 };
 
 const HIGHLIGHT_COLOR = '#00000073';
@@ -192,14 +192,16 @@ export default function SvgPanel({ src, activeLayerId, iceYear, onAnchorPosition
       const cfg         = INTERACTIVE_LAYERS[label];
       const trigger     = cfg?.fadeWithLayer ?? cfg?.fadeOutWithLayer ?? label;
       const triggerActive = trigger === activeLayerId;
+      const wasTriggered  = entry.triggered;
       if (triggerActive) entry.triggered = true;
       const isVisible = inverted ? !triggerActive : triggerActive;
       if (cfg?.pulseAnimation) {
-        if (isVisible) {
+        const isPulseActive = isVisible || activeLayerId === label;
+        if (isPulseActive) {
           el.style.transition = 'none';
           el.style.opacity    = '1';
           el.style.animation  = cfg.pulseAnimation;
-        } else if (cfg?.oneWay && entry.triggered) {
+        } else if (cfg?.oneWay && wasTriggered) {
           // stop pulsing but stay visible
           el.style.animation  = 'none';
           el.style.transition = 'none';
@@ -210,7 +212,7 @@ export default function SvgPanel({ src, activeLayerId, iceYear, onAnchorPosition
           el.style.opacity    = '0';
         }
       } else {
-        if (cfg?.oneWay && entry.triggered) return; // permanent — never reverse
+        if (cfg?.oneWay && wasTriggered) return; // already fired once — lock in place
         el.style.transition = isVisible
           ? (cfg?.fadeInTransition  ?? 'opacity 1500ms ease 600ms')
           : (cfg?.fadeOutTransition ?? 'opacity 1500ms ease');

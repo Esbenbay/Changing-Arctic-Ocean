@@ -21,15 +21,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
-     inkscape:zoom="0.89737915"
-     inkscape:cx="523.19022"
-     inkscape:cy="483.0734"
+     inkscape:zoom="0.90089668"
+     inkscape:cx="1199.3606"
+     inkscape:cy="446.77709"
      inkscape:window-width="2560"
      inkscape:window-height="1412"
      inkscape:window-x="1728"
      inkscape:window-y="28"
      inkscape:window-maximized="0"
-     inkscape:current-layer="g7" />
+     inkscape:current-layer="Ilustração" />
   <defs
      id="defs69">
     <linearGradient
@@ -4440,21 +4440,15 @@
         <ellipse
            style="display:inline;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.7;stroke-dasharray:none;stroke-opacity:0.547468"
            id="path91-0-2"
-           cx="504.09091"
-           cy="580.31543"
+           cx="527.47479"
+           cy="540.45935"
            rx="4.664"
            ry="2.5912821"
            inkscape:label="bubble_anchor" />
-      </g>
-      <g
-         id="g6"
-         inkscape:label="Erosion"
-         style="display:inline"
-         transform="matrix(0.58891228,0,0,0.78055028,218.48507,142.73523)">
         <g
            id="Low_erosion"
-           style="display:none"
-           transform="matrix(2.7793732,0,0,1.3116238,-1201.4395,-246.03712)">
+           style="display:inline"
+           transform="matrix(1.636807,0,0,1.0237883,-489.05741,-49.309113)">
           <g
              id="Erosion_pearls"
              transform="matrix(0.96387814,0,0,0.77420555,17.404748,171.96804)">
@@ -5180,6 +5174,12 @@
              d="m 657.77156,670.66208 19.84307,14.64774 22.57614,11.5062 54.35918,0.18289 82.9062,-5.66866 15.40296,-1.21649 20.98543,-3.34878 14.13703,-2.29889 7.14641,49.17877 3.73255,46.77156 -70.6672,-28.74583 -95.79414,-16.31983 -47.97692,-17.56519 -51.70358,2.95271 -8.74116,-25.84521 7.85938,-8.4148 5.34933,-6.43796 8.76782,-3.26856 1.52706,-5.77219 z"
              sodipodi:nodetypes="cccccccccccccccccccc" />
         </g>
+      </g>
+      <g
+         id="g6"
+         inkscape:label="Erosion"
+         style="display:inline"
+         transform="matrix(0.58891228,0,0,0.78055028,218.48507,142.73523)">
         <g
            id="g6-8"
            inkscape:label="Erosion_turbid"
@@ -6030,6 +6030,15 @@
                id="circle9634-4"
                style="fill:#2b90fd" />
           </g>
+          <ellipse
+             style="display:inline;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.851826;stroke-dasharray:none;stroke-opacity:0.547468"
+             id="path91-0-4-3"
+             cx="1022.199"
+             cy="372.66403"
+             rx="4.3546705"
+             ry="4.1098404"
+             inkscape:label="bubble_anchor"
+             transform="matrix(0.99548936,-0.09487321,0.03291454,0.99945817,0,0)" />
         </g>
       </g>
       <g
@@ -37521,8 +37530,7 @@
       <g
          id="g2-7"
          inkscape:label="Waves"
-         style="display:inline"
-         sodipodi:insensitive="true">
+         style="display:inline">
         <path
            id="path5-2-21-3-1"
            style="display:inline;fill:url(#linearGradient9);stroke-width:0.191131"
@@ -37546,8 +37554,8 @@
         <ellipse
            style="display:inline;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.7;stroke-dasharray:none;stroke-opacity:0.547468"
            id="path91-0-2-1"
-           cx="737.37531"
-           cy="579.01971"
+           cx="988.40631"
+           cy="455.93042"
            rx="4.664"
            ry="2.5912821"
            inkscape:label="bubble_anchor" />
@@ -41028,8 +41036,8 @@
           <ellipse
              style="display:inline;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.7;stroke-dasharray:none;stroke-opacity:0.547468"
              id="path91-0-2-1-3-0"
-             cx="756.14227"
-             cy="786.70734"
+             cx="711.19739"
+             cy="814.02679"
              rx="4.664"
              ry="2.5912821"
              inkscape:label="bubble_anchor" />
@@ -46535,8 +46543,8 @@
         <ellipse
            style="display:inline;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.7;stroke-dasharray:none;stroke-opacity:0.547468"
            id="path91-0-2-1-3"
-           cx="511.99973"
-           cy="684.47021"
+           cx="478.69955"
+           cy="668.93011"
            rx="4.664"
            ry="2.5912821"
            inkscape:label="bubble_anchor" />

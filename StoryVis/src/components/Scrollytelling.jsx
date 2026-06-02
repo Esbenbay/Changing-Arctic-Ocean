@@ -30,6 +30,21 @@ export default function ScrollamaDemo({
                   {entry.title}
                 </div>
               )}
+              {entry.image && (() => {
+                const src     = typeof entry.image === 'string' ? entry.image : entry.image.src;
+                const alt     = typeof entry.image === 'string' ? (entry.title ?? '') : (entry.image.alt ?? entry.title ?? '');
+                const caption = typeof entry.image === 'string' ? null : entry.image.caption;
+                return (
+                  <div style={{ marginBottom: 12 }}>
+                    <img src={src} alt={alt} style={{ width: '100%', borderRadius: 8, display: 'block', objectFit: 'cover' }} />
+                    {caption && (
+                      <div style={{ fontSize: '0.85rem', color: '#888', marginTop: 5, textAlign: 'center', fontStyle: 'italic' }}>
+                        {caption}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
               {entry.body && (
                 <div style={{ fontSize: '1.5rem', color: '#444', lineHeight: 1.75 }}>
                   {entry.body}

@@ -204,9 +204,9 @@ function buildQuizOpacityExpr(found) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeToggle = false, initialViewState, mapRevealed = false, onFlyOutComplete, cogUrl, cogYear, cogOpacity = 0, cogVmin = -3, cogVmax = 3 }) {
-  const temperatureMapActive = cogUrl && cogOpacity > 0.05;
-  const targetMapStyle = temperatureMapActive ? TEMPERATURE_MAP_STYLE : SATELLITE_MAP_STYLE;
+export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeToggle = false, initialViewState, mapRevealed = false, onFlyOutComplete, cogUrl, cogYear, cogOpacity = 0, cogVmin = -3, cogVmax = 3, useLightStyle = false }) {
+  const temperatureMapActive = cogUrl && cogOpacity > 0.3;
+  const targetMapStyle = (useLightStyle || temperatureMapActive) ? TEMPERATURE_MAP_STYLE : SATELLITE_MAP_STYLE;
 
   const mapRef            = useRef(null);
   const resizeObserverRef = useRef(null);
