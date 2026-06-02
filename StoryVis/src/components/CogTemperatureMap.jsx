@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { Map, Source, Layer } from 'react-map-gl/mapbox';
 import { fromArrayBuffer } from 'geotiff';
 import proj4 from 'proj4';
@@ -8,15 +8,23 @@ proj4.defs('EPSG:3411', '+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0
 
 const TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
-// Built-in color functions
+const TEMP_COLOR_STOPS = [
+  { t: 0.00, rgba: [49, 54, 149, 185] },
+  { t: 0.25, rgba: [116, 173, 209, 135] },
+  { t: 0.50, rgba: [246, 244, 232, 25] },
+  { t: 0.75, rgba: [253, 174, 97, 145] },
+  { t: 1.00, rgba: [165, 0, 38, 195] },
+];
+
+const lerp = (a, b, t) => a + (b - a) * t;
+
 function anomalyColor(val, vmin, vmax) {
   const t = Math.max(0, Math.min(1, (val - vmin) / (vmax - vmin)));
-  if (t < 0.5) {
-    const s = t * 2;
-    return [Math.round(s * 255), Math.round(s * 255), 255, 210];
-  }
-  const s = (t - 0.5) * 2;
-  return [255, Math.round((1 - s) * 255), Math.round((1 - s) * 255), 210];
+  const hiIndex = TEMP_COLOR_STOPS.findIndex(stop => t <= stop.t);
+  const hi = TEMP_COLOR_STOPS[Math.max(hiIndex, 1)];
+  const lo = TEMP_COLOR_STOPS[Math.max(hiIndex - 1, 0)];
+  const localT = hi.t === lo.t ? 0 : (t - lo.t) / (hi.t - lo.t);
+  return lo.rgba.map((channel, i) => Math.round(lerp(channel, hi.rgba[i], localT)));
 }
 
 function iceExtentColor(val) {
@@ -121,12 +129,12 @@ export default function CogTemperatureMap({
   onYearChange,
   externalYear,
 }) {
-  const colorFn = mode === 'ice' ? iceExtentColor : anomalyColor;
+  const colorFn = useMemo(() => mode === 'ice' ? iceExtentColor : anomalyColor, [mode]);
 
   const defLegendTitle    = mode === 'ice' ? 'Sea Ice Extent (Sep)' : 'Temp. Anomaly (°C)';
   const defLegendGradient = mode === 'ice'
     ? 'linear-gradient(to right, #001a33, #cce5ff)'
-    : 'linear-gradient(to right, #0000ff, #ffffff, #ff0000)';
+    : 'linear-gradient(to right, #313695, #74add1, #f6f4e8, #fdae61, #a50026)';
   const defLegendLabels   = mode === 'ice'
     ? ['Open ocean', '', 'Ice covered']
     : [`${vmin}`, '0', `+${vmax}`];
@@ -137,7 +145,6 @@ export default function CogTemperatureMap({
 
   const [year, setYear]       = useState(startYear);
   const [initLayer, setInitLayer] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError]     = useState(null);
   const requestId             = useRef(0);
   const resizeObserverRef     = useRef(null);
@@ -166,7 +173,7 @@ export default function CogTemperatureMap({
     };
     const t = setTimeout(run, 800);
     return () => { cancelled = true; clearTimeout(t); };
-  }, [startYear, endYear, yearStep, getUrl, vmin, vmax, mode]);
+  }, [startYear, endYear, yearStep, getUrl, vmin, vmax, colorFn]);
 
   // When scroll drives the year externally, debounce-snap to nearest yearStep
   useEffect(() => {
@@ -189,8 +196,6 @@ export default function CogTemperatureMap({
   // Decode TIF whenever year changes — use cache, then pre-fetch neighbours
   useEffect(() => {
     const id = ++requestId.current;
-    setLoading(true);
-    setError(null);
 
     const cache = tifCacheRef.current;
     const decode = cache.has(year)
@@ -200,6 +205,7 @@ export default function CogTemperatureMap({
     decode
       .then(result => {
         if (id !== requestId.current) return;
+        setError(null);
         // Pre-fetch adjacent decades in the background
         [-1, 1].forEach(d => {
           const adj = year + d * yearStep;
@@ -219,21 +225,17 @@ export default function CogTemperatureMap({
         } else {
           setInitLayer(result);
         }
-        setLoading(false);
       })
       .catch(err => {
         if (id !== requestId.current) return;
         setError(`Could not load ${year}: ${err.message}`);
-        setLoading(false);
       });
-  }, [year, getUrl, vmin, vmax, mode]);
+  }, [year, getUrl, vmin, vmax, colorFn, startYear, endYear, yearStep]);
 
 
   useEffect(() => {
     onYearChange?.(year);
   }, [year, onYearChange]);
-
-  const progress = (year - startYear) / (endYear - startYear);
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>

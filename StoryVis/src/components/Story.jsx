@@ -1,14 +1,12 @@
 import { trackEvent, trackStep, flushToSheet } from '../tracker.js';
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import ScrollamaDemo from '../components/Scrollytelling.jsx';
 import NewMap from '../components/Map.jsx';
-import ScatterPlot from '../components/Barchart.jsx';
 import SvgPanel from '../components/Svg.jsx';
 import IceExtentMap from '../components/IceExtentMap.jsx';
 import PhotosynthesisPanel from '../components/Photosynthesis.jsx';
 import ShippingRoutesPanel from '../components/ShippingRoutesPanel.jsx';
-import CogTemperatureMap from '../components/CogTemperatureMap.jsx';
 import TemperatureLineChart, { TempQuiz } from '../components/TemperatureLineChart.jsx';
 
 const TIMELINE_H = 68; // px — height of the bottom chapter bar
@@ -17,6 +15,7 @@ const TIMELINE_H = 68; // px — height of the bottom chapter bar
 const CHAPTERS = [
   { id: 'intro',          label: 'Introduction'   },
   { id: 'map',            label: 'Arctic Ocean'   },
+  { id: 'polar',          label: 'Coastal Zone'   },
   { id: 'seasons',        label: 'Seasons'        },
   { id: 'svg',            label: 'Ecosystem'      },
   { id: 'photosynthesis', label: 'Seafloor'       },
@@ -96,19 +95,6 @@ function ChapterTimeline({ currentChapter, onNavigate }) {
       })}
     </div>
   );
-}
-
-// ── Auto-sizing chart wrapper ─────────────────────────────────────────────────
-function AutoChart({ Chart, height = 400 }) {
-  const ref = useRef(null);
-  const [width, setWidth] = useState(300);
-  useEffect(() => {
-    if (!ref.current) return;
-    const ro = new ResizeObserver(entries => setWidth(entries[0].contentRect.width));
-    ro.observe(ref.current);
-    return () => ro.disconnect();
-  }, []);
-  return <div ref={ref} style={{ width: '95%' }}><Chart parentWidth={width} parentHeight={height} /></div>;
 }
 
 const BASE = import.meta.env.BASE_URL;
@@ -258,107 +244,74 @@ function SeasonDisplay({ activeIndex }) {
 const STEPS = [
 
   // ── Intro (no map panel) ──────────────────────────────────────────────────
+
+  {
+    chapter: 'intro',
+    camera:  'intro-arctic',
+    title:   'The Global Climate ',
+      text:  'The ',
+    },
   {
     chapter:       'intro',
     lineChartStep: 'world',
-    title:         'Climate Change - increasing temperatures',
-    text:          'Since the 1880s, burning fossil fuels has slowly released CO₂ into the atmosphere — warming the planet gradually at first, almost imperceptibly.',
+    title:         'Increasing Temperatures',
+    text:          'Drag and watch the regional changes since 1880',
   },
-  {
-    chapter:       'intro',
-    lineChartStep: 'world',
-    title:         'A Warming World',
-    text:          'Global average temperatures have now risen over 1°C since pre-industrial times — driving more frequent heatwaves, storms, and rising seas worldwide.',
-  },
-  {
-    chapter:       'intro',
-    lineChartStep: 'world',
-    title:         'Global consequences',
-    text:          'The impacts of this warming are far-reaching: melting glaciers, shifting ecosystems, and communities around the world facing unprecedented challenges.',
-  },
-  
+  // {
+  //   chapter:       'intro',
+  //   lineChartStep: 'world',
+  //   title:         'Try',
+  //   text:          'Global average temperatures have now risen over 1°C since pre-industrial times — driving more frequent heatwaves, storms, and rising seas worldwide.',
+  // },
   {
     chapter:       'intro',
     lineChartStep: 'quiz',
     title:         'Which Region Is Warming Fastest?',
     text:          'Not all parts of the planet warm equally. Some regions are experiencing change far beyond the global average. Can you guess which?',
   },
-  {
-    chapter:       'intro',
-    //lineChartStep: 'arctic',
-    title:         'Arctic Amplification',
-    text:          'The Arctic is warming 4× faster than the global average. As reflective sea ice disappears, dark ocean water absorbs more heat — accelerating the warming further.',
-  },
-  {
-    chapter:       'intro',
-    //lineChartStep: 'arctic',
-    title:         'The Crisis Accelerates',
-    text:          'In recent decades Arctic warming has reached unprecedented rates. What happens here reshapes weather patterns, sea levels, and ecosystems across the entire planet.',
-  },
-
-  // // ── Map chapter ───────────────────────────────────────────────────────────
-  {
+  // ── Map chapter ───────────────────────────────────────────────────────────
+{
     chapter: 'map',
     camera:  'world-overview',
-    quiz:    false,
-    text:    'The Arctic Ocean is normally viewed from the traditional map perspective — but try and switch to a different view so we can clearly view the entire ocean. Scroll to explore the ocean’s geography, ecosystems, and the human communities that depend on it.',
+    title:   'An Arctic Perspective',
+    text:    'Seen from above the North Pole, the true shape of the Arctic Ocean becomes clear — a nearly landlocked sea, ringed by the coastlines of five nations.',
   },
-
-  // ── Temperature chart section ─────────────────────────────────────────────
-  // {
-  //   chapter:       'map',
-  //   camera:        'world-overview',
-  //   lineChartStep: 'world',
-  //   title:         'A Warming Planet',
-  //   text:          'Global average temperatures have risen by over 1°C since pre-industrial times, driven by greenhouse gas emissions from fossil fuels, deforestation, and industry.',
-  // },
-  // {
-  //   chapter:       'map',
-  //   camera:        'world-overview',
-  //   lineChartStep: 'quiz',
-  //   title:         'Which Region Is Warming Fastest?',
-  //   text:          'Not all parts of the planet are warming equally. Rising temperatures are reshaping ecosystems, agriculture, and communities worldwide.',
-  // },
-  
-  
   {
     chapter: 'map',
-    camera:  'arctic-coastline',
+     camera:  'arctic-coastline',
     title:   'Arctic Coastline',
-    text:    "The Arctic Ocean is the smallest and shallowest of the world's five major oceans, covering about 14 million square kilometers. It surrounds the North Pole and is bordered by Russia, Canada, Greenland, Norway, Iceland, and the United States.",
+    text:    'One of the largest continuous coastlines in the world, the Arctic coast is shaped by the small inlets and fjords that carve into the land.',
   },
-
   {
     chapter: 'map',
-    camera:  'arctic-quiz',
-    quiz:    true,
-    text:    'Six countries share a coastline with the Arctic Ocean. Can you name them all? Click each country on the map to identify it.',
+    camera:  'polar-overview',
+    title:   'Shallow Continental Shelf',
+    text:    'The large continental shelf surrounding the Arctic Ocean is rich in nutrients and supports a diverse array of marine life.',
   },
+
 
   // {
   //   chapter: 'map',
-  //   camera:  'greenland-glaciers',
-  //   title:   'Retreating Glaciers',
-  //   text:    "Greenland's glaciers have been retreating at accelerating rates. Each line marks a historic ice front — a record of loss stretching back decades.",
+  //   camera:  'arctic-quiz',
+  //   quiz:    true,
+  //   text:    'Six countries share a coastline with the Arctic Ocean. Can you name them all? Click each country on the map to identify it.',
   // },
- 
-  {
-    chapter: 'map',
-    camera:  'svalbard',
-    text:    "The Arctic Ocean is home to a diverse range of marine life — polar bears, seals, walruses, whales, and many species of fish. These ecosystems are highly sensitive to changes in temperature and sea ice cover.",
-  },
+  
+  
+
   // {
   //   chapter: 'map',
-  //   camera:  'canada-arctic',
-  //   text:    "The Arctic Ocean is facing mounting pressure from climate change. Melting sea ice threatens iconic species like polar bears and disrupts traditional ways of life for indigenous communities across the circumpolar north.",
+  //   camera:  'polar-shelf',
+  //   title:   'The Continental Shelf',
+  //   text:    'The shallow coastal zone — less than 200 metres deep — encircles much of the Arctic. This productive shelf is where sunlight reaches the seafloor, driving the ecosystems that the entire food web depends on.',
   // },
 
   // ── Season chapter ────────────────────────────────────────────────────────
   {
     chapter:     'seasons',
     seasonIndex: 0,
-    title:       'Arctic Night',
-    text:        'During the polar night, the Arctic Ocean lies beneath a frozen mantle of darkness. For months the sun never rises. Sea ice thickens, biological activity drops to near zero, and the ecosystem enters a state of suspended animation — waiting for light to return.',
+    title:       'Arctic Winter',
+    text:        'During the Arctic winter, the Arctic Ocean lies beneath a frozen mantle of darkness. For months the sun never rises. Sea ice thickens, biological activity drops to near zero, and the ecosystem enters a state of suspended animation — waiting for light to return.',
   },
   {
     chapter:     'seasons',
@@ -389,9 +342,8 @@ const STEPS = [
   {
     chapter: 'svg',
     layerId: null,
-    title:   null,
-    // bubble:  { x: 50, y: 50, align: 'center' },
-    text:    null,
+    title:   'Changing Arctic Ecosystem',
+    text:    'The Arctic coastal ecosystem is complex and the changes we are seeing are interconnected. Let\'s break down some of the key changes happening in the coastal zone.',
   },
   {
     chapter: 'svg',
@@ -416,13 +368,6 @@ const STEPS = [
   },
 
 
-  // {
-  //   chapter: 'svg',
-  //   layerId: null,
-  //   title:   null,
-  //   bubble:  { x: 50, y: 55, align: 'center' },
-  //   text:    'From drifting sea ice to sun-lit ocean floors, the Arctic summer ecosystem is a web of life increasingly disrupted by a warming climate. Scroll to explore each layer of change.',
-  // },
   {
     chapter:       'svg',
     layerId:       'Mountain',
@@ -454,14 +399,7 @@ const STEPS = [
     text:    'Coastal wetlands act as blue carbon sinks, sequestering carbon at rates up to 10× higher than terrestrial forests. Their persistence is critical for climate mitigation.',
   },
 
-  // {
-  //   chapter: 'svg',
-  //   layerId: 'Low_erosion',
-  //   title:   'Coastal Erosion',
-  //   bubble:  { x: 18, y: 64, align: 'right', arrow: 'right' },
-  //   text:    'Permafrost thaw and increased wave action are consuming Arctic coastlines at up to 20 metres per year — threatening communities and releasing stored carbon.',
-  // },
-   {
+  {
     chapter: 'svg',
     layerId: 'Turbid_erosion',
     title:   'Coastal Erosion',
@@ -475,46 +413,6 @@ const STEPS = [
     bubble:  { arrow: 'left' },
     text:    'Increased cloud-cover and waves further complicate and alter the light availability in the water.',
   },
-//   {
-//     chapter: 'svg',
-//     layerId: 'Coulds',
-//     title:   'Atmosphere & Clouds',
-//     text:    'Reduced ice cover lowers the surface albedo — more solar energy is absorbed by the dark ocean, creating a self-reinforcing warming feedback loop.',
-//   },
-  
-//   {
-//     chapter: 'svg',
-//     layerId: 'Phytoplankton',  
-//     title:   'Phytoplankton',
-//     text:    'Phytoplankton blooms are expanding northward and occurring weeks earlier each season. These microscopic primary producers underpin the entire Arctic food web.',
-//     figure:  <AutoChart Chart={ScatterPlot} height={220} />,
-//   },
-//    {
-//     chapter: 'svg',
-//     layerId: 'Eddy',
-//     title:   'Eddy',
-//     text:    'Sub-Arctic species such as Atlantic cod and mackerel are moving north as waters warm, competing with endemic species and disrupting indigenous hunting practices.',
-//   },
-//   {
-//     chapter: 'svg',
-//     layerId: 'Instruments',
-//     title:   'Instruments',
-//     text:    'Instruments are essential for monitoring and understanding the changing Arctic environment. They provide critical data on temperature, ice thickness, and ecosystem health.',
-//   },
-  // {
-  //   chapter: 'svg',
-  //   layerId: 'Fish',
-  //   title:   'Fish',
-  //   text:    'Sub-Arctic species such as Atlantic cod and mackerel are moving north as waters warm, competing with endemic species and disrupting indigenous hunting practices.',
-  // },
-
-//   {
-//     chapter: 'svg',
-//     layerId: 'Corals',
-//     title:   'Cold-Water Corals',
-//     text:    'Deep cold-water coral reefs are threatened by ocean acidification driven by rising CO₂ absorption. Their calcium carbonate skeletons dissolve as seawater pH drops.',
-//   },
-
   {
     chapter: 'svg',
     layerId: 'kelp_highlight',
@@ -635,21 +533,20 @@ const STEPS = [
 ];
 
 const ICE_EXTENT_URL  = year => `${BASE}Ice_extent/N_${year}09_extent_v4.0.tif`;
-const COG_START_YEAR  = 1880;
-const COG_END_YEAR    = 2025;
-const COG_YEAR_STEP   = 10;
+const COG_START_YEAR = 1880;
+const COG_END_YEAR   = 2025;
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export default function StoryScene() {
+export default function StoryScene({ mapRevealed = false, landingFading = false }) {
   const [viewPoint,  setViewPoint]  = useState(0);
   const [iceYear,    setIceYear]    = useState(1979);
-  const [cogYear,        setCogYear]        = useState(null);
   const [scrollYear,     setScrollYear]     = useState(null);
   const [arcticRevealed, setArcticRevealed] = useState(false);
   const [showAllRegions, setShowAllRegions] = useState(false);
   const [anchorPos,      setAnchorPos]      = useState(null);
   const [photoAnchorPos, setPhotoAnchorPos] = useState(null);
   const [erosionProgress, setErosionProgress] = useState(0);
+  const [introMapShrunk, setIntroMapShrunk] = useState(false);
 
   const step = STEPS[viewPoint] ?? STEPS[0];
 
@@ -662,10 +559,15 @@ export default function StoryScene() {
 
   // Derive layout flags directly from the step's chapter — no magic offsets
   const sceneStarted    = step.chapter !== 'intro';
-  const inWideChapter    = step.chapter === 'seasons' || step.chapter === 'svg' || step.chapter === 'photosynthesis' || step.chapter === 'shipping';
-  const inSvgChapter     = step.chapter === 'svg';
-  const inPhotoChapter   = step.chapter === 'photosynthesis';
+  const inWideChapter    = step.chapter === 'seasons' || step.chapter === 'svg' || step.chapter === 'photosynthesis' || step.chapter === 'shipping' || step.chapter === 'polar';
+  const inSvgChapter       = step.chapter === 'svg';
+  const inPhotoChapter     = step.chapter === 'photosynthesis';
   const inShippingChapter  = step.chapter === 'shipping';
+  const inPolarChapter     = step.chapter === 'polar';
+  const inMapIntroStep     = step.chapter === 'intro' && !!step.camera;
+  const mapIsFullScreen    = inMapIntroStep && !introMapShrunk;
+  const showIntroMap       = step.chapter === 'intro' && (inMapIntroStep || introMapShrunk || !!step.lineChartStep);
+  const introMapEntering   = showIntroMap && landingFading && !mapRevealed;
 
   // Season accordion active tab: clamped to last index once SVG chapter starts
   const seasonIndex = step.chapter === 'seasons' ? step.seasonIndex
@@ -729,6 +631,35 @@ export default function StoryScene() {
     <>
     {createPortal(
       <>
+        {/* Intro map — full-screen on step 0, left-panel with temperature layer on lineChart steps */}
+        {showIntroMap && <div style={{
+          position:     'fixed',
+          top:          mapIsFullScreen ? 0 : '5vh',
+          left:         mapIsFullScreen ? 0 : 'var(--page-pad)',
+          width:        mapIsFullScreen ? '100vw' : 'calc((100vw - 2 * var(--page-pad)) * 0.60 - var(--col-gap) / 2)',
+          height:       mapIsFullScreen ? '100vh' : '90vh',
+          borderRadius: mapIsFullScreen ? 0 : 12,
+          overflow:     'hidden',
+          zIndex:       4,
+          background:   '#07111c',
+          opacity:      introMapEntering ? 0.45 : 1,
+          transform:    introMapEntering ? 'scale(1.025)' : 'scale(1)',
+          transition:   'top 1600ms cubic-bezier(0.4,0,0.2,1), left 1600ms cubic-bezier(0.4,0,0.2,1), width 1600ms cubic-bezier(0.4,0,0.2,1), height 1600ms cubic-bezier(0.4,0,0.2,1), border-radius 1600ms cubic-bezier(0.4,0,0.2,1), opacity 950ms ease-out, transform 1200ms cubic-bezier(0.16,1,0.3,1)',
+          pointerEvents: (showIntroMap && mapRevealed) ? 'auto' : 'none',
+        }}>
+          <NewMap
+            cameraKey={mapIsFullScreen ? step.camera : showIntroMap ? 'global-temp' : undefined}
+            hideGlobeToggle
+            embed
+            initialViewState={{ longitude: 16.57969, latitude: 77.82355, zoom: 9.508 }}
+            mapRevealed={mapRevealed}
+            onFlyOutComplete={() => setIntroMapShrunk(true)}
+            cogUrl={year => `${BASE}tif_data/anom_${year}.tif`}
+            cogYear={scrollYear ?? COG_START_YEAR}
+            cogOpacity={!!step.lineChartStep && viewPoint >= 2 ? 0.62 : 0}
+          />
+        </div>}
+
         {/* Full-screen SVG overlay — circle-reveals in when svg chapter starts */}
         <div style={{
           position:      'fixed', top: 0, left: 0, right: 0, bottom: TIMELINE_H, zIndex: 5,
@@ -770,40 +701,18 @@ export default function StoryScene() {
           />
         ))}
 
-        <ChapterTimeline currentChapter={step.chapter} onNavigate={navigateToChapter} />
+        <div style={{ opacity: !inMapIntroStep ? 1 : 0, transition: 'opacity 900ms ease', pointerEvents: !inMapIntroStep ? 'auto' : 'none' }}>
+          <ChapterTimeline currentChapter={step.chapter} onNavigate={navigateToChapter} />
+        </div>
       </>,
       document.body
     )}
-    <div style={{
-      position:     'fixed',
-      top:          '5vh',
-      left:         'var(--page-pad)',
-      width:        'calc((100vw - 2 * var(--page-pad)) * 0.60 - var(--col-gap) / 2)',
-      height:       '90vh',
-      borderRadius: 12,
-      overflow:     'hidden',
-      boxShadow:    '0 2px 10px rgba(0,0,0,0.06)',
-      zIndex:       0,
-      opacity:      !sceneStarted ? 1 : 0,
-      pointerEvents: 'none',
-      transition:   'opacity 900ms ease',
-    }}>
-      <CogTemperatureMap
-        getUrl={year => `${BASE}tif_data/anom_${year}.tif`}
-        startYear={COG_START_YEAR}
-        endYear={COG_END_YEAR}
-        yearStep={COG_YEAR_STEP}
-        legendTitle={`Temperature Anomaly (°C)`}
-        onYearChange={setCogYear}
-        externalYear={scrollYear}
-      />
-    </div>
-    <div
+    {mapRevealed && <div
       className={`scrolly-layout ${sceneStarted ? 'is-split' : 'is-intro'} ${inWideChapter ? 'is-svg' : ''}`}
       style={{
         ...(!sceneStarted ? { position: 'relative', zIndex: 1 } : undefined),
         opacity:       (inSvgChapter || inPhotoChapter) ? 0 : 1,
-        transition:    'opacity 500ms ease',
+        transition:    'opacity 2000ms ease',
         pointerEvents: (inSvgChapter || inPhotoChapter) ? 'none' : 'auto',
       }}
     >
@@ -837,9 +746,9 @@ export default function StoryScene() {
           {/* Season display — hidden once SVG or Photosynthesis full-screen portal takes over */}
           <div style={{
             position:      'absolute', inset: 0,
-            opacity:       (inSvgChapter || inPhotoChapter || inShippingChapter) ? 0 : 1,
+            opacity:       (inSvgChapter || inPhotoChapter || inShippingChapter || inPolarChapter) ? 0 : 1,
             transition:    'opacity 800ms ease',
-            pointerEvents: (inSvgChapter || inPhotoChapter || inShippingChapter) ? 'none' : 'auto',
+            pointerEvents: (inSvgChapter || inPhotoChapter || inShippingChapter || inPolarChapter) ? 'none' : 'auto',
           }}>
             <SeasonDisplay activeIndex={seasonIndex} />
           </div>
@@ -856,6 +765,15 @@ export default function StoryScene() {
               active={inShippingChapter}
               stepIndex={step.chapter === 'shipping' ? step.stepIndex : -1}
             />
+          </div>
+
+          {/* Arctic polar map — Mapbox globe view */}
+          <div style={{
+            position:   'absolute', inset: 0,
+            opacity:    inPolarChapter ? 1 : 0,
+            transition: 'opacity 1200ms ease',
+          }}>
+            <NewMap cameraKey={inPolarChapter ? step.camera : undefined} embed />
           </div>
 
         </div>
@@ -876,12 +794,12 @@ export default function StoryScene() {
             : null}
           sticky2StartIndex={sticky2StartIndex}
           sticky2EndIndex={sticky2EndIndex}
-          sticky2Content={lineChartStep
-            ? <div style={{ background: 'white', borderRadius: 8, padding: 16, boxShadow: '0 4px 4px rgba(0,0,0,0.04)' }}><TemperatureLineChart step={lineChartStep} currentYear={scrollYear ?? cogYear} startYear={COG_START_YEAR} endYear={COG_END_YEAR} onYearSelect={y => setScrollYear(y)} arcticRevealed={arcticRevealed} showAllRegions={showAllRegions} /></div>
+          sticky2Content={mapRevealed && lineChartStep
+            ? <div style={{ background: 'white', borderRadius: 8, padding: 16, boxShadow: '0 4px 4px rgba(0,0,0,0.04)' }}><TemperatureLineChart step={lineChartStep} currentYear={scrollYear ?? COG_START_YEAR} startYear={COG_START_YEAR} endYear={COG_END_YEAR} onYearSelect={y => setScrollYear(y)} arcticRevealed={arcticRevealed} showAllRegions={showAllRegions} /></div>
             : null}
         />
       </main>
-    </div>
+    </div>}
     </>
   );
 }

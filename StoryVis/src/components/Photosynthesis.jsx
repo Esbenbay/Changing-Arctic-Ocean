@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import gsap from 'gsap';
-import { zoomToLayer, findAnchor } from './Svg.jsx';
+import { zoomToLayer, findAnchor } from './svgHelpers.js';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
 
 const BASE = import.meta.env.BASE_URL;
@@ -65,6 +65,7 @@ export default function PhotosynthesisPanel({ activeLayerId, active, erosionProg
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+    const randomFadeIntervals = randomFadeRef.current;
 
     fetch(`${BASE}Phytosynthesis_Arctic_summer.svg`)
       .then(r => r.text())
@@ -164,9 +165,8 @@ export default function PhotosynthesisPanel({ activeLayerId, active, erosionProg
     return () => {
       iceTweenRef.current?.kill();
       Object.values(motionTweensRef.current).forEach(t => t.kill());
-      Object.values(randomFadeRef.current).forEach(clearInterval);
+      Object.values(randomFadeIntervals).forEach(clearInterval);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Reset zoom flag and stop micro animation when leaving the chapter
@@ -175,7 +175,6 @@ export default function PhotosynthesisPanel({ activeLayerId, active, erosionProg
       hasInitialZoomRef.current = false;
       Object.values(motionTweensRef.current).forEach(t => t.pause());
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
   // Show/hide layers, zoom, and trigger fade/random effects based on active layer
@@ -284,7 +283,7 @@ export default function PhotosynthesisPanel({ activeLayerId, active, erosionProg
         }, 2000);
       }
     });
-  }, [activeLayerId]);
+  }, [activeLayerId, onAnchorPosition]);
 
   // Erosion slider: cross-fade ice out / erosion in, move ice along path
   useEffect(() => {

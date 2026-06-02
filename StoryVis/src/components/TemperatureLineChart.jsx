@@ -144,7 +144,13 @@ export default function TemperatureLineChart({ step, currentYear, startYear = 18
     const from = prevYearRef.current ?? currentYear;
     prevYearRef.current = currentYear;
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    if (from === currentYear) { setDisplayYear(currentYear); return; }
+    if (from === currentYear) {
+      animFrameRef.current = requestAnimationFrame(() => {
+        setDisplayYear(currentYear);
+        animFrameRef.current = null;
+      });
+      return () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); };
+    }
 
     const DURATION = 350;
     const start = performance.now();

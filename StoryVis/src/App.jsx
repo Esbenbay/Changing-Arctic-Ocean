@@ -4,27 +4,17 @@ import FrontPage from './components/FrontPage.jsx'
 import StoryScene from './components/Story.jsx'
 
 function App() {
-
-  const [mode, setMode] = useState("landing"); // "landing" | "fading" | "story"
-  const storyTopRef = useRef(null);
+  const [fadingLanding, setFadingLanding] = useState(false);
+  const [mapRevealed,   setMapRevealed]   = useState(false);
+  const revealTimerRef = useRef(null);
 
   const startStory = () => {
-    setMode("fading"); // triggers hero fade-out
-    setTimeout(() => {
-      setMode("story");
-    }, 600); // match CSS transition duration
+    setFadingLanding(true);
+    clearTimeout(revealTimerRef.current);
+    revealTimerRef.current = setTimeout(() => {
+      setMapRevealed(true);
+    }, 500);
   };
-
-  useEffect(() => {
-    if (mode === "story") {
-      requestAnimationFrame(() => {
-        storyTopRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      });
-    }
-  }, [mode]);
 
   // Ctrl+Shift+E → download JSON, Ctrl+Shift+C → download CSV
   useEffect(() => {
@@ -37,18 +27,16 @@ function App() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
+  useEffect(() => {
+    return () => clearTimeout(revealTimerRef.current);
+  }, []);
+
   return (
     <>
-      {(mode === "landing" || mode === "fading") && (
-        <FrontPage onStart={startStory} fading={mode === "fading"} />
-      )}
-
-      {mode === "story" && (
-        <main className="story-main">
-          <div ref={storyTopRef} />
-          <StoryScene />
-        </main>
-      )}
+      <main className="story-main">
+        <StoryScene mapRevealed={mapRevealed} landingFading={fadingLanding} />
+      </main>
+      <FrontPage onStart={startStory} fading={fadingLanding} />
     </>
   );
 }

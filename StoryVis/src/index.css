@@ -34,21 +34,25 @@
 }
 
 .hero {
-  min-height: 100vh;
-  background-image: url("/HomePage.jpeg");
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background-color: #07111c; /* covers story while satellite image loads */
+  /* background-image set inline in FrontPage.jsx */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 
   display: grid;
   place-items: center;
-  position: relative;
 
-  transition: opacity 900ms ease;
+  transition: opacity 2000ms ease;
 }
 
 .hero.is-fading {
+  background-color: transparent;
   opacity: 0;
+  pointer-events: none;
 }
 
 @keyframes story-fade-in {

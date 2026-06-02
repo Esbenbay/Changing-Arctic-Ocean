@@ -24,9 +24,12 @@ export default function ShippingRoutesPanel({ active, stepIndex }) {
   const vbTweenRef    = useRef(null);
   const shipTweenRef  = useRef(null);
   const activeRef     = useRef(active);
-  activeRef.current   = active;
   const stepRef       = useRef(stepIndex);
-  stepRef.current     = stepIndex;
+
+  useEffect(() => {
+    activeRef.current = active;
+    stepRef.current = stepIndex;
+  }, [active, stepIndex]);
 
   const applyStep = (svg, step) => {
     const orig = origVBRef.current;
@@ -152,13 +155,11 @@ export default function ShippingRoutesPanel({ active, stepIndex }) {
       vbTweenRef.current?.kill();
       shipTweenRef.current?.kill();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (!active || !svgRef.current) return;
     applyStep(svgRef.current, stepIndex);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, stepIndex]);
 
   return <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />;

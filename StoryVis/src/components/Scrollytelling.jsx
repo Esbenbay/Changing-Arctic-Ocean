@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Scrollama, Step } from 'react-scrollama';
 
 export default function ScrollamaDemo({
@@ -8,11 +8,6 @@ export default function ScrollamaDemo({
   sticky2Content, sticky2StartIndex = -1, sticky2EndIndex = -1,
 }) {
   const [currentStepIndex, setCurrentStepIndex] = useState(null);
-
-  const lastStickyRef  = useRef(null);
-  const lastSticky2Ref = useRef(null);
-  if (stickyContent  != null) lastStickyRef.current  = stickyContent;
-  if (sticky2Content != null) lastSticky2Ref.current = sticky2Content;
 
   const onStepEnter = ({ data }) => {
     setCurrentStepIndex(data);
@@ -79,7 +74,7 @@ export default function ScrollamaDemo({
       </Scrollama>
 
       {/* Temperature chart sticky section */}
-      {hasChart && renderStickySection(sticky2StartIndex, sticky2EndIndex, lastSticky2Ref.current)}
+      {hasChart && renderStickySection(sticky2StartIndex, sticky2EndIndex, sticky2Content)}
 
       {/* Steps between chart and glacier sections */}
       {hasChart && hasGlacier && (
@@ -89,7 +84,7 @@ export default function ScrollamaDemo({
       )}
 
       {/* Glacier sticky section */}
-      {hasGlacier && renderStickySection(stickyStartIndex, stickyEndIndex, lastStickyRef.current)}
+      {hasGlacier && renderStickySection(stickyStartIndex, stickyEndIndex, stickyContent)}
 
       {/* Steps after last sticky section */}
       {(hasGlacier || hasChart) && (
