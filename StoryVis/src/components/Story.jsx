@@ -435,20 +435,20 @@ const STEPS = [
     bubble:        { arrow: 'left' },
     text:          "Greenland's ice sheet and Arctic glaciers are losing mass at record rates, contributing ~1 mm per year to global sea level rise and reshaping coastal landscapes.",
   },
-  {
-    chapter:       'svg',
-    layerId:       'Mountain',
-    glacierCamera: 'greenland-glaciers',
-    title:         'Retreating Ice Fronts',
-    bubble:        { arrow: 'left' },
-    text:          "Each coloured line marks a historic glacier terminus — yellow lines show the oldest recorded positions, red the most recent. Decades of retreat visible in a single view.",
-  },
+  // {
+  //   chapter:       'svg',
+  //   layerId:       'Mountain',
+  //   glacierCamera: 'greenland-glaciers',
+  //   title:         'Retreating Ice Fronts',
+  //   bubble:        { arrow: 'left' },
+  //   text:          "Each coloured line marks a historic glacier terminus — yellow lines show the oldest recorded positions, red the most recent. Decades of retreat visible in a single view.",
+  // },
   {
     chapter: 'svg',
     layerId: 'River',
     title:   'Rivers & Freshwater',
     bubble:  { arrow: 'left' },
-    text:    'Accelerating permafrost thaw drives increased freshwater and nutrient runoff into coastal waters, altering salinity, turbidity, and the Arctic nutrient balance.',
+    text:    'Increased freshwater runoff from melting glaciers and inland snow has increased river flow and altered sediment transport in Arctic rivers to the ocean.',
   },
   
  
@@ -467,7 +467,7 @@ const STEPS = [
     title:   'Waves',
     image:  { src: `${BASE}Waves.jpg`, caption: 'North East Greenland, August 2024' },
     bubble:  { arrow: 'left' },
-    text:    'Increased cloud-cover and waves further complicate and alter the light availability in the water.',
+    text:    'The retreating sea ice exposes the coastline to more wave action, which increases coastal erosion and can also stir up sediments in the water, making it more turbid.',
   },
   {
     chapter: 'svg',
