@@ -9,7 +9,7 @@ gsap.registerPlugin(MotionPathPlugin);
 
 // Layers visible at each step — cumulative: once shown, stays shown
 const PHOTO_LAYERS = {
-   g84:          { show: ['g84'] },
+   g84:          { show: ['g84', 'Ships', 'Eddy', 'Ship_1', 'Ship_2', 'Oil'] },
   Sea_weed:          { show: ['Sea_weed'] },
   O2_micro:          { show: ['O2_micro'] },
   Sun:               { show: ['Eddy'], zoomTarget: 'g84' },
@@ -36,6 +36,7 @@ const PHOTO_FADE_LAYERS = {
   Carbon_non_turbid: { trigger: 'Sea_weed', oneWay: true },
   Light_ray:         { trigger: 'Sea_weed', oneWay: true },
   O2_micro:          { trigger: 'Sea_weed', fadeInDuration: 2.0 },
+  Oil:               { trigger: 'g84', fadeInDuration: 6.0 },
 };
 
 // Layers whose direct children randomly blink in/out while the layer is visible.
@@ -54,9 +55,11 @@ const RANDOM_FADE_LAYERS = [
 const MOTION_PATH_ANIMS = {
   O2_micro: { elementLabel: 'O2_micro',  pathLabel: 'Micro_path_', triggerStep: 'Sea_weed', duration: 6, repeat: -1 },
   Eddy:     { elementLabel: 'Eddy',      pathLabel: 'Eddy_path',   triggerStep: 'Sun',      duration: 3, repeat: 0 },
+  Ship_1:    { elementLabel: 'Ship_1',    pathLabel: 'Ship_1_path',   triggerStep: 'g84',   duration: 4, repeat: 0 },
+  Ship_2:    { elementLabel: 'Ship_2',    pathLabel: 'Ship_2_path',   triggerStep: 'g84',   duration: 4, repeat: 0 },
 };
 
-export default function PhotosynthesisPanel({ activeLayerId, active, erosionProgress, onAnchorPosition }) {
+export default function PhotosynthesisPanel({ activeLayerId, anchorLayerId, active, erosionProgress, onAnchorPosition }) {
   const containerRef      = useRef(null);
   const svgRef            = useRef(null);
   const iceTweenRef       = useRef(null);
@@ -209,18 +212,18 @@ export default function PhotosynthesisPanel({ activeLayerId, active, erosionProg
         onAnchorPosition,
       });
     } else if (activeLayerId === null) {
-      onAnchorPosition?.(null);
-      const seaWeedEl = getEl('Sea_weed');
+      const seaWeedEl    = getEl('Sea_weed');
+      const anchorTarget = anchorLayerId ? getEl(anchorLayerId) : null;
+      const anchorEl     = anchorTarget ? findAnchor(anchorTarget) : null;
       if (seaWeedEl) {
         if (!hasInitialZoomRef.current) {
-          zoomToLayer(svg, container, seaWeedEl, { noTransition: true, maxZoom: 10 });
+          zoomToLayer(svg, container, seaWeedEl, { noTransition: true, maxZoom: 10, anchorEl, onAnchorPosition });
           hasInitialZoomRef.current = true;
         } else {
-          zoomToLayer(svg, container, seaWeedEl, {
-            transition: '1400ms cubic-bezier(0.4, 0, 0.2, 1)',
-            maxZoom:    10,
-          });
+          zoomToLayer(svg, container, seaWeedEl, { transition: '1400ms cubic-bezier(0.4, 0, 0.2, 1)', maxZoom: 10, anchorEl, onAnchorPosition });
         }
+      } else {
+        onAnchorPosition?.(null);
       }
     }
 
@@ -288,7 +291,7 @@ export default function PhotosynthesisPanel({ activeLayerId, active, erosionProg
         }, 1000);
       }
     });
-  }, [activeLayerId, onAnchorPosition]);
+  }, [activeLayerId, anchorLayerId, onAnchorPosition]);
 
   // Erosion slider: cross-fade ice out / erosion in, move ice along path
   useEffect(() => {

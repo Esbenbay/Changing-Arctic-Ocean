@@ -409,23 +409,23 @@ const STEPS = [
   {
     chapter: 'svg',
     layerId: 'Sea_ice_early',
-    title:   'Sea Ice',
+    title:   'Declining Sea Ice',
     bubble:  { arrow: 'right' },
-    text:    'Arctic sea ice extent has declined ~13% per decade since satellite records began. The loss of multi-year ice fundamentally restructures the ecosystem that depends on it.',
+    text:    'The Arctic minimum sea ice extent has declined ~13% per decade since satellite records began in 1979. The old sea ice has been replaced by thinner, younger ice that forms each autumn and melts again by summer.',
   },
   {
     chapter: 'svg',
     layerId: 'Light_production',
     title:   'Increasing Pan-Arctic Productivity',
     bubble:  { arrow: 'right' },
-    text:    'As ice retreats, unprecedented amounts of sunlight reach previously shaded Arctic waters, fuelling new biological productivity but also accelerating ocean warming.',
+    text:    'As ice retreats, sunlight reaches previously shaded Arctic waters and light is playing a bigger role earlier in the season in the shallow waters. This increases the growth area for algae species in the watercolumn but its difficult to know how it will affect algae species on the Arctic seafloor.',
   },
   {
     chapter: 'svg',
     layerId: 'productive_ocean',
     title:   'Complex Ecosystem Response',
     bubble:  { arrow: 'right' },
-    text:    'With increasing light in the ocean a surge in photosynthesis would be natural — Nature is although not so simple and the response of the ecosystem is complex and not fully understood.',
+    text:    'The retreating sea ice is just one part of a complex web of changes in the Arctic coastal zone and some changes might have opposing effects on the ecosystem. Lets take a closer look at some of the other changes happening in the coastal zone.',
   },
 
 
@@ -433,7 +433,7 @@ const STEPS = [
     chapter:       'svg',
     layerId:       'Mountain',
     glacierCamera: 'greenland-overview',
-    title:         'Glaciers & Mountains',
+    title:         'Glaciers in Retreat',
     bubble:        { arrow: 'left' },
     text:          "Greenland's ice sheet and Arctic glaciers are losing mass at record rates, contributing ~1 mm per year to global sea level rise and reshaping coastal landscapes.",
   },
@@ -489,31 +489,34 @@ const STEPS = [
 
   // ── Photosynthesis chapter ────────────────────────────────────────────────
   {
-    chapter: 'photosynthesis',
-    layerId: null,
-    title:   'Arctic Seafloor Photosynthesis',
-    text:    'The Arctic seafloor is a dynamic environment where photosynthesis plays a crucial role in supporting marine life.  ',
+    chapter:            'photosynthesis',
+    layerId:            null,
+    bubbleAnchorLayerId:'Sea_weed',
+    bubble:             { arrow: 'right' },
+    title:              'Arctic Seafloor Photosynthesis',
+    text:               'The Arctic seafloor is a dynamic environment where photosynthesis plays a crucial role in supporting marine life.',
   },
   {
     chapter: 'photosynthesis',
     layerId: 'Sea_weed',
     title:   'Arctic Seafloor Photosynthesis (Add images or figure)',
     bubble:  { arrow: 'right' },
-    text:    'In the Arctic, photosynthesis isn\'t just a surface phenomenon. As sea ice retreats, sunlight penetrates deeper, reaching the seafloor and transforming benthic ecosystems.',},
-   {
+    text:    'Seaweed catches sunlight and uses it like energy. It takes carbon dioxide from the water and turns it into sugar, which helps it grow and stay alive. While it does this, it releases oxygen back into the water. The ocean breathes in carbon dioxide and breathes out oxygen, and seaweed is a big part of that process on the seafloor.',
+  },
+  {
     chapter:         'photosynthesis',
     layerId:         'Sun',
     isErosionSlider: true,
     bubble:          { arrow: 'right' },
-    title:           'From Ice to Eroded Coast',
-    text:            'Drag the slider to see how retreating sea ice exposes the coastline to wave-driven erosion.',
+    title:           'From Ice to Turbid Waters',
+    text:            'Turbid waters reduce light penetration, which can limit the amount of light reaching the seafloor for photosynthesis. Lets look further into how we can explore the impacts of these changes on the Arctic seafloor ecosystem.',
   },
     {
     chapter: 'photosynthesis',
     layerId: 'Eddy',
     bubble:  { arrow: 'right' },
     title:   'Eddy Covariance System',
-    text:    'To estimate the impacts of changing ocean conditions on the seafloor, we deploy an eddy covariance system on the seafloor',
+    text:    'To estimate the impacts of changing ocean conditions on the seafloor, we deploy an eddy covariance system on the seafloor (Karl add more)',
   },
 
    {
@@ -521,7 +524,7 @@ const STEPS = [
     layerId: 'Instruments',
     bubble:  { arrow: 'right' },
     title:   'Measuring Instruments',
-    text:    'The sensors measure oxygen concentration flow from the seafloor, which allows us to calculate how productive the seafloor is',
+    text:    'The sensors measure oxygen concentration flow from the seafloor, which allows us to calculate how productive the seafloor is (Karl add more)',
   },
 
   {
@@ -529,50 +532,50 @@ const STEPS = [
     layerId: 'Benthic_highlight',
     bubble:  { arrow: 'bottom' },
     title:   'Expanding Benthic communities',
-    text:    'As sea ice retreats, sunlight reaches the seafloor, promoting the expansion of micro organisms in Arctic waters. Currently large uncertainties exist on how much the seafloor is producing and how much of the Arctic seafloor has potential for a productive seafloor.',
+    text:    'As sea ice retreats, sunlight reaches the seafloor, promoting the expansion of micro organisms in Arctic waters. Currently large uncertainties exist on how much the seafloor is producing and how much of the Arctic seafloor has potential for algae communities.',
   },
 
-  {
-    chapter:         'photosynthesis',
-    layerId:         'Sun',
-    isErosionSlider: true,
-    bubble:          { arrow: 'right' },
-    title:           'From Ice to Eroded Coast',
-    text:            'Drag the slider to see how retreating sea ice exposes the coastline to wave-driven erosion.',
-  },
+  // {
+  //   chapter:         'photosynthesis',
+  //   layerId:         'Sun',
+  //   isErosionSlider: true,
+  //   bubble:          { arrow: 'right' },
+  //   title:           'From Ice to Eroded Coast',
+  //   text:            'Drag the slider to see how retreating sea ice exposes the coastline to wave-driven erosion.',
+  // },
    
-  {
-    chapter: 'photosynthesis',
-    layerId: 'Light_ray',
-    bubble:  { arrow: 'right' },
-    title:   'The Midnight Sun',
-    text:    'During the Arctic summer the sun never sets, flooding the ocean surface with continuous light — the energy source that drives the entire ecosystem.',
-  },
-  {
-    chapter: 'photosynthesis',
-    layerId: 'Light_ray',
-    bubble:  { arrow: 'right' },
-    title:   'Light Penetration',
-    text:    'Sunlight penetrates the clear Arctic water, reaching phytoplankton and sea plants below. In ice-free waters light now reaches depths it never could before.',
-  },
-  {
-    chapter: 'photosynthesis',
-    layerId: 'Carbon_non_turbid',
-    bubble:  { arrow: 'right' },
-    title:   'Oxygen & Carbon',
-    text:    'Phytoplankton and seagrass convert CO₂ and sunlight into oxygen and organic carbon — the base of the food web and a critical carbon sink for the planet.',
-  },
-  {
-    chapter: 'photosynthesis',
-    layerId: 'O2',
-    bubble:  { arrow: 'right' },
-    title:   'Oxygen Rising',
-    text:    'Oxygen produced by phytoplankton bubbles upward through the water column, eventually reaching the atmosphere — the Arctic Ocean is a net source of oxygen for the planet.',
-  },
+  // {
+  //   chapter: 'photosynthesis',
+  //   layerId: 'Light_ray',
+  //   bubble:  { arrow: 'right' },
+  //   title:   'The Midnight Sun',
+  //   text:    'During the Arctic summer the sun never sets, flooding the ocean surface with continuous light — the energy source that drives the entire ecosystem.',
+  // },
+  // {
+  //   chapter: 'photosynthesis',
+  //   layerId: 'Light_ray',
+  //   bubble:  { arrow: 'right' },
+  //   title:   'Light Penetration',
+  //   text:    'Sunlight penetrates the clear Arctic water, reaching phytoplankton and sea plants below. In ice-free waters light now reaches depths it never could before.',
+  // },
+  // {
+  //   chapter: 'photosynthesis',
+  //   layerId: 'Carbon_non_turbid',
+  //   bubble:  { arrow: 'right' },
+  //   title:   'Oxygen & Carbon',
+  //   text:    'Phytoplankton and seagrass convert CO₂ and sunlight into oxygen and organic carbon — the base of the food web and a critical carbon sink for the planet.',
+  // },
+  // {
+  //   chapter: 'photosynthesis',
+  //   layerId: 'O2',
+  //   bubble:  { arrow: 'right' },
+  //   title:   'Oxygen Rising',
+  //   text:    'Oxygen produced by phytoplankton bubbles upward through the water column, eventually reaching the atmosphere — the Arctic Ocean is a net source of oxygen for the planet.',
+  // },
   
   {
     chapter: 'photosynthesis',
-    layerId: 'Eddy',
+    layerId: 'g84',
     bubble:  { arrow: 'right' },
     title:   'A Changing Cycle',
     text:    'As the Arctic warms, longer ice-free seasons extend the window for photosynthesis — but also alter nutrient cycles, ocean chemistry, and the balance of the entire ecosystem.',
@@ -584,13 +587,13 @@ const STEPS = [
     title:   'A New Presence',
     text:    'For the first time in history, industrial vessels navigate waters that were impassable just decades ago. The Arctic is no longer beyond reach.',
   },
-  {
-    chapter: 'photosynthesis',
-    layerId: 'Oil',
-    bubble:  { arrow: 'left' },
-    title:   'A New Threat',
-    text:    "But a new chapter is beginning. These vessels bring oil, noise, and geopolitical ambition to one of the last great wildernesses — accelerating the very changes that opened the route.",
-  },
+  // {
+  //   chapter: 'photosynthesis',
+  //   layerId: 'Oil',
+  //   bubble:  { arrow: 'left' },
+  //   title:   'A New Threat',
+  //   text:    "But a new chapter is beginning. These vessels bring oil, noise, and geopolitical ambition to one of the last great wildernesses — accelerating the very changes that opened the route.",
+  // },
  
 
   // ── Shipping routes chapter (ending) ─────────────────────────────────────
@@ -799,7 +802,7 @@ export default function StoryScene() {
           pointerEvents: inPhotoChapter ? 'auto' : 'none',
           background:    'white',
         }}>
-          <PhotosynthesisPanel activeLayerId={inPhotoChapter ? step.layerId : undefined} active={inPhotoChapter} erosionProgress={erosionProgress} onAnchorPosition={setPhotoAnchorPos} />
+          <PhotosynthesisPanel activeLayerId={inPhotoChapter ? step.layerId : undefined} anchorLayerId={inPhotoChapter ? step.bubbleAnchorLayerId : undefined} active={inPhotoChapter} erosionProgress={erosionProgress} onAnchorPosition={setPhotoAnchorPos} />
         </div>
 
         {/* Text bubbles on top of the overlay — supports 1 or multiple per step */}
