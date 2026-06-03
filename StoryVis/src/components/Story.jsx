@@ -115,7 +115,7 @@ function ErosionSlider({ onChange }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#555' }}>
-        <span>Sea Ice</span><span>Erosion</span>
+        <span>Sea Ice</span><span>Turbidity</span>
       </div>
       <input
         type="range" min={0} max={100} value={value}
@@ -129,9 +129,7 @@ function ErosionSlider({ onChange }) {
           animation: !hasDragged ? 'dragPulse 1.4s ease-in-out infinite' : 'none',
         }}
       />
-      <div style={{ textAlign: 'center', fontSize: '0.85rem', color: '#888' }}>
-        {value}% eroded
-      </div>
+     
     </div>
   );
 }
@@ -401,8 +399,8 @@ const STEPS = [
 
   // ── SVG infographic chapter ───────────────────────────────────────────────
   {
-    chapter: 'svg',
-    layerId: null,
+    chapter: 'seasons',
+      seasonIndex: 4,
     title:   'Changing Arctic Ecosystem',
     text:    'The Arctic coastal ecosystem is complex and the changes we are seeing are interconnected. Let\'s break down some of the key changes happening in the coastal zone.',
   },
