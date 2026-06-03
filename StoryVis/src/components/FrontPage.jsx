@@ -107,7 +107,7 @@ export default function FrontPage({ progress = 0, fading, imageSequenceEnd = DEF
             {allLoaded ? 'Scroll to explore the story' : 'Loading...'}
           </span>
           <div className="scroll-chevron">
-            <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M6 9l6 6 6-6"/>
             </svg>
           </div>
