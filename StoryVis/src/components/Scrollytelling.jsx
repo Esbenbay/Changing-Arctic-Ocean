@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Scrollama, Step } from 'react-scrollama';
 
 export default function ScrollamaDemo({
@@ -25,7 +25,7 @@ export default function ScrollamaDemo({
         <Step data={stepIndex} key={stepIndex}>
           <div
             data-step={stepIndex}
-            style={{ height: '900vh', margin: 0, minHeight: 1, opacity: 0, pointerEvents: 'none' }}
+            style={{ height: '600vh', margin: 0, minHeight: 1, opacity: 0, pointerEvents: 'none' }}
           />
         </Step>
       );
@@ -80,7 +80,7 @@ export default function ScrollamaDemo({
   const renderStickySection = (start, end, effectiveContent) => (
     <div>
       <div style={{ height: '450px' }} />
-      <div style={{ position: 'sticky', top: '5vh', zIndex: 5 }}>
+      <div style={{ position: 'sticky', top: '5vh', zIndex: 3 }}>
         {effectiveContent}
       </div>
       <Scrollama offset={0.60} onStepEnter={onStepEnter} onStepProgress={onStepProgress}>
@@ -92,7 +92,6 @@ export default function ScrollamaDemo({
   const hasChart   = sticky2StartIndex >= 0 && sticky2EndIndex >= sticky2StartIndex;
   const hasGlacier = stickyStartIndex  >= 0 && stickyEndIndex  >= stickyStartIndex;
 
-  // Chart section always comes before glacier section in the STEPS order
   return (
     <div>
       {/* Steps before first sticky section */}

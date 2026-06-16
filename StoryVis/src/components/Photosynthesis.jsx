@@ -18,14 +18,14 @@ const PHOTO_LAYERS = {
   O2:                { show: ['Light_ray', 'Carbon_non_turbid', 'O2'] },
   Eddy:              { show: ['Eddy'] },
   Instruments:       { show: ['Eddy'] },
-  Ship_1:            { show: ['Light_ray', 'Carbon_non_turbid', 'O2', 'Ship_1', 'Ship_2'] },
+  Ships:            { show: ['Light_ray', 'Carbon_non_turbid', 'O2', 'Ship_1', 'Ship_2', 'smoke', 'smoke_1'] },
   Oil:               { show: ['Light_ray', 'Carbon_non_turbid', 'O2', 'Ship_1', 'Ship_2', 'Oil'] },
   Benthic_highlight: { show: ['Instruments', 'Eddy', 'fade_in_benthic', 'O_2_benthic'] },
 
 
 };
 
-const ALL_FADE_LAYERS = ['Carbon_non_turbid','Light_ray','O2', 'Eddy', 'Ship_1', 'Ship_2', 'Oil', 'fade_in_benthic', 'O_2_benthic'];
+const ALL_FADE_LAYERS = ['Carbon_non_turbid','Light_ray','O2', 'Eddy', 'Ship_1', 'Ship_2', 'Oil', 'fade_in_benthic', 'O_2_benthic', 'smoke', 'smoke_1'];
 
 // Trigger-based fade layers — fire when `trigger` step becomes active.
 //   trigger:         layerId string that activates this layer
@@ -37,6 +37,8 @@ const PHOTO_FADE_LAYERS = {
   Light_ray:         { trigger: 'Sea_weed', oneWay: true },
   O2_micro:          { trigger: 'Sea_weed', fadeInDuration: 2.0 },
   Oil:               { trigger: 'g84', fadeInDuration: 6.0 },
+  smoke:               { trigger: 'Ships', fadeInDuration: 3.0 },
+  smoke_1:               { trigger: 'Ships', fadeInDuration: 3.0 },
 };
 
 // Layers whose direct children randomly blink in/out while the layer is visible.

@@ -8,7 +8,9 @@ const events = [];
 let lastChapter = null;
 
 export function trackEvent(type, data = {}) {
-  events.push({ t: new Date().toISOString(), type, ...data });
+  const event = { t: new Date().toISOString(), type, ...data };
+  events.push(event);
+  console.log('[tracker] event:', event);
 }
 export const track = trackEvent;
 
@@ -22,21 +24,26 @@ export function trackStep(chapter) {
 
 // ── Send compiled session JSON when story is complete ─────────────────────────
 let flushed = false;
-export function flushToSheet() {
+// evalAnswers: optional object { U1: 4, U2: 6, ... } from the evaluation form
+export function flushToSheet(evalAnswers = {}) {
   if (!SHEET_URL) { console.warn('[tracker] VITE_SHEET_URL not defined'); return; }
   if (flushed) return;
   flushed = true;
   trackEvent('story_complete');
   const completedAt = new Date().toISOString();
+  const evalFields  = Object.fromEntries(
+    Object.entries(evalAnswers).map(([q, v]) => [`eval_${q}`, v])
+  );
   const summary = {
     sessionId,
     sessionStart,
     completedAt,
     chapters:       events.filter(e => e.type === 'chapter_enter').map(e => e.chapter).join(','),
-    quizAnswer:     events.find(e => e.type === 'quiz_answer')?.answer ?? '',
-    quizCorrect:    events.some(e => e.type === 'quiz_correct'),
-    erosionFinal:   events.filter(e => e.type === 'erosion_drag_complete').at(-1)?.value ?? '',
-    chartDragYear:  events.filter(e => e.type === 'chart_drag_complete').at(-1)?.year ?? '',
+    quizAnswer:     events.find(e => e.type === 'quiz_answer')?.answer ?? 'NaN',
+    quizCorrect:    events.some(e => e.type === 'quiz_answer') ? events.some(e => e.type === 'quiz_correct') : 'NaN',
+    erosionFinal:   events.filter(e => e.type === 'erosion_drag_complete').at(-1)?.value ?? 'NaN',
+    chartDragYear:  events.filter(e => e.type === 'chart_drag_complete').at(-1)?.year ?? 'NaN',
+    ...evalFields,
     _t:             Date.now(), // cache-buster
   };
   console.log('[tracker] flushing', summary);

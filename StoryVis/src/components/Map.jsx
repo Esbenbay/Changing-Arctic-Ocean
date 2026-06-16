@@ -102,12 +102,12 @@ const snapCogYear = year =>
 const CAMERAS = {
   // Map chapter
   'arctic-quiz':    { center: [0, 85], zoom: 2.7,    speed: alterSpeed, pitch: 0, bearing: 0, projection: 'globe' },
-  'world-overview': { center: [1,           0        ], zoom: 0.5,  speed: alterSpeed, pitch: alterPitch },
+  'world-overview': { center: [0,           20      ], zoom: 1, pitch: 0, bearing: 0, projection: 'mercator' },
   'svalbard':       { center: [16.57969, 77.82355], zoom: 9.508,  projection: 'globe' },
   'canada-arctic':  { center: [-99.214076,  73.476835], zoom: 3.7,  speed: alterSpeed, pitch: alterPitch, projection: 'globe' },
 
   //'arctic-coastline':  { center: [120.734026, 85.53], zoom: 2.6,    speed: alterSpeed, pitch: 25, duration: 10000},
-  'arctic-coastline':  { center: [0, 85], zoom: 2.7,    speed: alterSpeed, pitch: 0 , projection: 'globe'    },
+  'arctic-coastline':  { center: [0, 90], zoom: 2.6,    speed: alterSpeed, pitch: 0 , projection: 'globe'    },
   'greenland-overview':  { center: [-42, 72],              zoom: 3, speed: alterSpeed, pitch: alterPitch },
   'greenland-glaciers':  { center: [-41.338798, 64.249670], zoom: 9, speed: alterSpeed, pitch: alterPitch },
 
@@ -118,23 +118,23 @@ const CAMERAS = {
 
   // Polar chapter
   'polar-overview': { center: [0, 90], zoom: 2.5, pitch: 0, bearing: 0, projection: 'globe' },
-  'polar-shelf':    { center: [0, 90], zoom: 2.5, pitch: 0, bearing: 0, speed: 0.6, projection: 'globe' },
+  'polar-shelf':    { center: [0, 90], zoom: 2.6, pitch: 0, bearing: 0, speed: 0.6, projection: 'globe' },
 
   // Available for future steps
   'arctic-overview':  { center: [1.558794,    79.96449 ], zoom: 2.3,  speed: alterSpeed, pitch: alterPitch },
-  'isfjorden':        { center: [15.066763,   78.349172], zoom: 6.7,  speed: alterSpeed, pitch: alterPitch },
-  'kongsfjorden':     { center: [11.918895,   78.931950], zoom: 8.3,  speed: alterSpeed, pitch: alterPitch },
-  'young-sound':      { center: [-21.022543,  74.343009], zoom: 7.8,  speed: alterSpeed, pitch: alterPitch },
-  'nuuk':             { center: [-50.892017,  64.280048], zoom: 7.7,  speed: alterSpeed, pitch: alterPitch },
-  'porsangerfjorden': { center: [25.786149,   70.525686], zoom: 7.3,  speed: alterSpeed, pitch: alterPitch },
-  'disko':            { center: [-51.984934,  69.278638], zoom: 6.55, speed: alterSpeed, pitch: alterPitch },
-  'greenland-sea':    { center: [-18.123336,  68.135691], zoom: 3.55, speed: alterSpeed, pitch: alterPitch },
-  'laptev-sea':       { center: [125.723552,  74.594426], zoom: 3.85, speed: alterSpeed, pitch: alterPitch },
-  'chukchi-sea':      { center: [-171.974262, 69.589304], zoom: 4.2,  speed: alterSpeed, pitch: alterPitch },
-  'baffin-bay':       { center: [-67.800772,  74.206607], zoom: 3,    speed: alterSpeed, pitch: alterPitch },
-  'barents-sea':      { center: [37.533459,   72.728405], zoom: 3.6,  speed: alterSpeed, pitch: alterPitch },
-  'east-siberian-sea':{ center: [162.250417,  72.365280], zoom: 4,    speed: alterSpeed, pitch: alterPitch },
-  'beaufort-sea':     { center: [-141.148989, 71.841302], zoom: 4,    speed: alterSpeed, pitch: alterPitch },
+  // 'isfjorden':        { center: [15.066763,   78.349172], zoom: 6.7,  speed: alterSpeed, pitch: alterPitch },
+  // 'kongsfjorden':     { center: [11.918895,   78.931950], zoom: 8.3,  speed: alterSpeed, pitch: alterPitch },
+  // 'young-sound':      { center: [-21.022543,  74.343009], zoom: 7.8,  speed: alterSpeed, pitch: alterPitch },
+  // 'nuuk':             { center: [-50.892017,  64.280048], zoom: 7.7,  speed: alterSpeed, pitch: alterPitch },
+  // 'porsangerfjorden': { center: [25.786149,   70.525686], zoom: 7.3,  speed: alterSpeed, pitch: alterPitch },
+  // 'disko':            { center: [-51.984934,  69.278638], zoom: 6.55, speed: alterSpeed, pitch: alterPitch },
+  // 'greenland-sea':    { center: [-18.123336,  68.135691], zoom: 3.55, speed: alterSpeed, pitch: alterPitch },
+  // 'laptev-sea':       { center: [125.723552,  74.594426], zoom: 3.85, speed: alterSpeed, pitch: alterPitch },
+  // 'chukchi-sea':      { center: [-171.974262, 69.589304], zoom: 4.2,  speed: alterSpeed, pitch: alterPitch },
+  // 'baffin-bay':       { center: [-67.800772,  74.206607], zoom: 3,    speed: alterSpeed, pitch: alterPitch },
+  // 'barents-sea':      { center: [37.533459,   72.728405], zoom: 3.6,  speed: alterSpeed, pitch: alterPitch },
+  // 'east-siberian-sea':{ center: [162.250417,  72.365280], zoom: 4,    speed: alterSpeed, pitch: alterPitch },
+  // 'beaufort-sea':     { center: [-141.148989, 71.841302], zoom: 4,    speed: alterSpeed, pitch: alterPitch },
 };
 
 // ── Arctic country highlights ─────────────────────────────────────────────────
@@ -206,7 +206,7 @@ function buildQuizOpacityExpr(found) {
 
 export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeToggle = false, initialViewState, mapRevealed = false, introFlyTriggered = false, onFlyOutComplete, cogUrl, cogYear, cogOpacity = 0, cogVmin = -3, cogVmax = 3, useLightStyle = false }) {
   const temperatureMapActive = cogUrl && cogOpacity > 0.3;
-  const targetMapStyle = (useLightStyle || temperatureMapActive) ? TEMPERATURE_MAP_STYLE : SATELLITE_MAP_STYLE;
+  const targetMapStyle = useLightStyle ? TEMPERATURE_MAP_STYLE : SATELLITE_MAP_STYLE;
 
   const mapRef            = useRef(null);
   const resizeObserverRef = useRef(null);
@@ -275,6 +275,13 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
   useEffect(() => {
     if (appliedMapStyle === targetMapStyle) return;
     const t = setTimeout(() => {
+      // Clear the COG React Source/Layer before the style swap so they are
+      // re-added fresh once the new style is loaded (Mapbox wipes all custom
+      // sources/layers on setStyle, but cogReadyRef would otherwise stay true
+      // and the re-init path would be skipped, leaving no COG layer visible).
+      cogReadyRef.current = false;
+      cogSlotRef.current  = 'a';
+      setCogLayer(null);
       setStyleLoaded(false);
       setAppliedMapStyle(targetMapStyle);
     }, 0);
@@ -388,8 +395,8 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
     map.stop();
     map.setProjection('mercator');
     map.flyTo({
-      center: [0, 20],
-      zoom: 1.0,
+      center: [1, 0],
+      zoom: 0.5,
       duration: FLY_DURATION,
       pitch: 0,
       bearing: 0,
@@ -448,6 +455,14 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
       if (!cogReadyRef.current) {
         setCogLayer(result);
         cogReadyRef.current = true;
+        if (cogOpacity > 0) {
+          setTimeout(() => {
+            const m = mapRef.current?.getMap();
+            if (!m?.isStyleLoaded() || !hasCogLayer(m, 'a')) return;
+            m.setPaintProperty('cog-raster-a', 'raster-opacity-transition', { duration: 800, delay: 0 });
+            m.setPaintProperty('cog-raster-a', 'raster-opacity', cogOpacity);
+          }, 0);
+        }
         return;
       }
       const map = mapRef.current?.getMap();
@@ -487,6 +502,14 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
     };
   }, []);
 
+  // Fallback: onIdle fires after all tiles load — catches any case where
+  // style.load didn't fire (e.g. initial satellite style before the listener
+  // was registered in handleMapLoad).
+  const handleStyleReady = useCallback(() => {
+    const map = mapRef.current?.getMap();
+    if (map?.isStyleLoaded()) setStyleLoaded(true);
+  }, []);
+
   // ── Map load ───────────────────────────────────────────────────────────────
   const handleMapLoad = useCallback(() => {
     const map = mapRef.current?.getMap();
@@ -501,18 +524,10 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
       console.error(error);
     });
 
-  }, []);
+    // style.load is the authoritative signal — fires as soon as style JSON is
+    // applied, before tiles load, so COG appears without waiting for tiles.
+    map.on('style.load', () => setStyleLoaded(true));
 
-  const handleStyleReady = useCallback(() => {
-    const map = mapRef.current?.getMap();
-    if (!map?.loaded() || !map.isStyleLoaded()) return;
-    clearTimeout(styleReadyTimerRef.current);
-    styleReadyTimerRef.current = setTimeout(() => {
-      const readyMap = mapRef.current?.getMap();
-      if (readyMap?.loaded() && readyMap.isStyleLoaded()) {
-        setStyleLoaded(true);
-      }
-    }, 0);
   }, []);
 
   // ── Quiz: pointer cursor when hovering over countries ─────────────────────
@@ -562,7 +577,7 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
     <Map
       ref={mapRef}
       mapboxAccessToken={TOKEN}
-      initialViewState={initialViewState ?? { latitude: 0, longitude: 1.558794, zoom: 0 }}
+      initialViewState={initialViewState ?? { latitude: 0, longitude: 1, zoom: 1 }}
       projection="mercator"
       mapStyle={appliedMapStyle}
       style={{
@@ -824,17 +839,16 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
             type="fill"
             paint={{
               "fill-color": [
-                "match", ["get", "depth"],
-                  //   5000, "#0d2a5c",
-                  //  4000, "#1a3f7a",
-                  //  3000, "#1d5f9e",
-                  //  2000, "#2980b9",
-                  //  1000, "#5baed6",
-                  //  200, "#89c5e8",
-                   0, "#efe8c8",
-                    "hsla(100, 23%, 98%, 0.00)"
+                "interpolate", ["linear"], ["get", "depth"],
+                0,    "#d6eef7",
+                200,  "#89c5e8",
+                1000, "#5baed6",
+                2000, "#2980b9",
+                3000, "#1d5f9e",
+                4000, "#1a3f7a",
+                5000, "#0d2a5c",
               ],
-              "fill-opacity": cameraKey === 'polar-shelf' ? 0.16 : ['polar-overview'].includes(cameraKey) ? 0.18 : 0,
+              "fill-opacity": ['polar-shelf'].includes(cameraKey) ? 0.5  : 0,
             }}
           />
           <Layer
@@ -923,6 +937,17 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
         </>}
 
       </>}
+
+      {/* Cover the blank canvas during style switches */}
+      <div style={{
+        position:      'absolute',
+        inset:         0,
+        background:    useLightStyle ? 'white' : '#07111c',
+        opacity:       styleLoaded ? 0 : 1,
+        transition:    styleLoaded ? 'opacity 600ms ease' : 'opacity 150ms ease',
+        pointerEvents: 'none',
+        zIndex:        20,
+      }} />
 
     </Map>
   );

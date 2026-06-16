@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -21,16 +21,47 @@ const FRAME_TEXTS = [
 
 const EXIT_FADE_MS = 1000;
 const IMAGE_CROSSFADE_MS = 900;
-const DEFAULT_IMAGE_SEQUENCE_END = 0.90;
 
-const clamp01 = value => Math.max(0, Math.min(1, value));
+const IMAGE_SEQUENCE_END = 0.90;
+const idxFromProgress = p =>
+  Math.min(FRAMES.length - 1, Math.floor(Math.min(1, p / IMAGE_SEQUENCE_END) * FRAMES.length));
 
-export default function FrontPage({ progress = 0, fading, imageSequenceEnd = DEFAULT_IMAGE_SEQUENCE_END }) {
+export default function FrontPage({ progress = 0, fading }) {
   const [loadedCount, setLoadedCount] = useState(0);
+  const [activeIdx, setActiveIdx] = useState(() => idxFromProgress(progress));
+  const accRef      = useRef(0);
+  const cooldownRef = useRef(false);
+  const activeIdxRef = useRef(activeIdx);
+  useEffect(() => { activeIdxRef.current = activeIdx; }, [activeIdx]);
+
+  // Accumulate deltaY and advance exactly one image per threshold crossing.
+  // Events below MIN_DELTA are trailing momentum — ignore them so they can't
+  // accumulate past the threshold after the cooldown expires.
+  useEffect(() => {
+    const THRESHOLD = 50;
+    const MIN_DELTA = 8;
+    const onWheel = (e) => {
+      if (cooldownRef.current) { accRef.current = 0; return; }
+      if (Math.abs(e.deltaY) < MIN_DELTA) return;
+      accRef.current += e.deltaY;
+      if (Math.abs(accRef.current) < THRESHOLD) return;
+
+      const dir = accRef.current > 0 ? 1 : -1;
+      accRef.current = 0;
+      cooldownRef.current = true;
+      setTimeout(() => { cooldownRef.current = false; }, 900);
+
+      if (dir > 0 && activeIdxRef.current >= FRAMES.length - 1) {
+        window.scrollTo(0, window.innerHeight * 6 * IMAGE_SEQUENCE_END + 10);
+      } else {
+        setActiveIdx(prev => Math.max(0, Math.min(FRAMES.length - 1, prev + dir)));
+      }
+    };
+    window.addEventListener('wheel', onWheel, { passive: true });
+    return () => window.removeEventListener('wheel', onWheel);
+  }, []);
 
   const allLoaded = loadedCount >= FRAMES.length;
-  const imageProgress = clamp01(progress / imageSequenceEnd);
-  const activeIdx = Math.min(FRAMES.length - 1, Math.floor(imageProgress * FRAMES.length));
   const hasScrolled = progress > 0.1;
   const settledTextIdx = hasScrolled && !fading ? activeIdx : -1;
 
@@ -107,8 +138,8 @@ export default function FrontPage({ progress = 0, fading, imageSequenceEnd = DEF
             {allLoaded ? 'Scroll to explore the story' : 'Loading...'}
           </span>
           <div className="scroll-chevron">
-            <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M6 9l6 6 6-6"/>
+            <svg viewBox="0 0 24 24" width="52" height="52" fill="none" aria-hidden="true">
+              <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
         </div>

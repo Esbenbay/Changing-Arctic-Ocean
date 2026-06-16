@@ -1,7 +1,7 @@
 const INTERACTIVE_LAYER_ZOOM = {
   Instruments: 10,
   'Ship-1': 12,
-  kelp_highlight: 9,
+  kelp_highlight: 9
 };
 
 export const getLayerEl = (svg, label) =>

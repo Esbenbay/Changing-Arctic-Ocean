@@ -25,6 +25,12 @@ body {
   70%       { transform: translateX(-5px); }
 }
 
+@keyframes erosionslide {
+   0%,  100% { opacity: 0; filter: saturate(0.7) brightness(0.95); }
+  50%        { opacity: 0.9; filter: saturate(1.3) brightness(1.05); }
+  100%        { opacity: 0; filter: saturate(1.0) brightness(1.0); }
+}
+
 @keyframes lightPulse {
   0%, 100% { opacity: 0.4; filter: brightness(1);   }
   50%       { opacity: 1;   filter: brightness(1.2) drop-shadow(0 0 6px rgba(255,220,80,0.4)); }
@@ -86,6 +92,11 @@ body {
   to   { opacity: 1; }
 }
 
+@keyframes slowFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 .story-main {
   animation: story-fade-in 400ms ease forwards;
 }
@@ -141,7 +152,7 @@ body {
 .scrolly-right {
   flex: 0 0 calc(40% - (var(--col-gap) / 2));
   min-height: 100%;
-  padding: 14px 0 68px;
+  padding: 14px 20px 68px 24px;
 }
 .left-bottom {
   /* In the flex flow — physically pushes the map up when visible */
@@ -193,10 +204,10 @@ body {
 }
 
 .scroll-indicator-label {
-  font-size:      0.95rem;
-  letter-spacing: 0.16em;
+  font-size:      1.3rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  font-weight:    700;
+  font-weight:    800;
   text-shadow:    0 1px 10px rgba(0, 0, 0, 0.7);
 }
 
@@ -277,18 +288,7 @@ body {
   line-height: 1.45;
 } */
 
-/* ---------- SVG chapter: 60 / 40 split ---------- */
-.scrolly-left.show.is-svg {
-  flex: 0 0 calc(60% - (var(--col-gap) / 2));
-  position: sticky;
-  top: 5vh;
-  bottom: calc(var(--timeline-h) + 10px);
-  height: calc(95vh - var(--timeline-h) - 10px);
-}
 
-.scrolly-layout.is-svg .scrolly-right {
-  flex: 0 0 calc(35% - (var(--col-gap) / 2));
-}
 
 /* Hide SVG bubble-anchor markers — visible in Inkscape, invisible in browser */
 [inkscape\:label="bubble_anchor"] { opacity: 0 !important; pointer-events: none; }
