@@ -95,17 +95,26 @@ export default function TemperatureLineChart({ step, currentYear, startYear = 18
     dragYearRef.current = yr;
   }, [width, startYear, endYear, onYearSelect]);
 
+  const handleDragStart = useCallback((e) => {
+    e.preventDefault();
+    setIsDragging(true);
+    setHasDragged(true);
+    handleDragMove(e);
+  }, [handleDragMove]);
+
   useEffect(() => {
     if (!isDragging) return;
     const onUp = () => {
       setIsDragging(false);
       if (dragYearRef.current != null) track('chart_drag_complete', { year: dragYearRef.current });
     };
-    window.addEventListener('mousemove', handleDragMove);
-    window.addEventListener('mouseup',  onUp);
+    window.addEventListener('pointermove', handleDragMove);
+    window.addEventListener('pointerup',  onUp);
+    window.addEventListener('pointercancel',  onUp);
     return () => {
-      window.removeEventListener('mousemove', handleDragMove);
-      window.removeEventListener('mouseup',  onUp);
+      window.removeEventListener('pointermove', handleDragMove);
+      window.removeEventListener('pointerup',  onUp);
+      window.removeEventListener('pointercancel',  onUp);
     };
   }, [isDragging, handleDragMove]);
 
@@ -231,7 +240,7 @@ export default function TemperatureLineChart({ step, currentYear, startYear = 18
         {/* Draggable year indicator line */}
         {lineX != null && (
           <div
-            onMouseDown={e => { e.preventDefault(); setIsDragging(true); setHasDragged(true); }}
+            onPointerDown={handleDragStart}
             style={{
               position: 'absolute',
               left: lineX,
@@ -243,24 +252,70 @@ export default function TemperatureLineChart({ step, currentYear, startYear = 18
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              touchAction: 'none',
             }}
           >
+            <div style={{
+              position: 'absolute',
+              top: -16,
+              left: '50%',
+              width: 44,
+              height: 24,
+              borderRadius: 999,
+              background: '#f39c12',
+              border: '2px solid white',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.22)',
+              transform: 'translateX(-50%)',
+              animation: !hasDragged ? 'handleNudge 1.65s ease-in-out infinite' : 'none',
+            }}>
+              <span style={{
+                position: 'absolute',
+                left: 9,
+                top: '50%',
+                width: 0,
+                height: 0,
+                borderTop: '5px solid transparent',
+                borderBottom: '5px solid transparent',
+                borderRight: '6px solid white',
+                transform: 'translateY(-50%)',
+              }} />
+              <span style={{
+                position: 'absolute',
+                right: 9,
+                top: '50%',
+                width: 0,
+                height: 0,
+                borderTop: '5px solid transparent',
+                borderBottom: '5px solid transparent',
+                borderLeft: '6px solid white',
+                transform: 'translateY(-50%)',
+              }} />
+            </div>
+            <div style={{
+              position: 'absolute',
+              inset: '-8px 7px',
+              borderRadius: 999,
+              background: 'rgba(243,156,18,0.14)',
+              opacity: isDragging ? 1 : 0.75,
+              animation: !hasDragged ? 'dragPulse 1.45s ease-in-out infinite' : 'none',
+            }} />
             {/* Visible line */}
             <div style={{
-              width: 4,
+              width: isDragging ? 7 : 5,
               height: '100%',
               background: '#f39c12',
-              borderRadius: 2,
-              opacity: isDragging ? 1 : 0.85,
-              boxShadow: isDragging ? '0 0 8px rgba(243,156,18,0.6)' : 'none',
-              transition: 'box-shadow 150ms ease',
-              animation: !hasDragged ? 'dragPulse 1.4s ease-in-out infinite' : 'none',
+              borderRadius: 999,
+              opacity: 1,
+              boxShadow: isDragging
+                ? '0 0 0 4px rgba(243,156,18,0.24), 0 0 16px rgba(243,156,18,0.7)'
+                : '0 0 0 2px rgba(255,255,255,0.9), 0 0 10px rgba(243,156,18,0.35)',
+              transition: 'width 150ms ease, box-shadow 150ms ease',
             }} />
           </div>
         )}
         {/* Capture drag events across the full chart area */}
         {isDragging && (
-          <div style={{ position: 'absolute', inset: 0, cursor: 'ew-resize' }} />
+          <div style={{ position: 'absolute', inset: 0, cursor: 'ew-resize', touchAction: 'none' }} />
         )}
         </div>
       )}

@@ -24,9 +24,9 @@ const IMAGE_CROSSFADE_MS = 900;
 
 const IMAGE_SEQUENCE_END = 0.90;
 const FRONT_WHEEL_MIN_DELTA = 28;
-const FRONT_WHEEL_GESTURE_IDLE_MS = 800;
+const FRONT_WHEEL_GESTURE_IDLE_MS = 600                                                ;
 const FRONT_TOUCH_THRESHOLD = 72;
-const FRONT_STEP_COOLDOWN_MS = 850;
+const FRONT_STEP_COOLDOWN_MS = 600;
 
 const idxFromProgress = (p, sequenceEnd = IMAGE_SEQUENCE_END) =>
   Math.min(FRAMES.length - 1, Math.floor(Math.min(1, p / sequenceEnd) * FRAMES.length));

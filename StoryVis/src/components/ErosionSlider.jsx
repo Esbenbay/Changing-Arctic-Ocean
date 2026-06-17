@@ -17,18 +17,20 @@ export default function ErosionSlider({ onChange }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#555' }}>
         <span>Sea Ice</span><span>Turbidity</span>
       </div>
-      <input
-        type="range" min={0} max={100} value={value}
-        onMouseDown={() => setHasDragged(true)}
-        onTouchStart={() => setHasDragged(true)}
-        onMouseUp={handleDragEnd}
-        onTouchEnd={handleDragEnd}
-        onChange={handle}
-        style={{
-          width: '100%',
-          animation: !hasDragged ? 'dragPulse 1.4s ease-in-out infinite' : 'none',
-        }}
-      />
+      <div style={{ position: 'relative', padding: '2px 0' }}>
+        <input
+          className={`story-range ${!hasDragged ? 'needs-interaction' : ''}`}
+          type="range" min={0} max={100} value={value}
+          onMouseDown={() => setHasDragged(true)}
+          onTouchStart={() => setHasDragged(true)}
+          onMouseUp={handleDragEnd}
+          onTouchEnd={handleDragEnd}
+          onChange={handle}
+          style={{
+            '--range-progress': `${value}%`,
+          }}
+        />
+      </div>
     </div>
   );
 }

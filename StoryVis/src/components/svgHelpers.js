@@ -159,8 +159,11 @@ export function zoomToLayer(svg, containerEl, labelOrEl, opts = {}) {
 
   const fillZoom = Math.max(cW / svgPixW, cH / svgPixH);
   const labelKey = typeof labelOrEl === 'string' ? labelOrEl : null;
-  const maxZoom  = maxZoomOverride ?? INTERACTIVE_LAYER_ZOOM[labelKey] ?? 3.5;
-  const zoom     = Math.max(fillZoom, Math.min(cW / (pixW * 1.4), cH / (pixH * 1.4), maxZoom));
+  const compactViewport = cW < 820 || cH < 680;
+  const targetPadding = compactViewport ? 1.85 : 1.4;
+  const configuredMaxZoom = maxZoomOverride ?? INTERACTIVE_LAYER_ZOOM[labelKey] ?? 3.5;
+  const maxZoom = compactViewport ? configuredMaxZoom * 0.84 : configuredMaxZoom;
+  const zoom = Math.max(fillZoom, Math.min(cW / (pixW * targetPadding), cH / (pixH * targetPadding), maxZoom));
 
   const targetWidth  = Math.min(baseVb.width,  cW / (s * zoom));
   const targetHeight = Math.min(baseVb.height, cH / (s * zoom));

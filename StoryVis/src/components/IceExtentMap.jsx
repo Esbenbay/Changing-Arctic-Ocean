@@ -44,6 +44,7 @@ export default function IceExtentMap({ getUrl, onYearChange }) {
   const [year, setYear]       = useState(START_YEAR);
   const [loading, setLoading] = useState(false);
   const [hasDragged, setHasDragged] = useState(false);
+  const sliderProgress = ((year - START_YEAR) / (END_YEAR - START_YEAR)) * 100;
 
   // Pre-decode all years in the background
   useEffect(() => {
@@ -116,6 +117,7 @@ export default function IceExtentMap({ getUrl, onYearChange }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ fontSize: '1rem', color: '#000000ff', flexShrink: 0 }}>{START_YEAR}</span>
         <input
+          className={`story-range ${!hasDragged ? 'needs-interaction' : ''}`}
           type="range"
           min={START_YEAR}
           max={END_YEAR}
@@ -125,8 +127,7 @@ export default function IceExtentMap({ getUrl, onYearChange }) {
           onChange={e => { const y = Number(e.target.value); setYear(y); onYearChange?.(y); track('ice_slider', { year: y }); }}
           style={{
             flex: 1,
-            animation: !hasDragged ? 'dragPulse 1.4s ease-in-out infinite' : 'none',
-            borderRadius: 4,
+            '--range-progress': `${sliderProgress}%`,
           }}
         />
         <span style={{ fontSize: '1rem', color: '#000000ff', flexShrink: 0 }}>{END_YEAR}</span>

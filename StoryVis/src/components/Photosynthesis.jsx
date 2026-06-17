@@ -9,23 +9,25 @@ gsap.registerPlugin(MotionPathPlugin);
 
 // Layers visible at each step — cumulative: once shown, stays shown
 const PHOTO_LAYERS = {
-   g84:          { show: ['g84', 'Ships', 'Eddy', 'Ship_1', 'Ship_2', 'Oil'] },
-  Sea_weed:          { show: ['Sea_weed'] },
+   g84:          { show: ['g84', 'Ships', 'Eddy', 'Ship_1', 'Ship_2', 'Oil', 'Erosion_layer'] },
+  Sea_weed:          { show: ['Sea_weed','Ice_layer', 'Ice_not_move'] },
   O2_micro:          { show: ['O2_micro'] },
-  Sun:               { show: ['Eddy'], zoomTarget: 'g84' },
+  Sun:               { show: ['Eddy', 'Ice_layer', 'Ice_not_move'], zoomTarget: 'g84' },
   Light_ray:         { show: ['Light_ray'] },
   Carbon_non_turbid: { show: ['Light_ray', 'Carbon_non_turbid'] },
   O2:                { show: ['Light_ray', 'Carbon_non_turbid', 'O2'] },
-  Eddy:              { show: ['Eddy'] },
-  Instruments:       { show: ['Eddy'] },
-  Ships:            { show: ['Light_ray', 'Carbon_non_turbid', 'O2', 'Ship_1', 'Ship_2', 'smoke', 'smoke_1'] },
-  Oil:               { show: ['Light_ray', 'Carbon_non_turbid', 'O2', 'Ship_1', 'Ship_2', 'Oil'] },
-  Benthic_highlight: { show: ['Instruments', 'Eddy', 'fade_in_benthic', 'O_2_benthic'] },
+  Eddy:              { show: ['Eddy', 'Erosion_layer'] },
+  Instruments:       { show: ['Eddy', 'Erosion_layer'] },
+  Ships:            { show: ['Light_ray', 'Erosion_layer', 'O2', 'Ship_1', 'Ship_2', 'smoke', 'smoke_1'] },
+  Oil:               { show: ['Light_ray', 'Erosion_layer', 'O2', 'Ship_1', 'Ship_2', 'Oil'] },
+  Benthic_highlight: { show: ['Instruments', 'Eddy', 'fade_in_benthic', 'O_2_benthic', 'Carbon_non_turbid', 'Erosion_layer'] },
+  ice_layer:         { show: ['Ice_layer'] },
+  Ice_not_move:      { show: ['Ice_not_move'] },
 
 
 };
 
-const ALL_FADE_LAYERS = ['Carbon_non_turbid','Light_ray','O2', 'Eddy', 'Ship_1', 'Ship_2', 'Oil', 'fade_in_benthic', 'O_2_benthic', 'smoke', 'smoke_1'];
+const ALL_FADE_LAYERS = ['Carbon_non_turbid','Light_ray','O2', 'Eddy', 'Ship_1', 'Ship_2', 'Oil', 'fade_in_benthic', 'O_2_benthic', 'smoke', 'smoke_1', 'Ice_layer', 'Ice_not_move', 'Erosion_layer'];
 
 // Trigger-based fade layers — fire when `trigger` step becomes active.
 //   trigger:         layerId string that activates this layer

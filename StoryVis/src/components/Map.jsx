@@ -242,6 +242,10 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
   const [appliedMapStyle, setAppliedMapStyle]   = useState(targetMapStyle);
   const [shelfPulse, setShelfPulse]             = useState(false);
   const [completionOverlayVisible, setCompletionOverlayVisible] = useState(false);
+  const [mapSize, setMapSize] = useState(() => ({
+    width:  window.innerWidth,
+    height: window.innerHeight,
+  }));
 
   // Quiz: which ISO codes the user has clicked so far
   const [quizFound, setQuizFound] = useState(new Set());
@@ -549,8 +553,14 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
     const map = mapRef.current?.getMap();
     if (!map) return;
 
-    const observer = new ResizeObserver(() => mapRef.current?.getMap().resize());
-    observer.observe(map.getContainer());
+    const container = map.getContainer();
+    const observer = new ResizeObserver(entries => {
+      mapRef.current?.getMap().resize();
+      const rect = entries[0]?.contentRect;
+      if (rect) setMapSize({ width: rect.width, height: rect.height });
+    });
+    observer.observe(container);
+    setMapSize({ width: container.clientWidth, height: container.clientHeight });
     setCleanupResources({ map, observer });
 
     map.on('error', ({ error }) => {
@@ -610,6 +620,18 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
   const shelfEdgeOpacity = shelfHighlightActive
     ? (shelfPulse ? 0.95 : 0.72)
     : ['polar-overview'].includes(cameraKey) ? 0.12 : 0;
+  const mapCompact = mapSize.width < 560 || mapSize.height < 460;
+  const mapTiny = mapSize.width < 390 || mapSize.height < 340;
+  const overlayInset = mapTiny ? 8 : mapCompact ? 10 : 16;
+  const legendWidth = Math.min(mapTiny ? 168 : mapCompact ? 184 : 230, Math.max(150, mapSize.width - overlayInset * 2));
+  const bathymetryLegendWidth = Math.min(mapTiny ? 156 : mapCompact ? 172 : 190, Math.max(140, mapSize.width - overlayInset * 2));
+  const overlayPadding = mapTiny ? '8px 9px' : mapCompact ? '9px 11px' : '11px 14px 10px';
+  const overlayTitleFont = mapTiny ? 10.5 : mapCompact ? 11 : 12;
+  const overlayTextFont = mapTiny ? 9 : mapCompact ? 9.5 : 10;
+  const quizPanelWidth = Math.min(mapTiny ? 168 : mapCompact ? 188 : 210, Math.max(150, mapSize.width - overlayInset * 2));
+  const quizPanelPadding = mapTiny ? '9px 10px' : mapCompact ? '11px 13px' : '14px 18px';
+  const globeFontSize = mapTiny ? 13 : mapCompact ? 15 : 20;
+  const globeButtonPadding = mapTiny ? '7px 12px' : mapCompact ? '8px 14px' : '8px 18px';
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -642,27 +664,27 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
       {quizMode && (
         <div style={{
           position:       'absolute',
-          top:            16,
-          left:           16,
+          top:            overlayInset,
+          left:           overlayInset,
           zIndex:         10,
           background:     'rgba(0,0,0,0.72)',
           backdropFilter: 'blur(8px)',
-          borderRadius:   12,
-          padding:        '14px 18px',
+          borderRadius:   mapTiny ? 8 : 12,
+          padding:        quizPanelPadding,
           color:          '#fff',
-          width:          210,
+          width:          quizPanelWidth,
           boxShadow:      '0 4px 20px rgba(0,0,0,0.4)',
         }}>
           {quizFound.size < QUIZ_COUNTRIES.length ? (
             <>
-              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4, lineHeight: 1.35 }}>
+              <div style={{ fontSize: mapTiny ? 11 : mapCompact ? 12 : 13, fontWeight: 700, marginBottom: 4, lineHeight: 1.35 }}>
                 Which countries border the Arctic Ocean?
               </div>
-              <div style={{ fontSize: 11, color: '#aaa', marginBottom: 12 }}>
+              <div style={{ fontSize: mapTiny ? 9 : 11, color: '#aaa', marginBottom: mapTiny ? 8 : 12 }}>
                 Click each country on the map
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: mapTiny ? 5 : 7 }}>
                 {QUIZ_COUNTRIES.map(({ iso, name, color }) => {
                   const found = quizFound.has(iso);
                   return (
@@ -682,7 +704,7 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
                         transition: 'background 400ms ease, box-shadow 400ms ease',
                         boxShadow:  found ? `0 0 7px ${color}` : 'none',
                       }} />
-                      <span style={{ fontSize: 12, fontWeight: found ? 600 : 400, flex: 1 }}>
+                      <span style={{ fontSize: mapTiny ? 10.5 : 12, fontWeight: found ? 600 : 400, flex: 1 }}>
                         {found ? name : '???'}
                       </span>
                       {found && (
@@ -693,15 +715,15 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
                 })}
               </div>
 
-              <div style={{ fontSize: 11, color: '#666', marginTop: 10, textAlign: 'right' }}>
+              <div style={{ fontSize: mapTiny ? 9.5 : 11, color: '#666', marginTop: 10, textAlign: 'right' }}>
                 {quizFound.size} / {QUIZ_COUNTRIES.length}
               </div>
             </>
           ) : (
             <div style={{ textAlign: 'center' }}>
               
-              <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>All 6 found!</div>
-              <div style={{ fontSize: 16, color: '#aaa', lineHeight: 1.5 }}>
+              <div style={{ fontSize: mapTiny ? 14 : 18, fontWeight: 700, marginBottom: 6 }}>All 6 found!</div>
+              <div style={{ fontSize: mapTiny ? 12 : mapCompact ? 14 : 16, color: '#aaa', lineHeight: 1.5 }}>
                 Russia, Canada, Norway, Greenland, Iceland and the United States all share a coastline
                 with the Arctic Ocean.
               </div>
@@ -713,10 +735,11 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
       {/* ── Globe toggle — disappears after switching ──────────────────────── */}
       {!isGlobe && !embed && !hideGlobeToggle && (
         <div style={{
-          height:    40,
+          height:    mapTiny ? 32 : 40,
           width:     'fit-content',
+          maxWidth:  `calc(100% - ${overlayInset * 2}px)`,
           position:  'absolute',
-          bottom:    24,
+          bottom:    mapTiny ? 12 : mapCompact ? 16 : 24,
           left:      '50%',
           transform: 'translateX(-50%)',
           zIndex:    10,
@@ -738,17 +761,19 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
               });
             }}
             style={{
-              padding:        '8px 18px',
+              padding:        globeButtonPadding,
               borderRadius:   30,
               border:         '1px solid rgba(255,255,255,0.4)',
               background:     'rgba(0,0,0,0.55)',
               color:          '#fff',
-              fontSize:       20,
+              fontSize:       globeFontSize,
               fontWeight:     600,
-              letterSpacing:  '0.05em',
+              letterSpacing:  mapTiny ? 0 : '0.05em',
               cursor:         'pointer',
               backdropFilter: 'blur(6px)',
               animation:      !globeClicked ? 'dragPulse 1.4s ease-in-out infinite' : 'none',
+              maxWidth:       '100%',
+              whiteSpace:     'normal',
             }}
           >
             🌍 View the Arctic from above
@@ -759,11 +784,11 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
       {showTemperatureLegend && (
         <div style={{
           position:             'absolute',
-          top:                  16,
-          right:                16,
+          top:                  overlayInset,
+          right:                overlayInset,
           zIndex:               10,
-          width:                230,
-          padding:              '11px 14px 10px',
+          width:                legendWidth,
+          padding:              overlayPadding,
           borderRadius:         8,
           background:           'rgba(255,255,255,0.9)',
           backdropFilter:       'blur(8px)',
@@ -779,24 +804,24 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
             justifyContent: 'space-between',
             alignItems:     'baseline',
             gap:            12,
-            marginBottom:   7,
+            marginBottom:   mapTiny ? 5 : 7,
           }}>
-            <span style={{ fontSize: 12, fontWeight: 700 }}>Temperature anomaly</span>
-            <span style={{ fontSize: 12, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+            <span style={{ fontSize: overlayTitleFont, fontWeight: 700 }}>Temperature anomaly</span>
+            <span style={{ fontSize: overlayTitleFont, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
               {Math.round(cogYear ?? 1880)}
             </span>
           </div>
           <div style={{
             width:        '100%',
-            height:       9,
+            height:       mapTiny ? 7 : 9,
             borderRadius: 999,
             background:   'linear-gradient(to right, #313695, #74add1, #f6f4e8, #fdae61, #a50026)',
-            marginBottom: 5,
+            marginBottom: mapTiny ? 4 : 5,
           }} />
           <div style={{
             display:        'flex',
             justifyContent: 'space-between',
-            fontSize:       10,
+            fontSize:       overlayTextFont,
             color:          '#435363',
           }}>
             <span>{cogVmin}°C</span>
@@ -987,11 +1012,11 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
       {showBathymetryLegend && (
         <div style={{
           position:             'absolute',
-          top:                  16,
-          right:                16,
+          top:                  overlayInset,
+          right:                overlayInset,
           zIndex:               10,
-          width:                190,
-          padding:              '11px 13px 10px',
+          width:                bathymetryLegendWidth,
+          padding:              overlayPadding,
           borderRadius:         8,
           background:           'rgba(255,255,255,0.9)',
           backdropFilter:       'blur(8px)',
@@ -1002,20 +1027,20 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
           opacity:              styleLoaded ? 1 : 0,
           transition:           'opacity 700ms ease',
         }}>
-          <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8 }}>
+          <div style={{ fontSize: overlayTitleFont, fontWeight: 700, marginBottom: mapTiny ? 6 : 8 }}>
             Bathymetry depth
           </div>
           <div style={{
             width:        '100%',
-            height:       10,
+            height:       mapTiny ? 8 : 10,
             borderRadius: 999,
             background:   'linear-gradient(to right, #d6eef7 0 14.285%, #89c5e8 14.285% 28.57%, #5baed6 28.57% 42.855%, #2980b9 42.855% 57.14%, #1d5f9e 57.14% 71.425%, #1a3f7a 71.425% 85.71%, #0d2a5c 85.71% 100%)',
-            marginBottom: 6,
+            marginBottom: mapTiny ? 4 : 6,
           }} />
           <div style={{
             display:        'flex',
             justifyContent: 'space-between',
-            fontSize:       10,
+            fontSize:       overlayTextFont,
             color:          '#435363',
           }}>
             <span>0 m</span>

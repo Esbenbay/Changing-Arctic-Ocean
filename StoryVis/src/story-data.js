@@ -225,9 +225,9 @@ export const STEPS = [
   {
     chapter: 'photosynthesis',
     layerId: 'Sea_weed',
-    title:   'Arctic Seafloor Photosynthesis (Add images or figure)',
+    title:   'Arctic Seafloor Photosynthesis',
     bubble:  { arrow: 'right' },
-    text:    'Seaweed catches sunlight and uses it like energy. It takes carbon dioxide from the water and turns it into sugar, which helps it grow and stay alive. While it does this, it releases oxygen back into the water. The ocean breathes in carbon dioxide and breathes out oxygen, and seaweed is a big part of that process on the seafloor.',
+    text:    'Seaweeds and tiny algae on the seafloor use energy from sunlight to grow. Like plants on land, they use this light to take carbon dioxide from the water and turn it into new living material. At the same time, they release oxygen. \nIn shallow Arctic coastal waters, this growth can provide food and habitat for life near the seabed.',
   },
   {
     chapter:         'photosynthesis',
@@ -241,8 +241,9 @@ export const STEPS = [
     chapter: 'photosynthesis',
     layerId: 'Eddy',
     bubble:  { arrow: 'right' },
+     image:   { src: `${BASE}Eddy_deploy.webp`, caption: 'Baltic Sea' },
     title:   'Eddy Covariance System',
-    text:    'To estimate the impacts of changing ocean conditions on the seafloor, we deploy an eddy covariance system on the seafloor (Karl add more)',
+    text:    'To estimate the impacts of changing ocean conditions on the seafloor, we deploy an eddy covariance system on the seafloor.',
   },
   {
     chapter: 'photosynthesis',
