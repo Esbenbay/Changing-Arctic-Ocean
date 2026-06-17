@@ -277,7 +277,7 @@ export default function Evaluation() {
 
           <p style={{ fontSize: '1.3rem', color: '#000000', margin: '0 0 48px', lineHeight: 1.6 }}>
             {pageIndex === 0
-              ? 'A few quick background questions before we start.'
+              ? <>The evaluation will be used to improve the future user experience and for research purposes.<br />A few quick background questions before we start.</>
               : <>Rate each statement from <strong style={{ color: '#030303f' }}>1</strong> (Strongly disagree) to <strong style={{ color: '#1c1c1c' }}>7</strong> (Strongly agree).</>
             }
           </p>
