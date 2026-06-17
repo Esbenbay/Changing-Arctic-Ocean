@@ -34,8 +34,7 @@ export default function StoryScene() {
   const [photoAnchorPos, setPhotoAnchorPos] = useState(null);
   const [erosionProgress, setErosionProgress] = useState(0);
   const [introMapShrunk, setIntroMapShrunk] = useState(false);
-  const [isClipTransitioning, setIsClipTransitioning] = useState(false);
-  const [isClipAnimating, setIsClipAnimating] = useState(false);
+  const [introHandoffPhase, setIntroHandoffPhase] = useState('idle');
   const [scrollLocked, setScrollLocked] = useState(false);
   const [chapterTransitioning, setChapterTransitioning] = useState(false);
 
@@ -48,7 +47,9 @@ export default function StoryScene() {
 
   // Lock scroll during fly-out + clip animation so the user can't skip past them
   useEffect(() => {
-    if (landingFading && !scrollLocked && !introMapShrunk) setScrollLocked(true);
+    if (!landingFading || scrollLocked || introMapShrunk) return undefined;
+    const frame = requestAnimationFrame(() => setScrollLocked(true));
+    return () => cancelAnimationFrame(frame);
   }, [landingFading, scrollLocked, introMapShrunk]);
 
   useEffect(() => {
@@ -84,7 +85,6 @@ export default function StoryScene() {
   };
 
   // Derive layout flags directly from the step's chapter — no magic offsets
-  const sceneStarted    = step.chapter !== 'intro';
   const inWideChapter    = step.chapter === 'seasons' || step.chapter === 'svg' || step.chapter === 'photosynthesis' || step.chapter === 'shipping' || step.chapter === 'polar';
   const inSvgChapter       = step.chapter === 'svg';
   const inPhotoChapter     = step.chapter === 'photosynthesis';
@@ -93,7 +93,15 @@ export default function StoryScene() {
   const inEvaluationChapter  = step.chapter === 'evaluation';
   const inMapIntroStep     = step.chapter === 'intro' && !!step.camera;
   const mapIsFullScreen    = inMapIntroStep && !introMapShrunk;
-  const showIntroMap       = (step.chapter === 'intro' && (inMapIntroStep || introMapShrunk || !!step.lineChartStep)) || step.chapter === 'map';
+  const introHandoffActive = introHandoffPhase === 'crossfading';
+  const firstMapOverviewStep = step.chapter === 'map' && step.camera === 'world-overview';
+  const introTemperatureOpacity = introMapShrunk && !!step.lineChartStep && introHandoffPhase !== 'preparing'
+    ? 0.62
+    : 0;
+  const introCogFadeDuration = introHandoffActive || introHandoffPhase === 'settling' ? 1700 : 250;
+  const showCinematicIntroMap = mapIsFullScreen || introHandoffActive;
+  const showTwoColumnMap = !showCinematicIntroMap && !inWideChapter && (step.chapter === 'map' || !!step.lineChartStep);
+  const twoColumnStarted = introMapShrunk || step.chapter !== 'intro';
   // Season accordion active tab: clamped to last index once SVG chapter starts
   const seasonIndex = step.chapter === 'seasons' ? step.seasonIndex
                     : step.chapter === 'svg'     ? SEASONS.length - 1
@@ -126,7 +134,7 @@ export default function StoryScene() {
   const sticky2EndIndex      = lineChartStepIndices[lineChartStepIndices.length - 1] ?? -1;
   const lineChartStep        = step.lineChartStep ?? STEPS[viewPoint + 1]?.lineChartStep ?? null;
 
-  const leftClass = `scrolly-left ${sceneStarted ? 'show' : ''}`;
+  const leftClass = `scrolly-left ${twoColumnStarted ? 'show' : ''}`;
 
   // Map a layer ID to a figure component for that bubble.
   const bubbleFigure = step.layerId === 'Sea_ice_early'
@@ -173,83 +181,46 @@ export default function StoryScene() {
           />
         )}
 
-        {/* Intro map — full-screen on step 0, left-panel with temperature layer on lineChart steps.
-            Transition uses clip-path instead of width/height/top/left so Mapbox never resizes
-            its canvas mid-animation (no tile re-render = no jank). Once the clip animation
-            finishes the container silently resizes to the real panel dimensions. */}
-        {showIntroMap && (() => {
-          // During the clip transition keep the container at 100vw×100vh and animate
-          // clip-path. After the timeout the container snaps to panel size (invisible
-          // because the clip already shows exactly that area).
-          const useFullScreen = mapIsFullScreen || isClipTransitioning || isClipAnimating;
-
-          // right inset = 100vw - page-pad - panel-width
-          // panel-width = (100vw - 2*18px)*0.6 - 1vh  →  40vw + 3.6px + 1vh
-          const CLIP_FULL  = 'inset(0px 0px 0px 0px round 0px)';
-          const CLIP_PANEL = 'inset(5vh calc(40vw + 3.6px + 1vh) 5vh 18px round 12px)';
-
+        {/* Cinematic intro map: full-screen only for the Svalbard fly-out, then
+            fades away while the normal two-column layout fades in underneath. */}
+        {showCinematicIntroMap && (() => {
           return (
             <div style={{
               position:     'fixed',
-              top:          useFullScreen ? 0 : '5vh',
-              left:         useFullScreen ? 0 : 'var(--page-pad)',
-              width:        useFullScreen ? '100vw' : 'calc((100vw - 2 * var(--page-pad)) * 0.60 - var(--col-gap) / 2)',
-              height:       useFullScreen ? '100vh' : '90vh',
-              borderRadius: useFullScreen ? 0 : 12,
+              inset:        0,
               overflow:     'hidden',
               zIndex:       4,
               background:   '#07111c',
-              opacity:      introMapOpacity,
-              clipPath:     mapIsFullScreen ? CLIP_FULL : isClipAnimating ? CLIP_PANEL : isClipTransitioning ? CLIP_FULL : 'none',
-              transition:   isClipTransitioning
-                ? 'clip-path 1600ms cubic-bezier(0.4,0,0.2,1), opacity 950ms ease-out'
-                : 'opacity 950ms ease-out',
-              pointerEvents: (!useFullScreen && showIntroMap && mapRevealed) ? 'auto' : 'none',
+              opacity:      introHandoffActive ? 0 : introMapOpacity,
+              transition:   introHandoffActive ? 'opacity 1400ms ease' : 'opacity 950ms ease-out',
+              pointerEvents: 'none',
             }}>
               <NewMap
-                cameraKey={
-                  mapIsFullScreen                       ? step.camera
-                  : (isClipTransitioning || isClipAnimating) ? 'intro-arctic'  // freeze camera during clip
-                  : step.chapter === 'map'              ? step.camera
-                  : showIntroMap                        ? 'global-temp'
-                  : undefined
-                }
-                hideGlobeToggle={step.chapter !== 'map'}
-                embed={step.chapter !== 'map'}
+                cameraKey="intro-arctic"
+                hideGlobeToggle
+                embed
                 initialViewState={{ longitude: 16.57969, latitude: 77.82355, zoom: 9.508 }}
                 mapRevealed={mapRevealed}
                 introFlyTriggered={introFlyTriggered}
                 onFlyOutComplete={() => {
-                  // 1. Switch to light style (satellite kept during the 9 s fly).
-                  //    style.load fires setStyleLoaded(true) as soon as style JSON is ready
-                  //    (~300-500 ms), so COG colors appear during the clip animation.
                   setIntroMapShrunk(true);
-                  // 2. Enable clip-path transition while container is still at CLIP_FULL.
-                  setIsClipTransitioning(true);
+                  setViewPoint(1);
+                  setIntroHandoffPhase('crossfading');
+
+                  requestAnimationFrame(() => {
+                    const el = document.querySelector('[data-step="1"]');
+                    if (el) {
+                      const rect = el.getBoundingClientRect();
+                      window.scrollTo({ top: window.scrollY + rect.top - window.innerHeight * 0.60 });
+                    }
+                  });
+
                   setTimeout(() => {
-                    // 3. One frame later: change clip-path to CLIP_PANEL → CSS animates it.
-                    setIsClipAnimating(true);
-                    setTimeout(() => {
-                      // 4. Clip done → snap container to real panel size, then
-                      //    scroll so step 1 enters the Scrollama trigger zone (60 % from top).
-                      //    This fires viewPoint=1 and shows the text card below the chart.
-                      setIsClipTransitioning(false);
-                      setIsClipAnimating(false);
-                      setScrollLocked(false);
-                      const el = document.querySelector('[data-step="1"]');
-                      if (el) {
-                        const rect = el.getBoundingClientRect();
-                        const scrollTarget = window.scrollY + rect.top - window.innerHeight * 0.60;
-                        window.scrollTo({ top: scrollTarget, behavior: 'smooth' });
-                      }
-                    }, 1700);
-                  }, 50);
+                    setIntroHandoffPhase('settling');
+                    setScrollLocked(false);
+                    setTimeout(() => setIntroHandoffPhase('settled'), 650);
+                  }, 1400);
                 }}
-                cogUrl={cogUrl}
-                cogYear={scrollYear ?? COG_START_YEAR}
-                cogOpacity={!!step.lineChartStep && viewPoint >= 1 ? 0.62 : 0}
-                useLightStyle={step.chapter === 'map' || introMapShrunk}
-                quizMode={step.quiz === true}
               />
             </div>
           );
@@ -329,9 +300,9 @@ export default function StoryScene() {
       document.body
     )}
     {mapRevealed && <div
-      className={`scrolly-layout ${(sceneStarted && !showIntroMap) ? '' : 'is-intro'}`}
+      className={`scrolly-layout ${(twoColumnStarted && !showCinematicIntroMap) ? '' : 'is-intro'}`}
       style={{
-        ...(!sceneStarted || showIntroMap ? { position: 'relative', zIndex: 1 } : undefined),
+        ...(!twoColumnStarted || showCinematicIntroMap ? { position: 'relative', zIndex: 1 } : undefined),
         opacity:       (inSvgChapter || inPhotoChapter || inEvaluationChapter) ? 0 : 1,
         transition:    'opacity 2000ms ease',
         pointerEvents: (inSvgChapter || inPhotoChapter || inEvaluationChapter) ? 'none' : 'auto',
@@ -348,10 +319,16 @@ export default function StoryScene() {
             pointerEvents: inWideChapter ? 'none' : 'auto',
           }}
         >
-          {!mapIsFullScreen && !showIntroMap && (
+          {showTwoColumnMap && (
             <NewMap
-              cameraKey={step.chapter === 'map' ? step.camera : undefined}
+              cameraKey={step.chapter === 'map' ? step.camera : 'world-overview'}
               quizMode={step.quiz === true}
+              hideGlobeToggle={!firstMapOverviewStep}
+              cogUrl={cogUrl}
+              cogYear={scrollYear ?? COG_START_YEAR}
+              cogOpacity={introTemperatureOpacity}
+              cogFadeDuration={introCogFadeDuration}
+              useLightStyle={introMapShrunk || step.chapter === 'map'}
             />
           )}
         </div>

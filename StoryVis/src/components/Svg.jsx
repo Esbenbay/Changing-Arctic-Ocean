@@ -137,7 +137,12 @@ export default function SvgPanel({ src, activeLayerId, iceYear, onAnchorPosition
           const anchorEl     = onAnchorPosition
             ? (fallbackLayer ? findAnchor(fallbackLayer) : null)
             : null;
-          zoomToLayer(svg, containerRef.current, zoomLabel, { noTransition: true, anchorEl, onAnchorPosition });
+          zoomToLayer(svg, containerRef.current, zoomLabel, {
+            noTransition: true,
+            maxZoom: fallbackCfg.maxZoom,
+            anchorEl,
+            onAnchorPosition,
+          });
         }
 
 
@@ -158,6 +163,7 @@ export default function SvgPanel({ src, activeLayerId, iceYear, onAnchorPosition
       : null;
     zoomToLayer(svg, containerRef.current, zoomLabel, {
       transition: cfg.zoomTransition,
+      maxZoom: cfg.maxZoom,
       anchorEl,
       onAnchorPosition,
     });

@@ -91,7 +91,7 @@ const COG_YEARS = [...Array.from({ length: 15 }, (_, i) => 1880 + i * 10), 2025]
 
 const alterSpeed = 0.8;
 const alterPitch = 2;
-const introFlyEasing = t => t * t * t;
+const introFlyEasing = t => t * t * (3 - 2 * t);
 
 const snapCogYear = year =>
   Math.max(1880, Math.min(2025, Math.round(year / 10) * 10));
@@ -204,7 +204,7 @@ function buildQuizOpacityExpr(found) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeToggle = false, initialViewState, mapRevealed = false, introFlyTriggered = false, onFlyOutComplete, cogUrl, cogYear, cogOpacity = 0, cogVmin = -3, cogVmax = 3, useLightStyle = false }) {
+export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeToggle = false, initialViewState, mapRevealed = false, introFlyTriggered = false, onFlyOutComplete, cogUrl, cogYear, cogOpacity = 0, cogFadeDuration = 250, cogVmin = -3, cogVmax = 3, useLightStyle = false }) {
   const temperatureMapActive = cogUrl && cogOpacity > 0.3;
   const targetMapStyle = useLightStyle ? TEMPERATURE_MAP_STYLE : SATELLITE_MAP_STYLE;
 
@@ -223,7 +223,9 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
   const cogReqRef   = useRef(0);
   const cogReadyRef = useRef(false);
   const cogInFlightRef = useRef(new window.Map());
-  const [cogLayer,  setCogLayer] = useState(null);
+  const [cogLayer,     setCogLayer]     = useState(null);
+  const [slotAOpacity, setSlotAOpacity] = useState(0);
+  const [slotBOpacity, setSlotBOpacity] = useState(0);
 
   const [isGlobe, setIsGlobe]                   = useState(false);
   const [styleLoaded, setStyleLoaded]           = useState(false);
@@ -282,6 +284,8 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
       cogReadyRef.current = false;
       cogSlotRef.current  = 'a';
       setCogLayer(null);
+      setSlotAOpacity(0);
+      setSlotBOpacity(0);
       setStyleLoaded(false);
       setAppliedMapStyle(targetMapStyle);
     }, 0);
@@ -392,14 +396,15 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
 
     flyOutFiredRef.current = true;
     const FLY_DURATION = 9000;
+    const targetCamera = CAMERAS['world-overview'];
     map.stop();
-    map.setProjection('mercator');
+    map.setProjection(targetCamera.projection ?? 'mercator');
     map.flyTo({
-      center: [1, 0],
-      zoom: 0.5,
+      center: targetCamera.center,
+      zoom: targetCamera.zoom,
       duration: FLY_DURATION,
-      pitch: 0,
-      bearing: 0,
+      pitch: targetCamera.pitch ?? 0,
+      bearing: targetCamera.bearing ?? 0,
       easing: introFlyEasing,
       essential: true,
     });
@@ -453,16 +458,15 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
     loadCogYear(yr).then(result => {
       if (id !== cogReqRef.current) return;
       if (!cogReadyRef.current) {
-        setCogLayer(result);
+        // First show after style switch: mount at zero, then ramp up on the
+        // next frame so late COG decodes still fade in instead of popping.
         cogReadyRef.current = true;
-        if (cogOpacity > 0) {
-          setTimeout(() => {
-            const m = mapRef.current?.getMap();
-            if (!m?.isStyleLoaded() || !hasCogLayer(m, 'a')) return;
-            m.setPaintProperty('cog-raster-a', 'raster-opacity-transition', { duration: 800, delay: 0 });
-            m.setPaintProperty('cog-raster-a', 'raster-opacity', cogOpacity);
-          }, 0);
-        }
+        setCogLayer(result);
+        setSlotBOpacity(0);
+        setSlotAOpacity(0);
+        requestAnimationFrame(() => {
+          if (id === cogReqRef.current) setSlotAOpacity(cogOpacity);
+        });
         return;
       }
       const map = mapRef.current?.getMap();
@@ -470,29 +474,28 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
       const next = cogSlotRef.current === 'a' ? 'b' : 'a';
       const prev = cogSlotRef.current;
       if (!hasCogLayer(map, next) || !hasCogLayer(map, prev)) {
+        // Fallback: reset to slot-a with new data
         setCogLayer(result);
         cogSlotRef.current = 'a';
+        setSlotAOpacity(cogOpacity);
+        setSlotBOpacity(0);
         return;
       }
+      // Normal crossfade: update next slot image then swap opacities via state
       map.getSource(`cog-${next}`).updateImage({ url: result.dataUrl, coordinates: result.coordinates });
-      map.setPaintProperty(`cog-raster-${next}`, 'raster-opacity-transition', { duration: 300, delay: 0 });
-      map.setPaintProperty(`cog-raster-${next}`, 'raster-opacity', cogOpacity);
-      map.setPaintProperty(`cog-raster-${prev}`, 'raster-opacity-transition', { duration: 300, delay: 0 });
-      map.setPaintProperty(`cog-raster-${prev}`, 'raster-opacity', 0);
       cogSlotRef.current = next;
+      if (next === 'a') { setSlotAOpacity(cogOpacity); setSlotBOpacity(0); }
+      else              { setSlotBOpacity(cogOpacity); setSlotAOpacity(0); }
     }).catch(() => {});
   }, [cogYear, cogUrl, styleLoaded, cogOpacity, loadCogYear]);
 
   // ── COG temperature layer: fade in/out when cogOpacity changes ────────────
   useEffect(() => {
-    if (!styleLoaded || !cogLayer) return;
-    const map = mapRef.current?.getMap();
-    if (!map?.isStyleLoaded()) return;
-    const activeSlot = cogSlotRef.current;
-    if (!hasCogLayer(map, activeSlot)) return;
-    map.setPaintProperty(`cog-raster-${activeSlot}`, 'raster-opacity-transition', { duration: 800, delay: 0 });
-    map.setPaintProperty(`cog-raster-${activeSlot}`, 'raster-opacity', cogOpacity);
-  }, [cogOpacity, styleLoaded, cogLayer]);
+    if (!cogLayer) return;
+    const slot = cogSlotRef.current;
+    if (slot === 'a') setSlotAOpacity(cogOpacity);
+    else              setSlotBOpacity(cogOpacity);
+  }, [cogOpacity, cogLayer]);
 
   // ── Cleanup ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -690,7 +693,13 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
               track('globe_toggle');
               map.setProjection('globe');
               setIsGlobe(true);
-              map.flyTo({ center: [0, 85], zoom: 2.7, pitch: 0, bearing: 0, duration: 5000 });
+              map.flyTo({
+                center: [0, 90],
+                zoom: 2.6,
+                pitch: 0,
+                bearing: 0,
+                duration: 5000,
+              });
             }}
             style={{
               padding:        '8px 18px',
@@ -929,10 +938,10 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
         {/* COG temperature anomaly — two-slot crossfade, opacity driven by parent */}
         {cogLayer && <>
           <Source id="cog-a" type="image" url={cogLayer.dataUrl} coordinates={cogLayer.coordinates}>
-            <Layer id="cog-raster-a" type="raster" paint={{ 'raster-opacity': 0 }} />
+            <Layer id="cog-raster-a" type="raster" paint={{ 'raster-opacity': slotAOpacity, 'raster-opacity-transition': { duration: cogFadeDuration, delay: 0 } }} />
           </Source>
           <Source id="cog-b" type="image" url={cogLayer.dataUrl} coordinates={cogLayer.coordinates}>
-            <Layer id="cog-raster-b" type="raster" paint={{ 'raster-opacity': 0 }} />
+            <Layer id="cog-raster-b" type="raster" paint={{ 'raster-opacity': slotBOpacity, 'raster-opacity-transition': { duration: cogFadeDuration, delay: 0 } }} />
           </Source>
         </>}
 
