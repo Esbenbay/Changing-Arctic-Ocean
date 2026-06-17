@@ -21,15 +21,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
-     inkscape:zoom="0.90175708"
-     inkscape:cx="1064.0338"
-     inkscape:cy="475.1834"
+     inkscape:zoom="4.1964216"
+     inkscape:cx="508.64766"
+     inkscape:cy="489.82209"
      inkscape:window-width="2560"
      inkscape:window-height="1292"
      inkscape:window-x="1728"
      inkscape:window-y="30"
      inkscape:window-maximized="0"
-     inkscape:current-layer="illustration_layers" />
+     inkscape:current-layer="Light_production" />
   <defs
      id="defs69">
     <linearGradient
@@ -3634,7 +3634,7 @@
          clip-path="url(#clippath-1)"
          id="g9515"
          style="display:inline"
-         transform="translate(-0.76171875,0.171875)">
+         transform="translate(-0.76171875,1.3091731)">
         <g
            id="g9"
            inkscape:label="Background"
@@ -3684,22 +3684,22 @@
           </g>
           <polygon
              class="cls-136"
-             points="430.05,637.51 418.56,638.21 417.07,636.37 425.75,636.01 "
+             points="418.56,638.21 417.07,636.37 425.75,636.01 430.05,637.51 "
              id="polygon9512"
              style="display:inline" />
           <polygon
              class="cls-136"
-             points="391.48,634.29 395.99,634.34 399.2,635.22 397.13,636.15 391.69,636.52 385.37,635.22 380.55,633.87 384.23,633.82 386.15,634.5 390.34,634.65 "
+             points="395.99,634.34 399.2,635.22 397.13,636.15 391.69,636.52 385.37,635.22 380.55,633.87 384.23,633.82 386.15,634.5 390.34,634.65 391.48,634.29 "
              id="polygon9513"
              style="display:inline" />
           <polygon
              class="cls-38"
-             points="905.88,695.04 1920,695.04 1920,694.01 1920,686.09 892.53,686.09 "
+             points="1920,695.04 1920,694.01 1920,686.09 892.53,686.09 905.88,695.04 "
              id="polygon9514"
              style="display:inline;fill:url(#linearGradient12672)" />
           <polygon
              class="cls-39"
-             points="513.78,695.04 905.88,695.04 892.53,686.09 538.78,686.09 508.96,687.65 "
+             points="905.88,695.04 892.53,686.09 538.78,686.09 508.96,687.65 513.78,695.04 "
              id="polygon9515"
              style="display:inline;fill:url(#linear-gradient-5)" />
           <path
@@ -3752,7 +3752,7 @@
           </g>
           <polygon
              class="cls-44"
-             points="596.98,860.4 793.54,846.53 949.08,885.43 1085.66,1028.77 50,1028.65 50,765.91 474.61,800.92 "
+             points="793.54,846.53 949.08,885.43 1085.66,1028.77 50,1028.65 50,765.91 474.61,800.92 596.98,860.4 "
              id="polygon11362"
              style="display:inline;opacity:1;fill:#4d4d4d" />
           <g
@@ -3799,7 +3799,7 @@
            style="display:inline">
           <polygon
              class="cls-218"
-             points="64.14,212.38 75.85,201.92 102.38,215.41 105.56,281.98 105.56,397.32 49.48,386 49.62,241.34 "
+             points="75.85,201.92 102.38,215.41 105.56,281.98 105.56,397.32 49.48,386 49.62,241.34 64.14,212.38 "
              id="polygon9330"
              style="fill:#ececec" />
           <path
@@ -3809,7 +3809,7 @@
              style="fill:#e3e2db;fill-opacity:1" />
           <polygon
              class="cls-235"
-             points="60.63,281.98 49.8,298.18 49.8,526.63 153.74,372.49 "
+             points="49.8,298.18 49.8,526.63 153.74,372.49 60.63,281.98 "
              id="polygon9331"
              style="fill:#f4e3d7" />
           <path
@@ -3820,37 +3820,37 @@
              sodipodi:nodetypes="cccccccccc" />
           <polygon
              class="cls-77"
-             points="116.11,189.38 153.74,372.49 60.63,281.98 "
+             points="153.74,372.49 60.63,281.98 116.11,189.38 "
              id="polygon9332"
              style="fill:#ececec" />
           <polygon
              class="cls-233"
-             points="145.58,332.77 258.01,448.37 256.56,393.5 "
+             points="258.01,448.37 256.56,393.5 145.58,332.77 "
              id="polygon9333"
              style="fill:#e6e6e6" />
           <polygon
              class="cls-182"
-             points="260.45,480.08 258.01,448.37 145.58,332.77 153.74,372.49 "
+             points="258.01,448.37 145.58,332.77 153.74,372.49 260.45,480.08 "
              id="polygon9334"
              style="fill:#f2f2f2" />
           <polygon
              class="cls-233"
-             points="194.06,247.77 188.56,218.48 131.5,264.25 145.58,332.77 205.37,286.77 "
+             points="188.56,218.48 131.5,264.25 145.58,332.77 205.37,286.77 194.06,247.77 "
              id="polygon9335"
              style="fill:#b3b3b3" />
           <polygon
              class="cls-58"
-             points="83.47,384.69 136.57,418.18 182.29,437.86 219.7,501.23 263.94,571.95 315.96,601.52 0.65,603.23 0.65,236.67 23.38,305.39 64.38,338.88 "
+             points="136.57,418.18 182.29,437.86 219.7,501.23 263.94,571.95 315.96,601.52 0.65,603.23 0.65,236.67 23.38,305.39 64.38,338.88 83.47,384.69 "
              id="polygon9368"
              style="display:inline;fill:#ffe6d5" />
           <polygon
              class="cls-239"
-             points="82.83,336.49 90.2,373.98 123.41,391.95 184.61,432.12 219.05,501.23 0,499.9 0,188.46 22.73,257.19 63.73,290.67 "
+             points="90.2,373.98 123.41,391.95 184.61,432.12 219.05,501.23 0,499.9 0,188.46 22.73,257.19 63.73,290.67 82.83,336.49 "
              id="polygon9367"
              style="display:inline;fill:#e9c6af" />
           <polygon
              class="cls-239"
-             points="263.29,571.95 201.67,432.8 236.95,438.65 280.5,510.72 309.23,543.29 313.2,600.33 "
+             points="201.67,432.8 236.95,438.65 280.5,510.72 309.23,543.29 313.2,600.33 263.29,571.95 "
              id="polygon9365"
              style="display:inline;fill:#b3caa0;fill-opacity:0.311966" />
           <ellipse
@@ -3860,17 +3860,16 @@
              cy="349.57349"
              rx="4.664"
              ry="2.5912821"
-             inkscape:label="bubble_anchor"
-             transform="translate(-2.5e-7)" />
+             inkscape:label="bubble_anchor" />
         </g>
         <polygon
            class="cls-62"
-           points="263.29,571.95 219.05,501.23 135.92,474.32 82.83,471.71 63.73,449.66 22.73,416.18 0,391.95 0,1028.57 1628.56,1028.77 1556.1,935.8 1527.1,911.7 1500.75,894.01 1441.95,886.29 1390.68,843.78 1311.75,837.77 1250.21,799.48 1085.7,784.58 1020.15,759.24 940.84,742.98 691.15,749.6 530.1,721.25 503.7,679.24 446.54,667.16 430.3,647.9 373.08,632.78 315.31,601.52 "
+           points="219.05,501.23 135.92,474.32 82.83,471.71 63.73,449.66 22.73,416.18 0,391.95 0,1028.57 1628.56,1028.77 1556.1,935.8 1527.1,911.7 1500.75,894.01 1441.95,886.29 1390.68,843.78 1311.75,837.77 1250.21,799.48 1085.7,784.58 1020.15,759.24 940.84,742.98 691.15,749.6 530.1,721.25 503.7,679.24 446.54,667.16 430.3,647.9 373.08,632.78 315.31,601.52 263.29,571.95 "
            id="polygon9373"
            style="display:inline;fill:#808080" />
         <polygon
            class="cls-44"
-           points="793.54,846.53 949.08,885.43 1085.66,1028.77 50,1028.65 50,765.91 474.61,800.92 596.98,860.4 "
+           points="949.08,885.43 1085.66,1028.77 50,1028.65 50,765.91 474.61,800.92 596.98,860.4 793.54,846.53 "
            id="polygon11362-8"
            style="display:inline;fill:#4d4d4d"
            transform="matrix(1.3174109,0,0,1,-16.876859,32.624357)" />
@@ -6206,10 +6205,10 @@
                style="fill:#2b90fd" />
           </g>
           <ellipse
-             style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.851826;stroke-dasharray:none;stroke-opacity:0.547468"
+             style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.851826;stroke-dasharray:none;stroke-opacity:1"
              id="path91-0-4-3"
-             cx="1182.1094"
-             cy="366.84964"
+             cx="1183.2673"
+             cy="412.71423"
              rx="4.3546705"
              ry="4.1098404"
              inkscape:label="bubble_anchor"
@@ -35941,10 +35940,10 @@
                id="polygon11394" />
           </g>
           <ellipse
-             style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.211433;stroke-dasharray:none;stroke-opacity:0.547468"
+             style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.211433;stroke-dasharray:none;stroke-opacity:1"
              id="path91-0-2-4"
-             cx="1091.9595"
-             cy="736.98474"
+             cx="1093.9922"
+             cy="749.03973"
              rx="1.5841863"
              ry="0.69601214"
              inkscape:label="bubble_anchor" />
@@ -37705,8 +37704,7 @@
       <g
          id="g2-7"
          inkscape:label="Waves"
-         style="display:inline"
-         sodipodi:insensitive="true">
+         style="display:inline">
         <path
            id="path5-2-21-3-1"
            style="display:inline;fill:url(#linearGradient9);stroke-width:0.191131"
@@ -37728,12 +37726,12 @@
            d="m 1144.1749,670.88092 c -14.1045,-0.25917 -28.3134,0.36325 -42.1048,2.22804 -27.5826,3.31521 -56.8376,4.14468 -83.5844,0.82948 -13.3733,-1.6576 -27.88337,-7.90432 -41.88357,-8.16331 -14.0003,-0.259 -27.49119,5.46904 -40.86459,7.33383 -26.7468,3.72959 -55.5834,4.5581 -81.91227,1.2429 -26.32897,-3.31519 -31.83242,-11.04993 -56.90749,-8.14913 -25.07516,2.90081 -74.3191,10.22212 -98.55838,7.73571 -20.63378,-2.11655 -24.29118,-11.52229 -45.10509,-9.86911 -0.59288,0.15251 -18.7622,9.10168 -19.3519,9.25943 -1.73368,0.47649 -3.33494,1.12657 -5.01007,1.68118 -0.67647,0.24242 -1.32541,0.51543 -1.96009,0.80199 -0.26364,0.13626 -0.50942,0.29496 -0.73157,0.45267 -0.27304,0.22847 -0.55099,0.45154 -0.73584,0.71172 -0.10123,0.14755 -0.14348,0.29102 -0.18129,0.44483 -0.0109,0.0827 -0.0179,0.16441 -0.0363,0.24596 h 668.22955 l 12.9961,0.18417 c -2.114,-0.64484 -20.3537,-3.43965 -27.1873,-3.87813 -7.5197,0.2207 -15.1084,1.01422 -22.608,1.7478 -25.911,2.9008 -44.2785,1.53257 -71.0251,-1.78263 -13.3736,-1.6576 -27.3732,-2.79834 -41.4776,-3.05752 z"
            sodipodi:nodetypes="scssssssccccccccccscsss" />
         <ellipse
-           style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.7;stroke-dasharray:none;stroke-opacity:0.547468"
+           style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1.00375;stroke-dasharray:none;stroke-opacity:1"
            id="path91-0-2-1"
-           cx="988.40631"
-           cy="455.93042"
-           rx="4.664"
-           ry="2.5912821"
+           cx="998.67999"
+           cy="472.05573"
+           rx="5.8328562"
+           ry="4.260345"
            inkscape:label="bubble_anchor" />
       </g>
       <g
@@ -38186,10 +38184,10 @@
              sodipodi:nodetypes="ccccc" />
         </g>
         <ellipse
-           style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.7;stroke-dasharray:none;stroke-opacity:0.547468"
+           style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.7;stroke-dasharray:none;stroke-opacity:1"
            id="path91"
-           cx="1381.4259"
-           cy="613.09198"
+           cx="1382.6227"
+           cy="650.33191"
            rx="4.664"
            ry="2.5912821"
            inkscape:label="bubble_anchor" />
@@ -46717,10 +46715,10 @@
              style="fill:url(#radial-gradient)" />
         </g>
         <ellipse
-           style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.7;stroke-dasharray:none;stroke-opacity:0.547468"
+           style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.7;stroke-dasharray:none;stroke-opacity:1"
            id="path91-0-2-1-3"
-           cx="478.69955"
-           cy="668.93011"
+           cx="393.09244"
+           cy="710.63837"
            rx="4.664"
            ry="2.5912821"
            inkscape:label="bubble_anchor" />

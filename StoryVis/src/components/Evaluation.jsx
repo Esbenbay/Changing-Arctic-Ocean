@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { trackEvent, flushToSheet } from '../tracker.js';
 
 // ── Page definitions ──────────────────────────────────────────────────────────
@@ -15,6 +15,10 @@ const PAGES = [
         text: 'How would you rate your prior knowledge of the Arctic Ocean?',
         leftLabel: 'No knowledge', rightLabel: 'Expert knowledge',
       },
+      {
+        id: 'background_comment', type: 'text', optional: true,
+        text: 'Anything you would like to add about your background or expectations?',
+      },
     ],
   },
   {
@@ -23,6 +27,7 @@ const PAGES = [
       { id: 'U1', type: 'likert', text: 'The tool was easy to use.' },
       { id: 'U2', type: 'likert', text: 'The scrolling interaction felt natural.' },
       { id: 'U3', type: 'likert', text: 'I always knew where I was in the story.' },
+      { id: 'U_comment', type: 'text', optional: true, text: 'What, if anything, made the tool difficult or easy to use?' },
     ],
   },
   {
@@ -31,6 +36,7 @@ const PAGES = [
       { id: 'N1', type: 'likert', text: 'The story was easy to follow.' },
       { id: 'N2', type: 'likert', text: 'The chapter structure helped me understand the topic step by step.' },
       { id: 'N3', type: 'likert', text: 'The amount of information presented was manageable.' },
+      { id: 'N_comment', type: 'text', optional: true, text: 'Was there any part of the story that felt unclear or especially helpful?' },
     ],
   },
   {
@@ -39,6 +45,7 @@ const PAGES = [
       { id: 'V1', type: 'likert', text: 'The visual changes helped me understand the accompanying text.' },
       { id: 'V2', type: 'likert', text: 'The text made it clear what I should look at in the visualizations.' },
       { id: 'V3', type: 'likert', text: 'The highlighting and revealing of elements guided my attention.' },
+      { id: 'V_comment', type: 'text', optional: true, text: 'Which visual element worked best, or could be improved?' },
     ],
   },
   {
@@ -47,6 +54,7 @@ const PAGES = [
       { id: 'L1', type: 'likert', text: 'The tool helped me understand how the Arctic Ocean is changing.' },
       { id: 'L2', type: 'likert', text: 'The tool helped me understand relationships between sea ice, light, ocean conditions, and biological processes.' },
       { id: 'L3', type: 'likert', text: 'I learned something new about the Arctic Ocean.' },
+      { id: 'L_comment', type: 'text', optional: true, text: 'What is one thing you learned or still wondered about?' },
     ],
   },
   {
@@ -55,6 +63,7 @@ const PAGES = [
       { id: 'E1', type: 'likert', text: 'I found the scrollytelling experience engaging.' },
       { id: 'E2', type: 'likert', text: 'The visual design made me want to continue through the story.' },
       { id: 'E3', type: 'likert', text: 'I would recommend this tool to someone interested in climate or ocean science.' },
+      { id: 'E_comment', type: 'text', optional: true, text: 'Any final thoughts or suggestions for the experience?' },
     ],
   },
 ];
@@ -119,6 +128,32 @@ function ChoiceButtons({ value, options, onChange, color }) {
   );
 }
 
+function FreeTextField({ value, onChange, color }) {
+  return (
+    <textarea
+      value={value ?? ''}
+      onChange={e => onChange(e.target.value)}
+      placeholder="Optional"
+      rows={4}
+      style={{
+        width:       '100%',
+        minHeight:   120,
+        resize:      'vertical',
+        border:      `2px solid ${value ? color : '#d7dde3'}`,
+        borderRadius: 10,
+        background:  'white',
+        padding:     '16px 18px',
+        color:       '#23313f',
+        fontSize:    '1.1rem',
+        lineHeight:  1.55,
+        outline:     'none',
+        boxShadow:   value ? `0 0 0 4px ${color}18` : 'none',
+        transition:  'border-color 150ms ease, box-shadow 150ms ease',
+      }}
+    />
+  );
+}
+
 function PageProgress({ pages, currentIndex }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0 }}>
@@ -129,7 +164,7 @@ function PageProgress({ pages, currentIndex }) {
         return [
           i > 0 && (
             <div key={`line-${p.id}`} style={{
-              flex:       '1 0 24px', maxWidth: 56,
+              flex:       '1 0 18px', maxWidth: 42,
               height:     2,
               background: isPast || isActive ? color : '#e0e0e0',
               transition: 'background 400ms ease',
@@ -137,18 +172,18 @@ function PageProgress({ pages, currentIndex }) {
           ),
           <div key={p.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <div style={{
-              width:        isActive ? 18 : 11, height: isActive ? 18 : 11,
+              width:        isActive ? 14 : 9, height: isActive ? 14 : 9,
               borderRadius: '50%',
               background:   isPast ? color : isActive ? color : '#ddd',
-              boxShadow:    isActive ? `0 0 0 5px ${color}28` : 'none',
+              boxShadow:    isActive ? `0 0 0 4px ${color}24` : 'none',
               transition:   'all 280ms ease',
             }} />
             <span style={{
-              fontSize:      '0.88rem',
+              fontSize:      '0.72rem',
               fontWeight:    isActive ? 700 : 400,
               color:         isActive ? color : isPast ? '#aaa' : '#ccc',
               textTransform: 'uppercase',
-              letterSpacing: '0.07em',
+              letterSpacing: '0.055em',
               whiteSpace:    'nowrap',
               transition:    'all 280ms ease',
             }}>
@@ -166,20 +201,43 @@ export default function Evaluation() {
   const [pageIndex, setPageIndex] = useState(0);
   const [answers,   setAnswers]   = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const [canScrollDown, setCanScrollDown] = useState(false);
+  const scrollAreaRef = useRef(null);
 
   const page = PAGES[pageIndex];
   const isLast = pageIndex === PAGES.length - 1;
 
-  const pageComplete = page.questions.every(q => answers[q.id] != null);
+  const pageComplete = page.questions.every(q => q.optional || answers[q.id] != null);
 
   const go = (delta) => setPageIndex(i => i + delta);
+
+  const updateScrollHint = useCallback(() => {
+    const el = scrollAreaRef.current;
+    if (!el) return;
+    setCanScrollDown(el.scrollHeight - el.scrollTop - el.clientHeight > 18);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollAreaRef.current;
+    if (!el) return undefined;
+    el.scrollTo({ top: 0 });
+    const frame = requestAnimationFrame(updateScrollHint);
+    const observer = new ResizeObserver(updateScrollHint);
+    observer.observe(el);
+    window.addEventListener('resize', updateScrollHint);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener('resize', updateScrollHint);
+    };
+  }, [pageIndex, updateScrollHint]);
 
   const handleSubmit = () => {
     if (!pageComplete) return;
     const allQ = PAGES.flatMap(p => p.questions);
-    allQ.forEach(q => trackEvent('eval_answer', { question: q.id, value: answers[q.id] }));
+    allQ.forEach(q => trackEvent('eval_answer', { question: q.id, value: answers[q.id] ?? '' }));
     console.log('[eval] submitting answers:', answers);
-    flushToSheet(answers);
+    flushToSheet(Object.fromEntries(allQ.map(q => [q.id, answers[q.id] ?? ''])));
     setSubmitted(true);
   };
 
@@ -199,13 +257,18 @@ export default function Evaluation() {
     <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: '#f7f9fb', overflow: 'hidden' }}>
 
       {/* ── Top: progress bar ── */}
-      <div style={{ padding: '28px 8% 22px', flexShrink: 0, borderBottom: '1px solid #edf0f3' }}>
+      <div style={{ padding: '16px 8% 14px', flexShrink: 0, borderBottom: '1px solid #edf0f3' }}>
         <PageProgress pages={PAGES} currentIndex={pageIndex} />
       </div>
 
       {/* ── Middle: header + questions — vertically centred, scrollable on overflow ── */}
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div style={{ width: '100%', maxWidth: 960, margin: 'auto', padding: '56px 8%' }}>
+      <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+      <div
+        ref={scrollAreaRef}
+        onScroll={updateScrollHint}
+        style={{ height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+      >
+        <div style={{ width: '100%', maxWidth: 960, margin: 'auto', padding: '56px 8% 92px' }}>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 14 }}>
             <div style={{ width: 5, height: 36, borderRadius: 3, background: page.color, flexShrink: 0 }} />
@@ -247,11 +310,47 @@ export default function Evaluation() {
                     color={page.color}
                   />
                 )}
+                {q.type === 'text' && (
+                  <FreeTextField
+                    value={answers[q.id] ?? ''}
+                    onChange={v => setAnswers(prev => ({ ...prev, [q.id]: v }))}
+                    color={page.color}
+                  />
+                )}
               </div>
             ))}
           </div>
 
         </div>
+      </div>
+      <div style={{
+        position:      'absolute',
+        left:          0,
+        right:         0,
+        bottom:        0,
+        height:        96,
+        opacity:       canScrollDown ? 1 : 0,
+        transition:    'opacity 220ms ease',
+        pointerEvents: 'none',
+        background:    'linear-gradient(to bottom, rgba(247,249,251,0), rgba(247,249,251,0.96) 68%, #f7f9fb)',
+        display:       'flex',
+        alignItems:    'flex-end',
+        justifyContent:'center',
+        paddingBottom: 14,
+      }}>
+        <div style={{
+          padding:       '7px 13px',
+          borderRadius:  999,
+          background:    'rgba(255,255,255,0.92)',
+          border:        '1px solid #dce3e9',
+          color:         '#5b6875',
+          fontSize:      '0.9rem',
+          fontWeight:    600,
+          boxShadow:     '0 2px 10px rgba(20,34,48,0.08)',
+        }}>
+          Scroll for more questions
+        </div>
+      </div>
       </div>
 
       {/* ── Bottom: navigation — pinned to bottom ── */}
@@ -272,7 +371,7 @@ export default function Evaluation() {
         </button>
 
         <span style={{ fontSize: '1.05rem', color: pageComplete ? 'transparent' : '#bbb' }}>
-          {page.questions.filter(q => answers[q.id] == null).length} remaining
+          {page.questions.filter(q => !q.optional && answers[q.id] == null).length} remaining
         </span>
 
         <button

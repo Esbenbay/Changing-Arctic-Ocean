@@ -7,6 +7,38 @@ export const sessionId = Math.random().toString(36).slice(2, 10);
 const events = [];
 let lastChapter = null;
 
+const EVAL_FIELD_IDS = [
+  'age',
+  'prior_knowledge',
+  'background_comment',
+  'U1',
+  'U2',
+  'U3',
+  'U_comment',
+  'N1',
+  'N2',
+  'N3',
+  'N_comment',
+  'V1',
+  'V2',
+  'V3',
+  'V_comment',
+  'L1',
+  'L2',
+  'L3',
+  'L_comment',
+  'E1',
+  'E2',
+  'E3',
+  'E_comment',
+];
+
+function normalizeEvalValue(value) {
+  if (value == null) return 'none';
+  if (typeof value === 'string') return value.trim() || 'none';
+  return value;
+}
+
 export function trackEvent(type, data = {}) {
   const event = { t: new Date().toISOString(), type, ...data };
   events.push(event);
@@ -24,7 +56,7 @@ export function trackStep(chapter) {
 
 // ── Send compiled session JSON when story is complete ─────────────────────────
 let flushed = false;
-// evalAnswers: optional object { U1: 4, U2: 6, ... } from the evaluation form
+// evalAnswers: optional object { U1: 4, U_comment: '...', ... } from the evaluation form
 export function flushToSheet(evalAnswers = {}) {
   if (!SHEET_URL) { console.warn('[tracker] VITE_SHEET_URL not defined'); return; }
   if (flushed) return;
@@ -32,8 +64,12 @@ export function flushToSheet(evalAnswers = {}) {
   trackEvent('story_complete');
   const completedAt = new Date().toISOString();
   const evalFields  = Object.fromEntries(
-    Object.entries(evalAnswers).map(([q, v]) => [`eval_${q}`, v])
+    EVAL_FIELD_IDS.map(id => [`eval_${id}`, normalizeEvalValue(evalAnswers[id])])
   );
+  Object.entries(evalAnswers).forEach(([id, value]) => {
+    const key = `eval_${id}`;
+    if (!(key in evalFields)) evalFields[key] = normalizeEvalValue(value);
+  });
   const summary = {
     sessionId,
     sessionStart,

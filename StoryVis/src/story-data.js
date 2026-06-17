@@ -55,20 +55,20 @@ export const STEPS = [
     camera:        'intro-arctic',
     lineChartStep: 'world',
     title:         'A Warming World',
-    text:          "Earth's average temperature has risen over 1.2°C since 1880 — but this warming is not felt equally everywhere. Drag the chart to explore how different regions have changed over time.",
+    text:          "Earth's average temperature has risen over 1.2°C since 1880 — but this warming is not felt equally everywhere. Drag the slider on the chart to explore how different regions have changed over time.",
   },
   // Step 1: first visible card — scrolls into view after the clip animation.
   {
     chapter:       'intro',
     lineChartStep: 'world',
     title:         'A Warming World',
-    text:          "Earth's average temperature has risen over 1.2°C since 1880 — but this warming is not felt equally everywhere. Drag the chart to explore how different regions have changed over time.",
+    text:          "Earth's average temperature has risen over 1.2°C since 1880 — but this warming is not felt equally everywhere. Drag the slider on the chart to explore how different regions have changed over time.",
   },
   {
     chapter:       'intro',
     lineChartStep: 'quiz',
     title:        null,
-    text:          'Some regions are changing at two, three, even four times the global rate. Can you guess which one?',
+    text:          'Some regions are changing at two, three, even four times the global rate. Can you from the colors on the map guess which one has seen the largest increase in temperature?',
   },
 
   // ── Map chapter ───────────────────────────────────────────────────────────
@@ -76,25 +76,34 @@ export const STEPS = [
     chapter: 'map',
     camera:  'world-overview',
     title:   'What is the Arctic Ocean?',
-    text:    'lets switch the map perspective to the Arctic Ocean and zoom in to explore the unique features of this remote and rapidly changing region.',
+    text:    'lets switch the map perspective to the Arctic Ocean and zoom in to explore some of the unique features of this remote and rapidly changing region.',
   },
   {
     chapter: 'map',
     camera:  'arctic-coastline',
     title:   'The Arctic Coastline',
-    text:    'One of the largest continuous coastlines in the world, the Arctic coast is shaped by the small inlets and fjords that carve into the land. The coastal zone varies widely and ranges from permafrost tundra along the Russian coast to towering glaciers in Greenland.',
+    text:    'The Arctic coast is shaped by the small inlets and fjords that carve into the land, which makes it one of the largest continuous coastlines in the world. The coastal zone varies widely and ranges from permafrost tundra along the Russian coast to towering glaciers in Greenland.',
+  },
+
+  {
+    chapter: 'map',
+    camera:  'polar-shelf',
+    bathymetryMode: 'full',
+    title:   'The Arctic Ocean',
+    text:    'The Arctic Ocean is the smallest and shallowest of the world\'s oceans, but its seafloor is highly varied. Broad continental shelves surround the deeper basins where water depth goes down to around 5500 meters.',
   },
   {
     chapter: 'map',
     camera:  'polar-shelf',
+    bathymetryMode: 'shelf',
     title:   'Shallow Continental Shelf',
-    text:    'The Arctic Ocean consists of a large shallow continental shelf (0-200 m), which covers approximately 50% of its total area. This shelf is critical habitat for Arctic marine life and supports rich biodiversity. Its shallow waters are also where much of the Arctic\'s algae production occurs, from seaweed to microscopic phytoplankton and microphytobenthos, making it a vital part of the region\'s ecosystem.',
+    text:    'The large shallow continental shelf (0-200 m), which covers approximately 50% of the total area in the Arctic Ocean. This shelf is a large habitat for Arctic marine life and supports rich biodiversity. Its shallow waters are also where much of the Arctic\'s algae production occurs, from seaweed to microscopic phytoplankton and microphytobenthos, making it a vital part of the region\'s ecosystem.',
   },
   {
     chapter: 'map',
     camera:  'svalbard',
     title:   'The Arctic Seasonal Cycle',
-    text:    'Lets take a closer look at the seasonal cycle of the Arctic ocean, which is one of the most extreme and dynamic on Earth.',
+    text:    'Lets take a closer look at the seasonal cycle of the Arctic ocean, which is one of the most extreme and dynamic on Earth .',
   },
 
   // ── Season chapter ────────────────────────────────────────────────────────
@@ -162,7 +171,7 @@ export const STEPS = [
     glacierCamera: 'greenland-overview',
     title:         'Glaciers in Retreat',
     bubble:        { arrow: 'left' },
-    text:          "Greenland's ice sheet and Arctic glaciers are losing mass at record rates, contributing ~1 mm per year to global sea level rise and reshaping coastal landscapes.",
+    text:          "Arctic glaciers and inland snow are losing mass, which is contributing roughly ~1 mm per year to global sea level rise and reshaping coastal landscapes.",
   },
   // {
   //   chapter:       'svg',
@@ -177,7 +186,7 @@ export const STEPS = [
     layerId: 'River',
     title:   'Rivers & Freshwater',
     bubble:  { arrow: 'left' },
-    text:    'Increased freshwater runoff from melting glaciers and inland snow has increased river flow and altered sediment transport in Arctic rivers to the ocean.',
+    text:    'Increased freshwater runoff from the melting glaciers and inland snow has increased river flow and altered sediment transport in Arctic rivers to the ocean.',
   },
   {
     chapter: 'svg',
@@ -185,7 +194,7 @@ export const STEPS = [
     title:   'Increased Water Turbidity',
     image:   { src: `${BASE}/Images/2022-07-07.jpg`, caption: 'Svalbard, July 2022', height: 320 },
     bubble:  { width: 600 },
-    text:    'Permafrost thaw and increased wave action are consuming Arctic coastlines at up to 20 metres per year — threatening communities and releasing stored carbon.',
+    text:    'The increased sediment runoff from melting glaciers is contributing to higher turbidity in Arctic waters, which complicates the light availability in the water column.',
   },
   {
     chapter: 'svg',
@@ -240,29 +249,29 @@ export const STEPS = [
     layerId: 'Instruments',
     bubble:  { arrow: 'right' },
     title:   'Measuring Instruments',
-    text:    'The sensors measure oxygen concentration flow from the seafloor, which allows us to calculate how productive the seafloor is (Karl add more)',
+    text:     'The eddy covariance system measures tiny changes in oxygen concentration together with the movement of water just above the seafloor.\n\n By combining these measurements, we can estimate how much oxygen the seafloor community produces during photosynthesis and how much it consumes through respiration. This gives us a direct window into the productivity of Arctic seafloor habitats without disturbing them.',
   },
+ {
+  chapter: 'photosynthesis',
+  layerId: 'Benthic_highlight',
+  bubble:  { arrow: 'bottom' },
+  title:   'Expanding Benthic Communities',
+  text:    'As sea ice retreats, more sunlight can reach shallow parts of the Arctic seafloor. This may allow algae, seaweed, and microscopic benthic communities to expand into areas that were previously too dark or ice-covered for much of the year.\n\nBut large uncertainties remain. We still do not know how widespread suitable habitats are, or how changing the changing environmental conditions will impact these communities.',
+},
   {
-    chapter: 'photosynthesis',
-    layerId: 'Benthic_highlight',
-    bubble:  { arrow: 'bottom' },
-    title:   'Expanding Benthic communities',
-    text:    'As sea ice retreats, sunlight reaches the seafloor, promoting the expansion of micro organisms in Arctic waters. Currently large uncertainties exist on how much the seafloor is producing and how much of the Arctic seafloor has potential for algae communities.',
-  },
+  chapter: 'photosynthesis',
+  layerId: 'g84',
+  bubble:  {  },
+  title:   'A Changing Cycle',
+  text:    'Longer ice-free seasons can extend the period when sunlight reaches the Arctic seafloor, potentially increasing photosynthesis in shallow coastal areas.\n But this change also reshapes the entire ecosystem. More light, warmer water, and increasing water turbidity can alter when and where the seafloor algae expand to.',
+},
   {
-    chapter: 'photosynthesis',
-    layerId: 'g84',
-    bubble:  {  },
-    title:   'A Changing Cycle',
-    text:    'As the Arctic warms, longer ice-free seasons extend the window for photosynthesis — but also alter nutrient cycles, ocean chemistry, and the balance of the entire ecosystem.',
-  },
-  {
-    chapter: 'photosynthesis',
-    layerId: 'Ships',
-    bubble:  { arrow: 'left', cta: 'Take the evaluation →' },
-    title:   'A New Presence',
-    text:    'For the first time in history, industrial vessels navigate waters that were impassable just decades ago. The Arctic is no longer beyond reach.',
-  },
+  chapter: 'photosynthesis',
+  layerId: 'Ships',
+  bubble:  {  cta: 'Take the evaluation →' },
+  title:   'Future Arctic Ocean',
+  text:    'As sea ice retreats, the Arctic Ocean is becoming more accessible for longer parts of the year.\nThis future brings new opportunities and pressures on the fragile marine ecosystems - so let’s understand the current complexities before new ones are introduced.\n\n Before you leave, we invite you to reflect on the story and share your perspective.',
+},
 
   // ── Evaluation (shown after final chapter, not in ChapterTimeline) ───────────
   {

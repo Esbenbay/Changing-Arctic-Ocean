@@ -22,7 +22,7 @@ function BubbleContent({ text }) {
       {items.map((item, i) => {
         if (typeof item === 'string') {
           return (
-            <div key={i} style={{ fontSize: '1.2rem', lineHeight: 1.65, color: '#3d5166', marginBottom: 8 }}>
+            <div key={i} style={{ fontSize: '1.2rem', lineHeight: 1.65, color: '#3d5166', marginBottom: 8, whiteSpace: 'pre-line' }}>
               {item}
             </div>
           );
@@ -36,7 +36,7 @@ function BubbleContent({ text }) {
                 style={{ width: item.imageWidth ?? '45%', flexShrink: 0, borderRadius: 7, display: 'block', objectFit: 'cover', height: item.imageHeight ?? 'auto' }}
               />
               <div>
-                <div style={{ fontSize: '1.2rem', lineHeight: 1.65, color: '#3d5166' }}>{item.text}</div>
+                <div style={{ fontSize: '1.2rem', lineHeight: 1.65, color: '#3d5166', whiteSpace: 'pre-line' }}>{item.text}</div>
                 {item.caption && (
                   <div style={{ fontSize: '0.78rem', color: '#888', marginTop: 4, fontStyle: 'italic' }}>{item.caption}</div>
                 )}

@@ -26,6 +26,9 @@ const SVG_WHEEL_GESTURE_IDLE_MS = 600;
 const SVG_TOUCH_THRESHOLD = 72;
 const SVG_STEP_COOLDOWN_MS = 600;
 const CONTROLLED_SVG_CHAPTERS = ['svg', 'photosynthesis'];
+const SVG_CHAPTER_DISSOLVE_MS = 1900;
+const SVG_CHAPTER_VEIL_HOLD_MS = 320;
+const SVG_CHAPTER_WASH_OPACITY = 0.14;
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function StoryScene() {
@@ -48,6 +51,11 @@ export default function StoryScene() {
   const controlledTouchGestureActiveRef = useRef(false);
   const controlledTouchStartYRef = useRef(null);
   const controlledScrollamaEntryLockedRef = useRef(false);
+  const svgChapterDissolveTimersRef = useRef([]);
+  const [retainedSvgLayerId, setRetainedSvgLayerId] = useState(null);
+  const [retainedPhotoLayerId, setRetainedPhotoLayerId] = useState(null);
+  const [retainedPhotoAnchorLayerId, setRetainedPhotoAnchorLayerId] = useState(null);
+  const [svgChapterDissolve, setSvgChapterDissolve] = useState(null);
 
   const cogUrl = useCallback(year => `${import.meta.env.BASE_URL}tif_data/anom_${year}.tif`, []);
 
@@ -105,6 +113,30 @@ export default function StoryScene() {
     window.scrollTo({ top: window.scrollY + rect.top - window.innerHeight * offset });
   }, []);
 
+  const startSvgChapterDissolve = useCallback((from, to) => {
+    svgChapterDissolveTimersRef.current.forEach(clearTimeout);
+    svgChapterDissolveTimersRef.current = [];
+    setSvgChapterDissolve({ from, to, phase: 'covering' });
+    svgChapterDissolveTimersRef.current = [
+      setTimeout(() => {
+        setSvgChapterDissolve(current =>
+          current?.from === from && current?.to === to
+            ? { from, to, phase: 'revealing' }
+            : current
+        );
+      }, SVG_CHAPTER_VEIL_HOLD_MS),
+      setTimeout(() => {
+        setSvgChapterDissolve(current =>
+          current?.from === from && current?.to === to ? null : current
+        );
+      }, SVG_CHAPTER_DISSOLVE_MS),
+    ];
+  }, []);
+
+  useEffect(() => () => {
+    svgChapterDissolveTimersRef.current.forEach(clearTimeout);
+  }, []);
+
   // Derive layout flags directly from the step's chapter — no magic offsets
   const inWideChapter    = step.chapter === 'seasons' || step.chapter === 'svg' || step.chapter === 'photosynthesis' || step.chapter === 'shipping' || step.chapter === 'polar';
   const inSvgChapter       = step.chapter === 'svg';
@@ -122,14 +154,37 @@ export default function StoryScene() {
     : 0;
   const introCogFadeDuration = introHandoffActive || introHandoffPhase === 'settling' ? 1700 : 250;
   const showCinematicIntroMap = mapIsFullScreen || introHandoffActive;
-  const showTwoColumnMap = !showCinematicIntroMap && !inWideChapter && (step.chapter === 'map' || !!step.lineChartStep);
   const twoColumnStarted = introMapShrunk || step.chapter !== 'intro';
+  const retainedTwoColumnMapStep = useMemo(() => {
+    for (let i = viewPoint; i >= 0; i -= 1) {
+      const candidate = STEPS[i];
+      if (candidate?.chapter === 'map' || candidate?.lineChartStep) return candidate;
+    }
+    return null;
+  }, [viewPoint]);
+  const showTwoColumnMap = !showCinematicIntroMap && !inEvaluationChapter && twoColumnStarted && !!retainedTwoColumnMapStep;
+  const twoColumnMapCamera = retainedTwoColumnMapStep?.chapter === 'map'
+    ? retainedTwoColumnMapStep.camera
+    : 'world-overview';
+  const mapCompletionOverlayImage = retainedTwoColumnMapStep?.chapter === 'map' && retainedTwoColumnMapStep.camera === 'svalbard'
+    ? `${import.meta.env.BASE_URL}Images/2022-05-29.jpg`
+    : null;
   // Season accordion active tab: clamped to last index once SVG chapter starts
   const seasonIndex = step.chapter === 'seasons' ? step.seasonIndex
                     : step.chapter === 'svg'     ? SEASONS.length - 1
                     : -1;
 
-  const activeLayerId = step.chapter === 'svg' ? step.layerId : null;
+  const svgPanelLayerId = inSvgChapter ? step.layerId : retainedSvgLayerId;
+  const photoPanelLayerId = inPhotoChapter ? step.layerId : retainedPhotoLayerId;
+  const photoPanelAnchorLayerId = inPhotoChapter ? step.bubbleAnchorLayerId : retainedPhotoAnchorLayerId;
+
+  const svgToPhotoDissolve = svgChapterDissolve?.from === 'svg' && svgChapterDissolve?.to === 'photosynthesis';
+  const photoToSvgDissolve = svgChapterDissolve?.from === 'photosynthesis' && svgChapterDissolve?.to === 'svg';
+  const svgChapterDissolveActive = Boolean(svgChapterDissolve);
+  const svgPanelOpacity = inSvgChapter ? 1 : 0;
+  const photoPanelOpacity = inPhotoChapter ? 1 : 0;
+  const photoPanelActive = inPhotoChapter || photoToSvgDissolve;
+
   const controlledStepIndices = useMemo(
     () => STEPS.map((s, i) => CONTROLLED_SVG_CHAPTERS.includes(s.chapter) ? i : -1).filter(i => i >= 0),
     []
@@ -155,6 +210,21 @@ export default function StoryScene() {
       if (nextIndex < 0 || nextIndex >= STEPS.length) return;
 
       controlledStepLockedRef.current = true;
+      const currentChapter = STEPS[viewPointRef.current]?.chapter;
+      const nextChapter = STEPS[nextIndex]?.chapter;
+      if (
+        currentChapter !== nextChapter &&
+        CONTROLLED_SVG_CHAPTERS.includes(currentChapter) &&
+        CONTROLLED_SVG_CHAPTERS.includes(nextChapter)
+      ) {
+        startSvgChapterDissolve(currentChapter, nextChapter);
+      }
+      if (nextChapter === 'svg') {
+        setRetainedSvgLayerId(STEPS[nextIndex]?.layerId);
+      } else if (nextChapter === 'photosynthesis') {
+        setRetainedPhotoLayerId(STEPS[nextIndex]?.layerId);
+        setRetainedPhotoAnchorLayerId(STEPS[nextIndex]?.bubbleAnchorLayerId);
+      }
       viewPointRef.current = nextIndex;
       setViewPoint(nextIndex);
       trackStep(STEPS[nextIndex]?.chapter);
@@ -237,7 +307,7 @@ export default function StoryScene() {
       controlledTouchStartYRef.current = null;
       controlledScrollamaEntryLockedRef.current = false;
     };
-  }, [controlledEndIndex, controlledStartIndex, controlledStepIndices, inControlledSvgChapter, scrollToStep]);
+  }, [controlledEndIndex, controlledStartIndex, controlledStepIndices, inControlledSvgChapter, scrollToStep, startSvgChapterDissolve]);
 
   // Steps with a title or figure use the structured card layout (left-aligned);
   // plain intro/map steps render as centred text.
@@ -358,15 +428,22 @@ export default function StoryScene() {
 
         {/* Full-screen SVG overlay — circle-reveals in when svg chapter starts */}
         <div style={{
-          position:      'fixed', top: 0, left: 0, right: 0, bottom: TIMELINE_H, zIndex: 5,
-          opacity:       inSvgChapter ? 1 : 0,
-          transition:    'opacity 1200ms cubic-bezier(0.4, 0, 0.2, 1)',
+          position:      'fixed',
+          top:           0,
+          left:          0,
+          right:         0,
+          bottom:        TIMELINE_H,
+          zIndex:        svgToPhotoDissolve ? 7 : 5,
+          opacity:       svgPanelOpacity,
+          transition:    svgChapterDissolveActive
+            ? `opacity ${SVG_CHAPTER_DISSOLVE_MS}ms cubic-bezier(0.16, 1, 0.3, 1)`
+            : 'opacity 1200ms cubic-bezier(0.4, 0, 0.2, 1)',
           pointerEvents: inSvgChapter ? 'auto' : 'none',
           background:    'white',
         }}>
           <SvgPanel
             src={`${import.meta.env.BASE_URL}SVG/Late_summer.svg`}
-            activeLayerId={activeLayerId}
+            activeLayerId={svgPanelLayerId}
             iceYear={iceYear}
             erosionProgress={erosionProgress}
             onAnchorPosition={setAnchorPos}
@@ -375,14 +452,39 @@ export default function StoryScene() {
 
         {/* Full-screen Photosynthesis overlay */}
         <div style={{
-          position:      'fixed', top: 0, left: 0, right: 0, bottom: TIMELINE_H, zIndex: 5,
-          opacity:       inPhotoChapter ? 1 : 0,
-          transition:    'opacity 900ms ease',
+          position:      'fixed',
+          top:           0,
+          left:          0,
+          right:         0,
+          bottom:        TIMELINE_H,
+          zIndex:        photoToSvgDissolve ? 7 : 6,
+          opacity:       photoPanelOpacity,
+          transition:    svgChapterDissolveActive
+            ? `opacity ${SVG_CHAPTER_DISSOLVE_MS}ms cubic-bezier(0.16, 1, 0.3, 1)`
+            : 'opacity 1300ms cubic-bezier(0.16, 1, 0.3, 1)',
           pointerEvents: inPhotoChapter ? 'auto' : 'none',
           background:    'white',
         }}>
-          <PhotosynthesisPanel activeLayerId={inPhotoChapter ? step.layerId : undefined} anchorLayerId={inPhotoChapter ? step.bubbleAnchorLayerId : undefined} active={inPhotoChapter} erosionProgress={erosionProgress} onAnchorPosition={setPhotoAnchorPos} />
+          <PhotosynthesisPanel activeLayerId={photoPanelLayerId} anchorLayerId={photoPanelAnchorLayerId} active={photoPanelActive} erosionProgress={erosionProgress} onAnchorPosition={setPhotoAnchorPos} />
         </div>
+
+        {/* Light wash during the SVG chapter crossfade */}
+        <div style={{
+          position:      'fixed',
+          top:           0,
+          left:          0,
+          right:         0,
+          bottom:        TIMELINE_H,
+          zIndex:        21,
+          opacity:       svgChapterDissolve
+            ? (svgChapterDissolve.phase === 'covering' ? SVG_CHAPTER_WASH_OPACITY : 0)
+            : 0,
+          transition:    svgChapterDissolve?.phase === 'covering'
+            ? `opacity ${SVG_CHAPTER_VEIL_HOLD_MS}ms ease-out`
+            : `opacity ${SVG_CHAPTER_DISSOLVE_MS}ms cubic-bezier(0.16, 1, 0.3, 1)`,
+          pointerEvents: 'none',
+          background:    'white',
+        }} />
 
         {/* Full-screen Evaluation overlay — covers entire screen including chapter bar */}
         <div style={{
@@ -451,8 +553,10 @@ export default function StoryScene() {
         >
           {showTwoColumnMap && (
             <NewMap
-              cameraKey={step.chapter === 'map' ? step.camera : 'world-overview'}
-              quizMode={step.quiz === true}
+              cameraKey={twoColumnMapCamera}
+              quizMode={retainedTwoColumnMapStep?.quiz === true}
+              bathymetryMode={retainedTwoColumnMapStep?.bathymetryMode}
+              completionOverlayImage={mapCompletionOverlayImage}
               hideGlobeToggle={!firstMapOverviewStep}
               cogUrl={cogUrl}
               cogYear={scrollYear ?? COG_START_YEAR}
@@ -518,6 +622,12 @@ export default function StoryScene() {
             if (nextIsControlledSvgStep) {
               controlledScrollamaEntryLockedRef.current = true;
               controlledStepLockedRef.current = true;
+              if (nextChapter === 'svg') {
+                setRetainedSvgLayerId(STEPS[vp]?.layerId);
+              } else if (nextChapter === 'photosynthesis') {
+                setRetainedPhotoLayerId(STEPS[vp]?.layerId);
+                setRetainedPhotoAnchorLayerId(STEPS[vp]?.bubbleAnchorLayerId);
+              }
               requestAnimationFrame(() => scrollToStep(vp));
               setTimeout(() => {
                 controlledStepLockedRef.current = false;

@@ -1,5 +1,5 @@
 import { Map, Layer, Source, Marker } from "react-map-gl/mapbox";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
 import { track } from "../tracker.js";
 import { fromArrayBuffer } from 'geotiff';
 import proj4 from 'proj4';
@@ -27,6 +27,14 @@ function anomalyColor(val, vmin, vmax) {
 
 const hasCogLayer = (map, slot) =>
   Boolean(map.getSource(`cog-${slot}`) && map.getLayer(`cog-raster-${slot}`));
+
+const disableTerrainSafely = (map) => {
+  try {
+    map?.setTerrain?.(null);
+  } catch {
+    // Mapbox may already be mid-style-teardown; this is a defensive cleanup.
+  }
+};
 
 async function decodeCOG(url, vmin, vmax) {
   const resp = await fetch(url);
@@ -92,6 +100,8 @@ const COG_YEARS = [...Array.from({ length: 15 }, (_, i) => 1880 + i * 10), 2025]
 const alterSpeed = 0.8;
 const alterPitch = 2;
 const introFlyEasing = t => t * t * (3 - 2 * t);
+const COMPLETION_OVERLAY_FADE_MS = 4000;
+const COMPLETION_OVERLAY_LEAD_MS = 1400;
 
 const snapCogYear = year =>
   Math.max(1880, Math.min(2025, Math.round(year / 10) * 10));
@@ -103,7 +113,7 @@ const CAMERAS = {
   // Map chapter
   'arctic-quiz':    { center: [0, 85], zoom: 2.7,    speed: alterSpeed, pitch: 0, bearing: 0, projection: 'globe' },
   'world-overview': { center: [0,           20      ], zoom: 1, pitch: 0, bearing: 0, projection: 'mercator' },
-  'svalbard':       { center: [16.57969, 77.82355], zoom: 9.508,  projection: 'globe' },
+  'svalbard':       { center: [16.57969, 77.82355], zoom: 9.508, duration: 5200, projection: 'globe' },
   'canada-arctic':  { center: [-99.214076,  73.476835], zoom: 3.7,  speed: alterSpeed, pitch: alterPitch, projection: 'globe' },
 
   //'arctic-coastline':  { center: [120.734026, 85.53], zoom: 2.6,    speed: alterSpeed, pitch: 25, duration: 10000},
@@ -204,16 +214,14 @@ function buildQuizOpacityExpr(found) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeToggle = false, initialViewState, mapRevealed = false, introFlyTriggered = false, onFlyOutComplete, cogUrl, cogYear, cogOpacity = 0, cogFadeDuration = 250, cogVmin = -3, cogVmax = 3, useLightStyle = false }) {
+export default function NewMap({ cameraKey, quizMode, bathymetryMode, completionOverlayImage, embed = false, hideGlobeToggle = false, initialViewState, mapRevealed = false, introFlyTriggered = false, onFlyOutComplete, cogUrl, cogYear, cogOpacity = 0, cogFadeDuration = 250, cogVmin = -3, cogVmax = 3, useLightStyle = false }) {
   const temperatureMapActive = cogUrl && cogOpacity > 0.3;
   const targetMapStyle = useLightStyle ? TEMPERATURE_MAP_STYLE : SATELLITE_MAP_STYLE;
 
   const mapRef            = useRef(null);
-  const resizeObserverRef = useRef(null);
   const coastlineAnimRef  = useRef(null);
   const rotateRef         = useRef(null);
   const flyOutTimerRef    = useRef(null);
-  const styleReadyTimerRef = useRef(null);
   const flyOutFiredRef    = useRef(false);
   const onFlyOutCompleteRef = useRef(onFlyOutComplete);
 
@@ -230,8 +238,10 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
   const [isGlobe, setIsGlobe]                   = useState(false);
   const [styleLoaded, setStyleLoaded]           = useState(false);
   const [globeClicked, setGlobeClicked]         = useState(false);
+  const [cleanupResources, setCleanupResources] = useState(null);
   const [appliedMapStyle, setAppliedMapStyle]   = useState(targetMapStyle);
   const [shelfPulse, setShelfPulse]             = useState(false);
+  const [completionOverlayVisible, setCompletionOverlayVisible] = useState(false);
 
   // Quiz: which ISO codes the user has clicked so far
   const [quizFound, setQuizFound] = useState(new Set());
@@ -243,7 +253,7 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
   }, [onFlyOutComplete]);
 
   useEffect(() => {
-    if (cameraKey !== 'polar-shelf') {
+    if (cameraKey !== 'polar-shelf' || bathymetryMode !== 'shelf') {
       setShelfPulse(false);
       return undefined;
     }
@@ -251,7 +261,7 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
       setShelfPulse(value => !value);
     }, 2300);
     return () => clearInterval(pulseTimer);
-  }, [cameraKey]);
+  }, [bathymetryMode, cameraKey]);
 
   const loadCogYear = useCallback((year) => {
     if (!cogUrl) return Promise.reject(new Error('Missing COG URL template'));
@@ -277,6 +287,7 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
   useEffect(() => {
     if (appliedMapStyle === targetMapStyle) return;
     const t = setTimeout(() => {
+      disableTerrainSafely(mapRef.current?.getMap());
       // Clear the COG React Source/Layer before the style swap so they are
       // re-added fresh once the new style is loaded (Mapbox wipes all custom
       // sources/layers on setStyle, but cogReadyRef would otherwise stay true
@@ -296,6 +307,7 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
   useEffect(() => {
     const map = mapRef.current?.getMap();
     if (!map || !styleLoaded) return;
+    setCompletionOverlayVisible(false);
 
     // Cancel any running animations
     if (rotateRef.current) {
@@ -309,6 +321,8 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
 
     // ── Camera ──────────────────────────────────────────────────────────────
     let onMoveEnd = null;
+    let onCompletionMoveEnd = null;
+    let completionOverlayTimer = null;
     if (cameraKey === 'intro-globe') {
       map.setProjection('globe');
       map.jumpTo({ center: [20, 78], zoom: 1.5, pitch: 20, bearing: 0 });
@@ -327,8 +341,21 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
       map.setProjection(cam.projection ?? (cam.jump ? 'globe' : 'mercator'));
       if (cam.jump) {
         map.jumpTo(cam);
+        if (completionOverlayImage) {
+          requestAnimationFrame(() => setCompletionOverlayVisible(true));
+        }
       } else {
         map.flyTo(cam);
+        if (completionOverlayImage) {
+          if (cam.duration) {
+            completionOverlayTimer = setTimeout(() => {
+              setCompletionOverlayVisible(true);
+            }, Math.max(0, cam.duration - COMPLETION_OVERLAY_LEAD_MS));
+          } else {
+            onCompletionMoveEnd = () => setCompletionOverlayVisible(true);
+            map.once('moveend', onCompletionMoveEnd);
+          }
+        }
       }
       // 'intro-arctic': initialViewState positions the map; fly-out effect owns all animation
     }
@@ -372,6 +399,8 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
 
     return () => {
       if (onMoveEnd) map.off('moveend', onMoveEnd);
+      if (onCompletionMoveEnd) map.off('moveend', onCompletionMoveEnd);
+      clearTimeout(completionOverlayTimer);
       if (rotateRef.current) {
         cancelAnimationFrame(rotateRef.current);
         rotateRef.current = null;
@@ -385,7 +414,7 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
         flyOutTimerRef.current = null;
       }
     };
-  }, [cameraKey, embed, styleLoaded]);
+  }, [cameraKey, completionOverlayImage, embed, styleLoaded]);
 
   // ── Intro fly-out: triggered by Scrollama, then played by Mapbox ─────────
   useEffect(() => {
@@ -498,12 +527,14 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
   }, [cogOpacity, cogLayer]);
 
   // ── Cleanup ────────────────────────────────────────────────────────────────
-  useEffect(() => {
+  // Mapbox owns this imperative instance; cleanup must run before React-Map-GL
+  // removes child sources so terrain cannot reference a source mid-teardown.
+  useLayoutEffect(() => {
     return () => {
-      resizeObserverRef.current?.disconnect();
-      clearTimeout(styleReadyTimerRef.current);
+      disableTerrainSafely(cleanupResources?.map);
+      cleanupResources?.observer?.disconnect();
     };
-  }, []);
+  }, [cleanupResources]);
 
   // Fallback: onIdle fires after all tiles load — catches any case where
   // style.load didn't fire (e.g. initial satellite style before the listener
@@ -520,7 +551,7 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
 
     const observer = new ResizeObserver(() => mapRef.current?.getMap().resize());
     observer.observe(map.getContainer());
-    resizeObserverRef.current = observer;
+    setCleanupResources({ map, observer });
 
     map.on('error', ({ error }) => {
       if (error?.status === 404) return;
@@ -565,14 +596,19 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
 
   const tempWashOpacity = temperatureMapActive ? Math.min(0.18, cogOpacity * 0.25) : 0;
   const showTemperatureLegend = cogUrl && cogOpacity > 0.05;
-  const shelfFillOpacity = cameraKey === 'polar-shelf'
-    ? (shelfPulse ? 0.30 : 0.20)
-    : ['polar-overview'].includes(cameraKey) ? 0.08 : 0;
-  const shelfGlowOpacity = cameraKey === 'polar-shelf'
-    ? (shelfPulse ? 0.42 : 0.26)
-    : ['polar-overview'].includes(cameraKey) ? 0.10 : 0;
-  const shelfEdgeOpacity = cameraKey === 'polar-shelf'
+  const showBathymetryLegend = cameraKey === 'polar-shelf' && bathymetryMode === 'full';
+  const bathymetryFillOpacity = cameraKey === 'polar-shelf'
+    ? (bathymetryMode === 'shelf' ? 0.12 : 0.55)
+    : 0;
+  const shelfHighlightActive = cameraKey === 'polar-shelf' && bathymetryMode === 'shelf';
+  const shelfFillOpacity = shelfHighlightActive
     ? (shelfPulse ? 0.58 : 0.42)
+    : ['polar-overview'].includes(cameraKey) ? 0.08 : 0;
+  const shelfGlowOpacity = shelfHighlightActive
+    ? (shelfPulse ? 0.90 : 0.62)
+    : ['polar-overview'].includes(cameraKey) ? 0.10 : 0;
+  const shelfEdgeOpacity = shelfHighlightActive
+    ? (shelfPulse ? 0.95 : 0.72)
     : ['polar-overview'].includes(cameraKey) ? 0.12 : 0;
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -857,7 +893,8 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
                 4000, "#1a3f7a",
                 5000, "#0d2a5c",
               ],
-              "fill-opacity": ['polar-shelf'].includes(cameraKey) ? 0.5  : 0,
+              "fill-opacity": bathymetryFillOpacity,
+              "fill-opacity-transition": { duration: 1500, delay: 0 },
             }}
           />
           <Layer
@@ -876,8 +913,8 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
             filter={["any", ["==", ["get", "depth"], 0], ["==", ["get", "depth"], "0"]]}
             paint={{
               "line-color": "#d9cfaa",
-              "line-width": cameraKey === 'polar-shelf' ? 8 : 4,
-              "line-blur":  cameraKey === 'polar-shelf' ? 4 : 1.5,
+              "line-width": shelfHighlightActive ? 13 : 4,
+              "line-blur":  shelfHighlightActive ? 7 : 1.5,
               "line-opacity": shelfGlowOpacity,
               "line-opacity-transition": { duration: 1500, delay: 0 },
             }}
@@ -888,7 +925,7 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
             filter={["any", ["==", ["get", "depth"], 0], ["==", ["get", "depth"], "0"]]}
             paint={{
               "line-color": "#5d777b",
-              "line-width": cameraKey === 'polar-shelf' ? 1.6 : 0.6,
+              "line-width": shelfHighlightActive ? 3.2 : 0.6,
               "line-opacity": shelfEdgeOpacity,
               "line-opacity-transition": { duration: 1500, delay: 0 },
             }}
@@ -946,6 +983,70 @@ export default function NewMap({ cameraKey, quizMode, embed = false, hideGlobeTo
         </>}
 
       </>}
+
+      {showBathymetryLegend && (
+        <div style={{
+          position:             'absolute',
+          top:                  16,
+          right:                16,
+          zIndex:               10,
+          width:                190,
+          padding:              '11px 13px 10px',
+          borderRadius:         8,
+          background:           'rgba(255,255,255,0.9)',
+          backdropFilter:       'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          boxShadow:            '0 2px 12px rgba(0,0,0,0.16)',
+          color:                '#1d2b36',
+          pointerEvents:        'none',
+          opacity:              styleLoaded ? 1 : 0,
+          transition:           'opacity 700ms ease',
+        }}>
+          <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8 }}>
+            Bathymetry depth
+          </div>
+          <div style={{
+            width:        '100%',
+            height:       10,
+            borderRadius: 999,
+            background:   'linear-gradient(to right, #d6eef7 0 14.285%, #89c5e8 14.285% 28.57%, #5baed6 28.57% 42.855%, #2980b9 42.855% 57.14%, #1d5f9e 57.14% 71.425%, #1a3f7a 71.425% 85.71%, #0d2a5c 85.71% 100%)',
+            marginBottom: 6,
+          }} />
+          <div style={{
+            display:        'flex',
+            justifyContent: 'space-between',
+            fontSize:       10,
+            color:          '#435363',
+          }}>
+            <span>0 m</span>
+            <span>2,500 m</span>
+            <span>5,000 m</span>
+          </div>
+        </div>
+      )}
+
+      {completionOverlayImage && (
+        <div style={{
+          position:      'absolute',
+          inset:         0,
+          zIndex:        12,
+          pointerEvents: 'none',
+        }}>
+          <img
+            src={completionOverlayImage}
+            alt=""
+            style={{
+              width:         '100%',
+              height:        '100%',
+              objectFit:     'cover',
+              objectPosition:'center',
+              display:       'block',
+              opacity:       completionOverlayVisible ? 1 : 0,
+              transition:    `opacity ${COMPLETION_OVERLAY_FADE_MS}ms cubic-bezier(0.16, 1, 0.3, 1)`,
+            }}
+          />
+        </div>
+      )}
 
       {/* Cover the blank canvas during style switches */}
       <div style={{
