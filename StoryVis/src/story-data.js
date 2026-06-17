@@ -55,20 +55,20 @@ export const STEPS = [
     camera:        'intro-arctic',
     lineChartStep: 'world',
     title:         'A Warming World',
-    text:          "Earth's average temperature has risen over 1.2°C since 1880 — but this warming is not felt equally everywhere. Drag the slider on the chart to explore how different regions have changed over time.",
+    text:          'The planet is getting warmer, but the change is not spread evenly. Some regions are heating much faster than others. Drag the year marker across the chart to see how warming has unfolded around the world.',
   },
   // Step 1: first visible card — scrolls into view after the clip animation.
   {
     chapter:       'intro',
     lineChartStep: 'world',
     title:         'A Warming World',
-    text:          "Earth's average temperature has risen over 1.2°C since 1880 — but this warming is not felt equally everywhere. Drag the slider on the chart to explore how different regions have changed over time.",
+    text:          'The planet is getting warmer, but the change is not spread evenly. Some regions are heating much faster than others. Drag the year marker across the chart to see how warming has unfolded around the world.',
   },
   {
     chapter:       'intro',
     lineChartStep: 'quiz',
     title:        null,
-    text:          'Some regions are changing at two, three, even four times the global rate. Can you from the colors on the map guess which one has seen the largest increase in temperature?',
+    text:          'Some regions are warming two, three, or even four times faster than the global average. Looking at the colors on the map, which region do you think has warmed the most?',
   },
 
   // ── Map chapter ───────────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ export const STEPS = [
     chapter: 'map',
     camera:  'world-overview',
     title:   'What is the Arctic Ocean?',
-    text:    'lets switch the map perspective to the Arctic Ocean and zoom in to explore some of the unique features of this remote and rapidly changing region.',
+    text:    'To understand why the Arctic is changing so quickly, we first need to look at the ocean itself. Let us shift the map north and explore some of the features that make this region so distinct.',
   },
   {
     chapter: 'map',
@@ -103,7 +103,7 @@ export const STEPS = [
     chapter: 'map',
     camera:  'svalbard',
     title:   'The Arctic Seasonal Cycle',
-    text:    'Lets take a closer look at the seasonal cycle of the Arctic ocean, which is one of the most extreme and dynamic on Earth .',
+    text:    'We now turn to the Arctic seasonal cycle. Each year, light, sea ice, and open water shift dramatically, shaping one of the most dynamic environments on Earth.',
   },
 
   // ── Season chapter ────────────────────────────────────────────────────────
@@ -154,7 +154,7 @@ export const STEPS = [
   {
     chapter: 'svg',
     layerId: 'Light_production',
-    title:   'Increasing Pan-Arctic Productivity',
+    title:   'Increasing Arctic Ocean Productivity',
     bubble:  { arrow: 'right' },
     text:    'As ice retreats, sunlight reaches previously shaded Arctic waters and light is playing a bigger role earlier in the season in the shallow waters. This increases the growth area for algae species in the watercolumn but its difficult to know how it will affect algae species on the Arctic seafloor.',
   },
@@ -271,7 +271,7 @@ export const STEPS = [
   layerId: 'Ships',
   bubble:  {  cta: 'Take the evaluation →' },
   title:   'Future Arctic Ocean',
-  text:    'As sea ice retreats, the Arctic Ocean is becoming more accessible for longer parts of the year.\nThis future brings new opportunities and pressures on the fragile marine ecosystems - so let’s understand the current complexities before new ones are introduced.\n\n Before you leave, we invite you to reflect on the story and share your perspective.',
+  text:    'As the temperature increases and the sea ice retreats, the Arctic Ocean is becoming more accessible for longer parts of the year.\nThis future brings new opportunities and pressures on the fragile marine ecosystems - so let’s understand the current complexities before new ones are introduced.\n\n Before you leave, we invite you to reflect on the story and share your perspective.',
 },
 
   // ── Evaluation (shown after final chapter, not in ChapterTimeline) ───────────
