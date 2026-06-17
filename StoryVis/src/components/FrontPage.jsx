@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -23,43 +23,144 @@ const EXIT_FADE_MS = 1000;
 const IMAGE_CROSSFADE_MS = 900;
 
 const IMAGE_SEQUENCE_END = 0.90;
-const idxFromProgress = p =>
-  Math.min(FRAMES.length - 1, Math.floor(Math.min(1, p / IMAGE_SEQUENCE_END) * FRAMES.length));
+const FRONT_WHEEL_MIN_DELTA = 28;
+const FRONT_WHEEL_GESTURE_IDLE_MS = 800;
+const FRONT_TOUCH_THRESHOLD = 72;
+const FRONT_STEP_COOLDOWN_MS = 850;
 
-export default function FrontPage({ progress = 0, fading }) {
+const idxFromProgress = (p, sequenceEnd = IMAGE_SEQUENCE_END) =>
+  Math.min(FRAMES.length - 1, Math.floor(Math.min(1, p / sequenceEnd) * FRAMES.length));
+
+const progressForFrame = (index, sequenceEnd = IMAGE_SEQUENCE_END) => {
+  if (index <= 0) return 0;
+  return Math.min(sequenceEnd - 0.02, (index / FRAMES.length) * sequenceEnd + 0.025);
+};
+
+export default function FrontPage({ progress = 0, fading, imageSequenceEnd = IMAGE_SEQUENCE_END }) {
   const [loadedCount, setLoadedCount] = useState(0);
-  const [activeIdx, setActiveIdx] = useState(() => idxFromProgress(progress));
-  const accRef      = useRef(0);
-  const cooldownRef = useRef(false);
+  const [activeIdx, setActiveIdx] = useState(() => idxFromProgress(progress, imageSequenceEnd));
+  const stepLockedRef = useRef(false);
+  const wheelGestureActiveRef = useRef(false);
+  const touchGestureActiveRef = useRef(false);
+  const touchStartYRef = useRef(null);
   const activeIdxRef = useRef(activeIdx);
   useEffect(() => { activeIdxRef.current = activeIdx; }, [activeIdx]);
 
-  // Accumulate deltaY and advance exactly one image per threshold crossing.
-  // Events below MIN_DELTA are trailing momentum — ignore them so they can't
-  // accumulate past the threshold after the cooldown expires.
   useEffect(() => {
-    const THRESHOLD = 50;
-    const MIN_DELTA = 8;
-    const onWheel = (e) => {
-      if (cooldownRef.current) { accRef.current = 0; return; }
-      if (Math.abs(e.deltaY) < MIN_DELTA) return;
-      accRef.current += e.deltaY;
-      if (Math.abs(accRef.current) < THRESHOLD) return;
+    if (fading) return undefined;
+    const frame = requestAnimationFrame(() => {
+      const syncedIndex = idxFromProgress(progress, imageSequenceEnd);
+      activeIdxRef.current = syncedIndex;
+      setActiveIdx(syncedIndex);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [fading, imageSequenceEnd, progress]);
 
-      const dir = accRef.current > 0 ? 1 : -1;
-      accRef.current = 0;
-      cooldownRef.current = true;
-      setTimeout(() => { cooldownRef.current = false; }, 900);
+  const scrollIntroToProgress = useCallback((targetProgress) => {
+    const introStep = document.querySelector('[data-step="0"]');
+    if (!introStep) return;
+    const rect = introStep.getBoundingClientRect();
+    const stepTop = window.scrollY + rect.top;
+    window.scrollTo({ top: stepTop + introStep.offsetHeight * targetProgress });
+  }, []);
 
-      if (dir > 0 && activeIdxRef.current >= FRAMES.length - 1) {
-        window.scrollTo(0, window.innerHeight * 6 * IMAGE_SEQUENCE_END + 10);
+  useEffect(() => {
+    if (fading) return undefined;
+
+    let unlockTimer = null;
+    let wheelIdleTimer = null;
+
+    const goToFrame = (direction) => {
+      if (stepLockedRef.current) return;
+
+      const currentIndex = activeIdxRef.current;
+      const nextIndex = Math.max(0, Math.min(FRAMES.length - 1, currentIndex + direction));
+      const leavingIntro = direction > 0 && currentIndex >= FRAMES.length - 1;
+
+      stepLockedRef.current = true;
+
+      if (leavingIntro) {
+        scrollIntroToProgress(imageSequenceEnd + 0.02);
       } else {
-        setActiveIdx(prev => Math.max(0, Math.min(FRAMES.length - 1, prev + dir)));
+        activeIdxRef.current = nextIndex;
+        setActiveIdx(nextIndex);
+        scrollIntroToProgress(progressForFrame(nextIndex, imageSequenceEnd));
+      }
+
+      unlockTimer = setTimeout(() => {
+        stepLockedRef.current = false;
+      }, FRONT_STEP_COOLDOWN_MS);
+    };
+
+    const onWheel = (event) => {
+      event.preventDefault();
+      clearTimeout(wheelIdleTimer);
+      wheelIdleTimer = setTimeout(() => {
+        wheelGestureActiveRef.current = false;
+      }, FRONT_WHEEL_GESTURE_IDLE_MS);
+
+      if (Math.abs(event.deltaY) < FRONT_WHEEL_MIN_DELTA) return;
+      if (wheelGestureActiveRef.current) return;
+      wheelGestureActiveRef.current = true;
+      goToFrame(event.deltaY > 0 ? 1 : -1);
+    };
+
+    const onTouchStart = (event) => {
+      touchGestureActiveRef.current = false;
+      touchStartYRef.current = event.touches[0]?.clientY ?? null;
+    };
+
+    const onTouchMove = (event) => {
+      const startY = touchStartYRef.current;
+      if (startY == null) return;
+      const currentY = event.touches[0]?.clientY;
+      if (currentY == null) return;
+      const delta = startY - currentY;
+      event.preventDefault();
+      if (Math.abs(delta) < FRONT_TOUCH_THRESHOLD) return;
+      if (touchGestureActiveRef.current) return;
+      touchGestureActiveRef.current = true;
+      touchStartYRef.current = currentY;
+      goToFrame(delta > 0 ? 1 : -1);
+    };
+
+    const onTouchEnd = () => {
+      touchGestureActiveRef.current = false;
+      touchStartYRef.current = null;
+    };
+
+    const onKeyDown = (event) => {
+      if (['ArrowDown', 'PageDown', ' '].includes(event.key)) {
+        event.preventDefault();
+        goToFrame(1);
+      } else if (['ArrowUp', 'PageUp'].includes(event.key)) {
+        event.preventDefault();
+        goToFrame(-1);
       }
     };
-    window.addEventListener('wheel', onWheel, { passive: true });
-    return () => window.removeEventListener('wheel', onWheel);
-  }, []);
+
+    window.addEventListener('wheel', onWheel, { passive: false, capture: true });
+    window.addEventListener('touchstart', onTouchStart, { passive: true, capture: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: false, capture: true });
+    window.addEventListener('touchend', onTouchEnd, { capture: true });
+    window.addEventListener('touchcancel', onTouchEnd, { capture: true });
+    window.addEventListener('keydown', onKeyDown, { capture: true });
+
+    return () => {
+      window.removeEventListener('wheel', onWheel, { capture: true });
+      window.removeEventListener('touchstart', onTouchStart, { capture: true });
+      window.removeEventListener('touchmove', onTouchMove, { capture: true });
+      window.removeEventListener('touchend', onTouchEnd, { capture: true });
+      window.removeEventListener('touchcancel', onTouchEnd, { capture: true });
+      window.removeEventListener('keydown', onKeyDown, { capture: true });
+      clearTimeout(unlockTimer);
+      clearTimeout(wheelIdleTimer);
+      stepLockedRef.current = false;
+      wheelGestureActiveRef.current = false;
+      touchGestureActiveRef.current = false;
+      touchStartYRef.current = null;
+    };
+  }, [fading, imageSequenceEnd, scrollIntroToProgress]);
 
   const allLoaded = loadedCount >= FRAMES.length;
   const hasScrolled = progress > 0.1;

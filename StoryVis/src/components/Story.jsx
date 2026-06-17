@@ -1,5 +1,5 @@
 import { trackEvent, trackStep } from '../tracker.js';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import ScrollamaDemo from '../components/Scrollytelling.jsx';
 import NewMap from '../components/Map.jsx';
@@ -21,6 +21,11 @@ import {
 } from '../story-data.js';
 
 const clamp01 = value => Math.max(0, Math.min(1, value));
+const SVG_WHEEL_MIN_DELTA = 28;
+const SVG_WHEEL_GESTURE_IDLE_MS = 600;
+const SVG_TOUCH_THRESHOLD = 72;
+const SVG_STEP_COOLDOWN_MS = 600;
+const CONTROLLED_SVG_CHAPTERS = ['svg', 'photosynthesis'];
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function StoryScene() {
@@ -37,10 +42,19 @@ export default function StoryScene() {
   const [introHandoffPhase, setIntroHandoffPhase] = useState('idle');
   const [scrollLocked, setScrollLocked] = useState(false);
   const [chapterTransitioning, setChapterTransitioning] = useState(false);
+  const viewPointRef = useRef(viewPoint);
+  const controlledStepLockedRef = useRef(false);
+  const controlledWheelGestureActiveRef = useRef(false);
+  const controlledTouchGestureActiveRef = useRef(false);
+  const controlledTouchStartYRef = useRef(null);
+  const controlledScrollamaEntryLockedRef = useRef(false);
 
   const cogUrl = useCallback(year => `${import.meta.env.BASE_URL}tif_data/anom_${year}.tif`, []);
 
   const step = STEPS[viewPoint] ?? STEPS[0];
+  useEffect(() => {
+    viewPointRef.current = viewPoint;
+  }, [viewPoint]);
   const mapRevealed = true;
   const landingFading = introProgress >= MAP_TRANSITION_START;
   const introFlyTriggered = landingFading;
@@ -84,10 +98,18 @@ export default function StoryScene() {
     }, 320);
   };
 
+  const scrollToStep = useCallback((stepIndex, offset = 0.60) => {
+    const el = document.querySelector(`[data-step="${stepIndex}"]`);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    window.scrollTo({ top: window.scrollY + rect.top - window.innerHeight * offset });
+  }, []);
+
   // Derive layout flags directly from the step's chapter — no magic offsets
   const inWideChapter    = step.chapter === 'seasons' || step.chapter === 'svg' || step.chapter === 'photosynthesis' || step.chapter === 'shipping' || step.chapter === 'polar';
   const inSvgChapter       = step.chapter === 'svg';
   const inPhotoChapter     = step.chapter === 'photosynthesis';
+  const inControlledSvgChapter = CONTROLLED_SVG_CHAPTERS.includes(step.chapter);
   const inShippingChapter    = step.chapter === 'shipping';
   const inPolarChapter       = step.chapter === 'polar';
   const inEvaluationChapter  = step.chapter === 'evaluation';
@@ -108,6 +130,114 @@ export default function StoryScene() {
                     : -1;
 
   const activeLayerId = step.chapter === 'svg' ? step.layerId : null;
+  const controlledStepIndices = useMemo(
+    () => STEPS.map((s, i) => CONTROLLED_SVG_CHAPTERS.includes(s.chapter) ? i : -1).filter(i => i >= 0),
+    []
+  );
+  const controlledStartIndex = controlledStepIndices[0] ?? -1;
+  const controlledEndIndex = controlledStepIndices[controlledStepIndices.length - 1] ?? -1;
+
+  useEffect(() => {
+    if (!inControlledSvgChapter || controlledStartIndex < 0 || controlledEndIndex < 0) return undefined;
+
+    let unlockTimer = null;
+    let wheelIdleTimer = null;
+
+    const goToControlledStep = (direction) => {
+      if (controlledStepLockedRef.current) return;
+      const currentPosition = controlledStepIndices.indexOf(viewPointRef.current);
+      if (currentPosition < 0) return;
+
+      const nextIndex = direction > 0
+        ? (currentPosition === controlledStepIndices.length - 1 ? controlledEndIndex + 1 : controlledStepIndices[currentPosition + 1])
+        : (currentPosition === 0 ? controlledStartIndex - 1 : controlledStepIndices[currentPosition - 1]);
+
+      if (nextIndex < 0 || nextIndex >= STEPS.length) return;
+
+      controlledStepLockedRef.current = true;
+      viewPointRef.current = nextIndex;
+      setViewPoint(nextIndex);
+      trackStep(STEPS[nextIndex]?.chapter);
+      scrollToStep(nextIndex);
+
+      unlockTimer = setTimeout(() => {
+        controlledStepLockedRef.current = false;
+      }, SVG_STEP_COOLDOWN_MS);
+    };
+
+    const onWheel = (event) => {
+      event.preventDefault();
+      clearTimeout(wheelIdleTimer);
+      wheelIdleTimer = setTimeout(() => {
+        controlledWheelGestureActiveRef.current = false;
+      }, SVG_WHEEL_GESTURE_IDLE_MS);
+
+      if (Math.abs(event.deltaY) < SVG_WHEEL_MIN_DELTA) return;
+      if (controlledWheelGestureActiveRef.current) return;
+      controlledWheelGestureActiveRef.current = true;
+      goToControlledStep(event.deltaY > 0 ? 1 : -1);
+    };
+
+    const onTouchStart = (event) => {
+      controlledTouchGestureActiveRef.current = false;
+      controlledTouchStartYRef.current = event.touches[0]?.clientY ?? null;
+    };
+
+    const onTouchMove = (event) => {
+      const startY = controlledTouchStartYRef.current;
+      if (startY == null) return;
+      const currentY = event.touches[0]?.clientY;
+      if (currentY == null) return;
+      const delta = startY - currentY;
+      if (Math.abs(delta) < SVG_TOUCH_THRESHOLD) {
+        event.preventDefault();
+        return;
+      }
+      event.preventDefault();
+      if (controlledTouchGestureActiveRef.current) return;
+      controlledTouchGestureActiveRef.current = true;
+      controlledTouchStartYRef.current = currentY;
+      goToControlledStep(delta > 0 ? 1 : -1);
+    };
+
+    const onTouchEnd = () => {
+      controlledTouchGestureActiveRef.current = false;
+      controlledTouchStartYRef.current = null;
+    };
+
+    const onKeyDown = (event) => {
+      if (['ArrowDown', 'PageDown', ' '].includes(event.key)) {
+        event.preventDefault();
+        goToControlledStep(1);
+      } else if (['ArrowUp', 'PageUp'].includes(event.key)) {
+        event.preventDefault();
+        goToControlledStep(-1);
+      }
+    };
+
+    window.addEventListener('wheel', onWheel, { passive: false, capture: true });
+    window.addEventListener('touchstart', onTouchStart, { passive: true, capture: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: false, capture: true });
+    window.addEventListener('touchend', onTouchEnd, { capture: true });
+    window.addEventListener('touchcancel', onTouchEnd, { capture: true });
+    window.addEventListener('keydown', onKeyDown, { capture: true });
+
+    return () => {
+      window.removeEventListener('wheel', onWheel, { capture: true });
+      window.removeEventListener('touchstart', onTouchStart, { capture: true });
+      window.removeEventListener('touchmove', onTouchMove, { capture: true });
+      window.removeEventListener('touchend', onTouchEnd, { capture: true });
+      window.removeEventListener('touchcancel', onTouchEnd, { capture: true });
+      window.removeEventListener('keydown', onKeyDown, { capture: true });
+      clearTimeout(unlockTimer);
+      clearTimeout(wheelIdleTimer);
+      controlledStepLockedRef.current = false;
+      controlledWheelGestureActiveRef.current = false;
+      controlledTouchGestureActiveRef.current = false;
+      controlledTouchStartYRef.current = null;
+      controlledScrollamaEntryLockedRef.current = false;
+    };
+  }, [controlledEndIndex, controlledStartIndex, controlledStepIndices, inControlledSvgChapter, scrollToStep]);
 
   // Steps with a title or figure use the structured card layout (left-aligned);
   // plain intro/map steps render as centred text.
@@ -382,8 +512,20 @@ export default function StoryScene() {
       <main className="scrolly-right">
         <ScrollamaDemo
           handleUpdate={({ viewPoint: vp }) => {
+            const nextChapter = STEPS[vp]?.chapter;
+            const nextIsControlledSvgStep = CONTROLLED_SVG_CHAPTERS.includes(nextChapter);
+            if (nextIsControlledSvgStep && (inControlledSvgChapter || controlledScrollamaEntryLockedRef.current)) return;
+            if (nextIsControlledSvgStep) {
+              controlledScrollamaEntryLockedRef.current = true;
+              controlledStepLockedRef.current = true;
+              requestAnimationFrame(() => scrollToStep(vp));
+              setTimeout(() => {
+                controlledStepLockedRef.current = false;
+              }, SVG_STEP_COOLDOWN_MS);
+            }
+            viewPointRef.current = vp;
             setViewPoint(vp);
-            trackStep(STEPS[vp]?.chapter);
+            trackStep(nextChapter);
           }}
           onProgress={({ step: progressStep, progress }) => {
             if (progressStep === 0) {
