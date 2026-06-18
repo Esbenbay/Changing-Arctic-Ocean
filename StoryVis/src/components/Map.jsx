@@ -32,7 +32,7 @@ const disableTerrainSafely = (map) => {
   try {
     map?.setTerrain?.(null);
   } catch {
-    
+    // Mapbox can throw while styles/sources are already tearing down.
   }
 };
 

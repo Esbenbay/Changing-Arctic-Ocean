@@ -30,7 +30,6 @@ export default function ScrollamaDemo({
         </Step>
       );
     }
-
     return (
       <Step data={stepIndex} key={stepIndex}>
         <div data-step={stepIndex} style={{ margin: '80vh 0', minHeight: 1, textAlign: 'center', opacity: currentStepIndex === stepIndex ? 1 : 0.1 }}>
@@ -59,7 +58,7 @@ export default function ScrollamaDemo({
                 );
               })()}
               {entry.body && (
-                <div style={{ fontSize: '1.5rem', color: '#444', lineHeight: 1.75 }}>
+                <div className="story-body-text" style={{ fontSize: '1.5rem', color: '#2f3f4f', lineHeight: 1.75 }}>
                   {entry.body}
                 </div>
               )}
@@ -71,7 +70,11 @@ export default function ScrollamaDemo({
                 </div>
               )}
             </div>
-          ) : <div style={{ fontSize: '1.5rem', color: '#444', lineHeight: 1.75 }}>{entry}</div>}
+          ) : (
+            <div className="story-body-text" style={{ fontSize: '1.5rem', color: '#2f3f4f', lineHeight: 1.75, textAlign: 'left' }}>
+              {entry}
+            </div>
+          )}
         </div>
       </Step>
     );

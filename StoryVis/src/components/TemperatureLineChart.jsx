@@ -182,7 +182,7 @@ export default function TemperatureLineChart({ step, currentYear, startYear = 18
   const traces = worldData ? [
     {
       x: worldData.x, y: worldData.y,
-      type: 'scatter', mode: 'lines', name: 'Global Average',
+      type: 'scatter', mode: 'lines', name: 'Global Anomely Average (Diviation from 1951-1980 means)',
       line: { color: '#5b8dd9', width: 2 },
       hovertemplate: '%{x}: %{y:.2f}°C<extra>Global</extra>',
     },

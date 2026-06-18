@@ -1,15 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { FRONT_FRAMES } from '../story-assets.js';
 
-const BASE = import.meta.env.BASE_URL;
-
-const FRAMES = [
-  { src: `${BASE}Images/2022-05-29.jpg`, label: 'May 29'  },
-  { src: `${BASE}Images/2022-06-03.jpg`, label: 'June 2'  },
-  { src: `${BASE}Images/2022-06-02.jpg`, label: 'June 3'  },
-  { src: `${BASE}Images/2022-06-22.jpg`, label: 'June 22' },
-  { src: `${BASE}Images/2022-07-07.jpg`, label: 'July 7' },
-
-];
+const FRAMES = FRONT_FRAMES;
 
 const FRAME_TEXTS = [
   '',
@@ -24,9 +16,9 @@ const IMAGE_CROSSFADE_MS = 900;
 
 const IMAGE_SEQUENCE_END = 0.90;
 const FRONT_WHEEL_MIN_DELTA = 28;
-const FRONT_WHEEL_GESTURE_IDLE_MS = 600                                                ;
+const FRONT_WHEEL_GESTURE_IDLE_MS = 100                                                ;
 const FRONT_TOUCH_THRESHOLD = 72;
-const FRONT_STEP_COOLDOWN_MS = 600;
+const FRONT_STEP_COOLDOWN_MS = 100;
 
 const idxFromProgress = (p, sequenceEnd = IMAGE_SEQUENCE_END) =>
   Math.min(FRAMES.length - 1, Math.floor(Math.min(1, p / sequenceEnd) * FRAMES.length));
@@ -216,7 +208,7 @@ export default function FrontPage({ progress = 0, fading, imageSequenceEnd = IMA
         <h1 style={{ fontSize: '5em', marginBottom: '40px' }}>
           A Changing Arctic Ocean
         </h1>
-        <p style={{ fontSize: '2em', textAlign: 'center', maxWidth: '700px' }}>
+        <p className="story-body-text" style={{ fontSize: '2em', textAlign: 'center', maxWidth: '700px', color: '#102033', lineHeight: 1.45, textShadow: '0 1px 12px rgba(255,255,255,0.72)' }}>
           Explore the Arctic Ocean through our interactive storytelling visualization.
           Dive into the unique features, ecosystems, and challenges of this remote
           and captivating region.
@@ -261,16 +253,17 @@ export default function FrontPage({ progress = 0, fading, imageSequenceEnd = IMA
         {FRAME_TEXTS.map((text, i) => text && (
           <p
             key={text}
+            className="story-body-text"
             style={{
               position:      'absolute',
               margin:        0,
               fontSize:      '4em',
               fontWeight:    600,
-              color:         'rgba(0, 0, 0, 0.96)',
+              color:         'rgba(12, 25, 38, 0.96)',
               lineHeight:    1.12,
               maxWidth:      '980px',
               textAlign:     'left',
-              textShadow:    'none',
+              textShadow:    '0 1px 14px rgba(255,255,255,0.72)',
               opacity:       settledTextIdx === i ? 1 : 0,
               transition:    'opacity 750ms ease',
             }}

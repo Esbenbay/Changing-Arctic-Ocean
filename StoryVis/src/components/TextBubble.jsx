@@ -51,7 +51,7 @@ function BubbleContent({ text, compact, bodyFontSize, bodyLineHeight }) {
       {items.map((item, i) => {
         if (typeof item === 'string') {
           return (
-            <div key={i} style={{ fontSize: bodyFontSize, lineHeight: bodyLineHeight, color: '#3d5166', marginBottom: compact ? 6 : 8, whiteSpace: 'pre-line' }}>
+            <div className="story-body-text" key={i} style={{ fontSize: bodyFontSize, lineHeight: bodyLineHeight, color: '#2f4356', marginBottom: compact ? 6 : 8, whiteSpace: 'pre-line' }}>
               {item}
             </div>
           );
@@ -65,7 +65,7 @@ function BubbleContent({ text, compact, bodyFontSize, bodyLineHeight }) {
                 style={{ width: compact ? '100%' : item.imageWidth ?? '45%', maxHeight: compact ? 170 : 240, flexShrink: 0, borderRadius: 7, display: 'block', objectFit: 'cover', height: item.imageHeight ?? 'auto' }}
               />
               <div>
-                <div style={{ fontSize: bodyFontSize, lineHeight: bodyLineHeight, color: '#3d5166', whiteSpace: 'pre-line' }}>{item.text}</div>
+                <div className="story-body-text" style={{ fontSize: bodyFontSize, lineHeight: bodyLineHeight, color: '#2f4356', whiteSpace: 'pre-line' }}>{item.text}</div>
                 {item.caption && (
                   <div style={{ fontSize: '0.78rem', color: '#888', marginTop: 4, fontStyle: 'italic' }}>{item.caption}</div>
                 )}
@@ -169,12 +169,12 @@ export default function TextBubble({ title, text, x, y, arrow, figure, width, ct
       zIndex:               20,
       width:                bubbleWidth,
       maxWidth:             `calc(100vw - ${margin * 2}px)`,
-      background:           'rgba(255,255,255,0.95)',
+      background:           'rgba(255,255,255,0.88)',
       backdropFilter:       'blur(14px)',
       WebkitBackdropFilter: 'blur(14px)',
       borderRadius:         tight ? 10 : 14,
       padding:              tight ? '8px 11px' : compact ? '9px 13px' : '10px 15px',
-      boxShadow:            '0 4px 24px rgba(0,0,0,0.14), 0 1px 4px rgba(0,0,0,0.08)',
+      boxShadow:            '0 10px 30px rgba(18,38,58,0.18), 0 1px 4px rgba(0,0,0,0.10)',
       pointerEvents:        (hasFigure || hasCta) ? 'auto' : 'none',
       animation:            'story-fade-in 400ms ease forwards',
     }}>

@@ -185,7 +185,7 @@ function ConsentBox({ checked, onChange, color, text }) {
           cursor:     'pointer',
         }}
       />
-      <span style={{ fontSize: '1.18rem', color: '#22313f', lineHeight: 1.55 }}>
+      <span className="story-body-text" style={{ fontSize: '1.18rem', color: '#22313f', lineHeight: 1.55 }}>
         {text}
       </span>
     </label>
@@ -314,7 +314,7 @@ export default function Evaluation() {
             <h2 style={{ fontSize: '2.4rem', fontWeight: 700, color: '#12263a', margin: 0 }}>{page.label}</h2>
           </div>
 
-          <p style={{ fontSize: '1.3rem', color: '#000000', margin: '0 0 48px', lineHeight: 1.6 }}>
+          <p className="story-body-text story-text-panel" style={{ fontSize: '1.3rem', color: '#1f2f3f', margin: '0 0 48px', lineHeight: 1.6, padding: '16px 18px' }}>
             {pageIndex === 0
               ? <>The evaluation will be used to improve the future user experience and for research purposes.<br />A few quick background questions before we start.</>
               : <>Rate each statement from <strong style={{ color: '#030303f' }}>1</strong> (Strongly disagree) to <strong style={{ color: '#1c1c1c' }}>7</strong> (Strongly agree).</>
@@ -325,7 +325,7 @@ export default function Evaluation() {
             {page.questions.map(q => (
               <div key={q.id}>
                 {q.type !== 'consent' && (
-                  <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 20 }}>
+                  <div className="story-body-text story-text-panel" style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 20, padding: '14px 16px' }}>
                     {q.type === 'likert' && pageIndex > 0 && (
                       <span style={{ fontSize: '1rem', fontWeight: 700, color: page.color, opacity: 0.7, minWidth: 34, paddingTop: 5, flexShrink: 0 }}>
                         {q.id}
