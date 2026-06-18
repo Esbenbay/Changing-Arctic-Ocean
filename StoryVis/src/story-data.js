@@ -207,10 +207,10 @@ export const STEPS = [
   {
     chapter: 'svg',
     layerId: 'kelp_highlight',
-    title:   'How is the Arctic Seafloor Adapting (Add image of the seafloor)?',
-    image:   { src: `${BASE}Micro.jpg`, caption: 'Antarctic, ?? karl' },
+    title:   'How is the Arctic Seafloor Adapting',
+    image:   { src: `${BASE}Micro.jpg`, caption: 'Antarctic' },
     bubble:  { width: 500 },
-    text:    'Our research is focusing on how the Arctic seafloor is adapting to this complex web of change in the Arctic ocean. We want to understand how much the microorganisms grow, when they grow, and how the energy they produce moves through the food web around them.',
+    text:    'Our research is focusing on how the Arctic seafloor is adapting to this complex web of change in the Arctic ocean. We want to understand how much the microorganisms on the seafloor grow, when they grow, and how the energy they produce moves through the food web around them.',
   },
 
   // ── Photosynthesis chapter ────────────────────────────────────────────────
@@ -264,13 +264,13 @@ export const STEPS = [
   layerId: 'g84',
   bubble:  {  },
   title:   'A Changing Cycle',
-  text:    'Longer ice-free seasons can extend the period when sunlight reaches the Arctic seafloor, potentially increasing photosynthesis in shallow coastal areas.\n But this change also reshapes the entire ecosystem. More light, warmer water, and increasing water turbidity can alter when and where the seafloor algae expand to.',
+  text:    'Longer ice-free seasons can extend the period when sunlight reaches the Arctic seafloor, potentially increasing photosynthesis in shallow coastal areas.\n But this change also reshapes the entire ecosystem. Less sea ice, more light, and increasing water turbidity can alter when and where the seafloor algae expand to.',
 },
   {
   chapter: 'photosynthesis',
   layerId: 'Ships',
   bubble:  {  cta: 'Take the evaluation →' },
-  title:   'Future Arctic Ocean',
+  title:   'The Future Arctic Ocean',
   text:    'As the temperature increases and the sea ice retreats, the Arctic Ocean is becoming more accessible for longer parts of the year.\nThis future brings new opportunities and pressures on the fragile marine ecosystems - so let’s understand the current complexities before new ones are introduced.\n\n Before you leave, we invite you to reflect on the story and share your perspective.',
 },
 
