@@ -22,9 +22,9 @@ import {
 
 const clamp01 = value => Math.max(0, Math.min(1, value));
 const SVG_WHEEL_MIN_DELTA = 28;
-const SVG_WHEEL_GESTURE_IDLE_MS = 50;
+const SVG_WHEEL_GESTURE_IDLE_MS = 100;
 const SVG_TOUCH_THRESHOLD = 72;
-const SVG_STEP_COOLDOWN_MS = 50;
+const SVG_STEP_COOLDOWN_MS = 100;
 const CONTROLLED_SVG_CHAPTERS = ['svg', 'photosynthesis'];
 const SVG_CHAPTER_DISSOLVE_MS = 1900;
 const SVG_CHAPTER_VEIL_HOLD_MS = 320;
