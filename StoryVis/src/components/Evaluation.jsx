@@ -7,6 +7,10 @@ const PAGES = [
     id: 'background', label: 'Background', color: '#546e7a',
     questions: [
       {
+        id: 'research_consent', type: 'consent',
+        text: 'I consent to my responses being used to improve the user experience and for research purposes.',
+      },
+      {
         id: 'age', type: 'choice', text: 'What is your age range?',
         options: ['Under 18', '18–24', '25–34', '35–44', '45–54', '55–64', '65-74', '75 or older'],
       },
@@ -154,6 +158,40 @@ function FreeTextField({ value, onChange, color }) {
   );
 }
 
+function ConsentBox({ checked, onChange, color, text }) {
+  return (
+    <label style={{
+      display:       'flex',
+      alignItems:    'flex-start',
+      gap:           14,
+      padding:       '18px 20px',
+      borderRadius:  10,
+      border:        `2px solid ${checked ? color : '#d7dde3'}`,
+      background:    checked ? `${color}10` : 'white',
+      boxShadow:     checked ? `0 0 0 4px ${color}18` : 'none',
+      cursor:        'pointer',
+      transition:    'border-color 150ms ease, box-shadow 150ms ease, background 150ms ease',
+    }}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={e => onChange(e.target.checked)}
+        style={{
+          width:      24,
+          height:     24,
+          margin:     '2px 0 0',
+          accentColor: color,
+          flexShrink: 0,
+          cursor:     'pointer',
+        }}
+      />
+      <span style={{ fontSize: '1.18rem', color: '#22313f', lineHeight: 1.55 }}>
+        {text}
+      </span>
+    </label>
+  );
+}
+
 function PageProgress({ pages, currentIndex }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0 }}>
@@ -207,7 +245,8 @@ export default function Evaluation() {
   const page = PAGES[pageIndex];
   const isLast = pageIndex === PAGES.length - 1;
 
-  const pageComplete = page.questions.every(q => q.optional || answers[q.id] != null);
+  const isQuestionComplete = q => q.optional || (q.type === 'consent' ? answers[q.id] === true : answers[q.id] != null);
+  const pageComplete = page.questions.every(isQuestionComplete);
 
   const go = (delta) => setPageIndex(i => i + delta);
 
@@ -285,14 +324,24 @@ export default function Evaluation() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 52 }}>
             {page.questions.map(q => (
               <div key={q.id}>
-                <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 20 }}>
-                  {q.type === 'likert' && pageIndex > 0 && (
-                    <span style={{ fontSize: '1rem', fontWeight: 700, color: page.color, opacity: 0.7, minWidth: 34, paddingTop: 5, flexShrink: 0 }}>
-                      {q.id}
-                    </span>
-                  )}
-                  <span style={{ fontSize: '1.55rem', color: '#222', lineHeight: 1.55 }}>{q.text}</span>
-                </div>
+                {q.type !== 'consent' && (
+                  <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', marginBottom: 20 }}>
+                    {q.type === 'likert' && pageIndex > 0 && (
+                      <span style={{ fontSize: '1rem', fontWeight: 700, color: page.color, opacity: 0.7, minWidth: 34, paddingTop: 5, flexShrink: 0 }}>
+                        {q.id}
+                      </span>
+                    )}
+                    <span style={{ fontSize: '1.55rem', color: '#222', lineHeight: 1.55 }}>{q.text}</span>
+                  </div>
+                )}
+                {q.type === 'consent' && (
+                  <ConsentBox
+                    checked={answers[q.id] === true}
+                    onChange={v => setAnswers(prev => ({ ...prev, [q.id]: v }))}
+                    color={page.color}
+                    text={q.text}
+                  />
+                )}
                 {q.type === 'likert' && (
                   <LikertScale
                     value={answers[q.id] ?? null}
@@ -371,7 +420,7 @@ export default function Evaluation() {
         </button>
 
         <span style={{ fontSize: '1.05rem', color: pageComplete ? 'transparent' : '#bbb' }}>
-          {page.questions.filter(q => !q.optional && answers[q.id] == null).length} remaining
+          {page.questions.filter(q => !isQuestionComplete(q)).length} remaining
         </span>
 
         <button

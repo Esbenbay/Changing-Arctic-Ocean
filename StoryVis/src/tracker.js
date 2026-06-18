@@ -8,6 +8,7 @@ const events = [];
 let lastChapter = null;
 
 const EVAL_FIELD_IDS = [
+  'research_consent',
   'age',
   'prior_knowledge',
   'background_comment',
