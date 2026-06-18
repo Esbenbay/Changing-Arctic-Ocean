@@ -32,7 +32,7 @@ const disableTerrainSafely = (map) => {
   try {
     map?.setTerrain?.(null);
   } catch {
-    // Mapbox may already be mid-style-teardown; this is a defensive cleanup.
+    
   }
 };
 
@@ -192,7 +192,7 @@ const QUIZ_COUNTRIES = [
   { iso: "US", name: "United States", color: "#AD1457" },
 ];
 
-// Builds a Mapbox match expression: found countries show their colour, others are dimmed
+
 function buildQuizColorExpr(found) {
   const entries = QUIZ_COUNTRIES.flatMap(({ iso, color }) => {
     const c = found.has(iso) ? color : "#444";
@@ -203,7 +203,7 @@ function buildQuizColorExpr(found) {
   return ["match", ["get", "iso_3166_1"], ...entries, "transparent"];
 }
 
-// Found countries are visible; unfound are fully transparent (still clickable in Mapbox)
+
 function buildQuizOpacityExpr(found) {
   const entries = QUIZ_COUNTRIES.flatMap(({ iso }) => {
     const op = found.has(iso) ? 0.6 : 0;
@@ -292,10 +292,7 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
     if (appliedMapStyle === targetMapStyle) return;
     const t = setTimeout(() => {
       disableTerrainSafely(mapRef.current?.getMap());
-      // Clear the COG React Source/Layer before the style swap so they are
-      // re-added fresh once the new style is loaded (Mapbox wipes all custom
-      // sources/layers on setStyle, but cogReadyRef would otherwise stay true
-      // and the re-init path would be skipped, leaving no COG layer visible).
+     
       cogReadyRef.current = false;
       cogSlotRef.current  = 'a';
       setCogLayer(null);
@@ -491,8 +488,7 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
     loadCogYear(yr).then(result => {
       if (id !== cogReqRef.current) return;
       if (!cogReadyRef.current) {
-        // First show after style switch: mount at zero, then ramp up on the
-        // next frame so late COG decodes still fade in instead of popping.
+       
         cogReadyRef.current = true;
         setCogLayer(result);
         setSlotBOpacity(0);
@@ -530,9 +526,7 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
     else              setSlotBOpacity(cogOpacity);
   }, [cogOpacity, cogLayer]);
 
-  // ── Cleanup ────────────────────────────────────────────────────────────────
-  // Mapbox owns this imperative instance; cleanup must run before React-Map-GL
-  // removes child sources so terrain cannot reference a source mid-teardown.
+ 
   useLayoutEffect(() => {
     return () => {
       disableTerrainSafely(cleanupResources?.map);
@@ -540,9 +534,7 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
     };
   }, [cleanupResources]);
 
-  // Fallback: onIdle fires after all tiles load — catches any case where
-  // style.load didn't fire (e.g. initial satellite style before the listener
-  // was registered in handleMapLoad).
+ 
   const handleStyleReady = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (map?.isStyleLoaded()) setStyleLoaded(true);

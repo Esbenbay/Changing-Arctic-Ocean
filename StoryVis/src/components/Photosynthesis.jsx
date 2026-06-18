@@ -253,7 +253,7 @@ export default function PhotosynthesisPanel({ activeLayerId, anchorLayerId, acti
       // stayVisible && !isActive: already at 1, GSAP leaves it alone
     });
 
-    // ── Build combined visible set for random fades ───────────────────────────
+    
     const allVisible = new Set(visible);
     Object.entries(fadeLayersRef.current).forEach(([name, entry]) => {
       const isActive = entry.cfg.trigger === activeLayerId;
@@ -261,8 +261,7 @@ export default function PhotosynthesisPanel({ activeLayerId, anchorLayerId, acti
       if (isActive || stayVis) allVisible.add(name);
     });
 
-    // ── Play/pause motion-path loops ──────────────────────────────────────────
-    // Infinite loops resume from pause; one-shot anims restart from the beginning.
+   
     Object.entries(MOTION_PATH_ANIMS).forEach(([key, animCfg]) => {
       const tween = motionTweensRef.current[key];
       if (!tween) return;
@@ -274,7 +273,7 @@ export default function PhotosynthesisPanel({ activeLayerId, anchorLayerId, acti
       }
     });
 
-    // ── Random sub-layer blinking — only start/stop on visibility change ──────
+    
     RANDOM_FADE_LAYERS.forEach(name => {
       const running   = name in randomFadeRef.current;
       const shouldRun = allVisible.has(name);
@@ -297,7 +296,7 @@ export default function PhotosynthesisPanel({ activeLayerId, anchorLayerId, acti
     });
   }, [activeLayerId, anchorLayerId, onAnchorPosition]);
 
-  // Erosion slider: cross-fade ice out / erosion in, move ice along path
+  
   useEffect(() => {
     if (erosionProgress == null) return;
     const { iceOpacity, iceNotOpacity, erosionOpacity } = quickSettersRef.current;

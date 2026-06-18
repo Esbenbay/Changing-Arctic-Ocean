@@ -175,7 +175,7 @@ export default function CogTemperatureMap({
     return () => { cancelled = true; clearTimeout(t); };
   }, [startYear, endYear, yearStep, getUrl, vmin, vmax, colorFn]);
 
-  // When scroll drives the year externally, debounce-snap to nearest yearStep
+  
   useEffect(() => {
     if (externalYear == null) return;
     if (extDebounceRef.current) clearTimeout(extDebounceRef.current);
@@ -186,14 +186,14 @@ export default function CogTemperatureMap({
     return () => clearTimeout(extDebounceRef.current);
   }, [externalYear, yearStep, startYear, endYear]);
 
-  // Once first image mounts both sources are ready after a short delay
+  
   useEffect(() => {
     if (!initLayer) return;
     const t = setTimeout(() => { initializedRef.current = true; }, 100);
     return () => clearTimeout(t);
   }, [initLayer]);
 
-  // Decode TIF whenever year changes — use cache, then pre-fetch neighbours
+  
   useEffect(() => {
     const id = ++requestId.current;
 

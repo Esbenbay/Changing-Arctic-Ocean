@@ -42,7 +42,7 @@ function ArrowTip({ direction }) {
   return <div style={tips[direction] ?? null} />;
 }
 
-// `text` can be a plain string OR an array of strings / { image, alt?, caption? } objects.
+
 function BubbleContent({ text, compact, bodyFontSize, bodyLineHeight }) {
   if (!text) return null;
   const items = Array.isArray(text) ? text : [text];
@@ -95,8 +95,8 @@ function BubbleContent({ text, compact, bodyFontSize, bodyLineHeight }) {
   );
 }
 
-// `bubble` shape: { x, y, align, arrow?, title, text, figure?, cta?, onCta? }
-// Renders only when an anchor position is known — x/y come from the SVG dot.
+
+
 export default function TextBubble({ title, text, x, y, arrow, figure, width, cta, onCta }) {
   const bubbleRef = useRef(null);
   const viewport = useViewportSize();
