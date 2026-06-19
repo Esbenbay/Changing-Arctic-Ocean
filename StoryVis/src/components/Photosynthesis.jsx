@@ -4,6 +4,8 @@ import { zoomToLayer, findAnchor } from './svgHelpers.js';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
 
 const BASE = import.meta.env.BASE_URL;
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const XLINK_NS = 'http://www.w3.org/1999/xlink';
 
 gsap.registerPlugin(MotionPathPlugin);
 
@@ -59,12 +61,13 @@ const RANDOM_FADE_LAYERS = [
 const MOTION_PATH_ANIMS = {
   O2_micro: { elementLabel: 'O2_micro',  pathLabel: 'Micro_path_', triggerStep: 'Sea_weed', duration: 6, repeat: -1 },
   Eddy:     { elementLabel: 'Eddy',      pathLabel: 'Eddy_path',   triggerStep: 'Sun',      duration: 3, repeat: 0 },
-  Ship_1:    { elementLabel: 'Ship_1',    pathLabel: 'Ship_1_path',   triggerStep: 'g84',   duration: 4, repeat: 0 },
-  Ship_2:    { elementLabel: 'Ship_2',    pathLabel: 'Ship_2_path',   triggerStep: 'g84',   duration: 4, repeat: 0 },
+  Ship_1:   { elementLabel: 'Ship_1',    pathLabel: 'Ship_1_path', triggerStep: 'g84',      duration: 4, repeat: 0 },
+  Ship_2:   { elementLabel: 'Ship_2',    pathLabel: 'Ship_2_path', triggerStep: 'g84',      duration: 4, repeat: 0 },
 };
 
 export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId, active, erosionProgress, onAnchorPosition }) {
   const containerRef      = useRef(null);
+  const svgHostRef        = useRef(null);
   const svgRef            = useRef(null);
   const iceTweenRef       = useRef(null);
   const hasInitialZoomRef = useRef(false);
@@ -76,23 +79,40 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    const svgHost = svgHostRef.current;
+    if (!container || !svgHost) return;
     const randomFadeIntervals = randomFadeRef.current;
 
-    fetch(`${BASE}Phytosynthesis_Arctic_summer.svg`)
+    fetch(`${BASE}Phytosynthesis_Arctic_summer_layers.svg`)
       .then(r => r.text())
       .then(svgText => {
-        if (!containerRef.current) return;
-        container.innerHTML = svgText;
+        if (!containerRef.current || !svgHostRef.current) return;
+        svgHost.innerHTML = svgText;
 
-        const svg = container.querySelector('svg');
+        const svg = svgHost.querySelector('svg');
         if (!svg) return;
         svg.style.width                    = '100%';
         svg.style.height                   = '100%';
+        svg.style.display                  = 'block';
+        svg.style.position                 = 'absolute';
+        svg.style.inset                    = '0';
         svg.style.transformOrigin          = '0 0';
         svg.style.backfaceVisibility       = 'hidden';
         svg.style.webkitBackfaceVisibility = 'hidden';
         svgRef.current = svg;
+
+        const vb = svg.viewBox.baseVal;
+        const backgroundImage = document.createElementNS(SVG_NS, 'image');
+        const backgroundSrc = `${BASE}Phytosynthesis_Arctic_summer.webp`;
+        backgroundImage.setAttribute('href', backgroundSrc);
+        backgroundImage.setAttributeNS(XLINK_NS, 'href', backgroundSrc);
+        backgroundImage.setAttribute('x', String(vb.x));
+        backgroundImage.setAttribute('y', String(vb.y));
+        backgroundImage.setAttribute('width', String(vb.width));
+        backgroundImage.setAttribute('height', String(vb.height));
+        backgroundImage.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        backgroundImage.style.pointerEvents = 'none';
+        svg.insertBefore(backgroundImage, svg.firstElementChild);
 
         // Prefix all IDs to avoid clashing with Late_summer.svg in DOM
         const P = 'ph__';
@@ -178,6 +198,7 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
       iceTweenRef.current?.kill();
       Object.values(motionTweensRef.current).forEach(t => t.kill());
       Object.values(randomFadeIntervals).forEach(clearInterval);
+      svgHost.innerHTML = '';
     };
   }, []);
 
@@ -306,5 +327,18 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
     if (iceTweenRef.current) gsap.to(iceTweenRef.current, { progress: erosionProgress, duration: 0.1, ease: 'none', overwrite: true });
   }, [erosionProgress]);
 
-  return <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />;
+  return (
+    <div ref={containerRef} style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: 'white' }}>
+      <div
+        ref={svgHostRef}
+        aria-hidden="true"
+        style={{
+          position:      'absolute',
+          inset:         0,
+          pointerEvents: 'none',
+          contain:       'layout paint style',
+        }}
+      />
+    </div>
+  );
 });

@@ -1,6 +1,40 @@
 import { memo, useRef, useEffect } from 'react';
 import { findAnchor, getLayerEl, zoomToLayer } from './svgHelpers.js';
 
+const BASE = import.meta.env.BASE_URL;
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const XLINK_NS = 'http://www.w3.org/1999/xlink';
+
+const getSceneAssets = (src) => {
+  if (src?.endsWith('SVG/Late_summer.svg')) {
+    return {
+      svgSrc: `${BASE}SVG/Late_summer_layers.svg`,
+      backgroundSrc: `${BASE}SVG/Late_summer.webp`,
+    };
+  }
+  return { svgSrc: src, backgroundSrc: null };
+};
+
+const insertRasterBackground = (svg, backgroundSrc) => {
+  if (!backgroundSrc) return;
+  const vb = svg.viewBox.baseVal;
+  const backgroundImage = document.createElementNS(SVG_NS, 'image');
+  backgroundImage.setAttribute('href', backgroundSrc);
+  backgroundImage.setAttributeNS(XLINK_NS, 'href', backgroundSrc);
+  backgroundImage.setAttribute('x', String(vb.x));
+  backgroundImage.setAttribute('y', String(vb.y));
+  backgroundImage.setAttribute('width', String(vb.width));
+  backgroundImage.setAttribute('height', String(vb.height));
+  backgroundImage.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  backgroundImage.style.pointerEvents = 'none';
+
+  const firstRenderedChild = [...svg.children].find(child => {
+    const tag = child.tagName.toLowerCase();
+    return !['defs', 'metadata', 'title', 'desc', 'sodipodi:namedview'].includes(tag);
+  });
+  svg.insertBefore(backgroundImage, firstRenderedChild ?? null);
+};
+
 const INTERACTIVE_LAYERS = {
   Sun_first:   { name: 'Sunlight & Seasons', description: 'The Arctic experiences extreme seasonal shifts in sunlight, with polar night in winter and midnight sun in summer. These cycles drive the rhythms of life and ecosystem productivity.', fadeOutWithLayer: 'Light_production', noHighlight: true, oneWay: false, fadeOutTransition: 'opacity 1000ms ease' },
   Sea_ice_early:     { name: 'Sea Ice',              description: 'Arctic sea ice extent has declined ~13% per decade since satellite records began. The loss of multi-year ice fundamentally restructures the ecosystem that depends on it.' },
@@ -94,8 +128,9 @@ export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPos
   // Load and wire up SVG
   useEffect(() => {
     if (!containerRef.current) return;
+    const { svgSrc, backgroundSrc } = getSceneAssets(src);
 
-    fetch(src)
+    fetch(svgSrc)
       .then(r => r.text())
       .then(svgText => {
         containerRef.current.innerHTML = svgText;
@@ -106,6 +141,7 @@ export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPos
         svg.style.backfaceVisibility = 'hidden';
         svg.style.webkitBackfaceVisibility = 'hidden';
         svgRef.current = svg;
+        insertRasterBackground(svg, backgroundSrc);
 
         // Register fade-controlled layers
         Object.entries(INTERACTIVE_LAYERS).forEach(([label, cfg]) => {
