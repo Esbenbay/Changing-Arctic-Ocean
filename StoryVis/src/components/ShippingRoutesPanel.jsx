@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { memo, useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
 
@@ -17,7 +17,7 @@ const parseViewBox = svg => {
   return vb ? { x: vb[0], y: vb[1], w: vb[2], h: vb[3] } : null;
 };
 
-export default function ShippingRoutesPanel({ active, stepIndex }) {
+export default memo(function ShippingRoutesPanel({ active, stepIndex }) {
   const containerRef  = useRef(null);
   const svgRef        = useRef(null);
   const origVBRef     = useRef(null);
@@ -163,4 +163,4 @@ export default function ShippingRoutesPanel({ active, stepIndex }) {
   }, [active, stepIndex]);
 
   return <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />;
-}
+});

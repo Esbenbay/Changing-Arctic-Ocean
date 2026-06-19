@@ -8,7 +8,6 @@ const events = [];
 let lastChapter = null;
 
 const EVAL_FIELD_IDS = [
-  'research_consent',
   'age',
   'prior_knowledge',
   'background_comment',
@@ -57,6 +56,7 @@ export function trackStep(chapter) {
 
 // ── Send compiled session JSON when story is complete ─────────────────────────
 let flushed = false;
+// evalAnswers: optional object { U1: 4, U2: 6, ... } from the evaluation form
 // evalAnswers: optional object { U1: 4, U_comment: '...', ... } from the evaluation form
 export function flushToSheet(evalAnswers = {}) {
   if (!SHEET_URL) { console.warn('[tracker] VITE_SHEET_URL not defined'); return; }

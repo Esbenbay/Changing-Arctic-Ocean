@@ -1,5 +1,5 @@
 import { Map, Layer, Source, Marker } from "react-map-gl/mapbox";
-import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
+import { memo, useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
 import { track } from "../tracker.js";
 import { fromArrayBuffer } from 'geotiff';
 import proj4 from 'proj4';
@@ -214,7 +214,7 @@ function buildQuizOpacityExpr(found) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function NewMap({ cameraKey, quizMode, bathymetryMode, completionOverlayImage, embed = false, hideGlobeToggle = false, initialViewState, mapRevealed = false, introFlyTriggered = false, onFlyOutComplete, cogUrl, cogYear, cogOpacity = 0, cogFadeDuration = 250, cogVmin = -3, cogVmax = 3, useLightStyle = false }) {
+export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, completionOverlayImage, embed = false, hideGlobeToggle = false, initialViewState, mapRevealed = false, introFlyTriggered = false, onFlyOutComplete, cogUrl, cogYear, cogOpacity = 0, cogFadeDuration = 250, cogVmin = -3, cogVmax = 3, useLightStyle = false }) {
   const temperatureMapActive = cogUrl && cogOpacity > 0.3;
   const targetMapStyle = useLightStyle ? TEMPERATURE_MAP_STYLE : SATELLITE_MAP_STYLE;
 
@@ -224,6 +224,7 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
   const flyOutTimerRef    = useRef(null);
   const flyOutFiredRef    = useRef(false);
   const onFlyOutCompleteRef = useRef(onFlyOutComplete);
+  const resizeFrameRef    = useRef(null);
 
   // COG temperature layer
   const cogCacheRef = useRef(new window.Map());
@@ -258,8 +259,8 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
 
   useEffect(() => {
     if (cameraKey !== 'polar-shelf' || bathymetryMode !== 'shelf') {
-      setShelfPulse(false);
-      return undefined;
+      const frame = requestAnimationFrame(() => setShelfPulse(false));
+      return () => cancelAnimationFrame(frame);
     }
     const pulseTimer = setInterval(() => {
       setShelfPulse(value => !value);
@@ -308,7 +309,7 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
   useEffect(() => {
     const map = mapRef.current?.getMap();
     if (!map || !styleLoaded) return;
-    setCompletionOverlayVisible(false);
+    const resetOverlayFrame = requestAnimationFrame(() => setCompletionOverlayVisible(false));
 
     // Cancel any running animations
     if (rotateRef.current) {
@@ -401,6 +402,7 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
     return () => {
       if (onMoveEnd) map.off('moveend', onMoveEnd);
       if (onCompletionMoveEnd) map.off('moveend', onCompletionMoveEnd);
+      cancelAnimationFrame(resetOverlayFrame);
       clearTimeout(completionOverlayTimer);
       if (rotateRef.current) {
         cancelAnimationFrame(rotateRef.current);
@@ -448,26 +450,46 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
     };
   }, [mapRevealed, introFlyTriggered, styleLoaded, cameraKey]);
 
-  // ── COG temperature layer: pre-load all years in background ──────────────
+  // ── COG temperature layer: warm the cache gently during idle time ────────
   useEffect(() => {
-    if (!cogUrl) return;
+    if (!cogUrl || cogOpacity <= 0.05) return undefined;
     let cancelled = false;
-    const run = async () => {
-      let nextIndex = 0;
-      const worker = async () => {
-        while (!cancelled && nextIndex < COG_YEARS.length) {
-          const year = COG_YEARS[nextIndex++];
+    let timeoutId = null;
+    let idleId = null;
+    let nextIndex = 0;
+
+    const schedule = (delay = 2200) => {
+      if (cancelled) return;
+      timeoutId = setTimeout(() => {
+        const run = async () => {
+          if (cancelled || document.visibilityState === 'hidden') return;
+          while (nextIndex < COG_YEARS.length && cogCacheRef.current.has(COG_YEARS[nextIndex])) {
+            nextIndex += 1;
+          }
+          const year = COG_YEARS[nextIndex];
+          if (year == null) return;
+          nextIndex += 1;
           await loadCogYear(year).catch(() => {});
+          schedule(900);
+        };
+
+        if ('requestIdleCallback' in window) {
+          idleId = window.requestIdleCallback(run, { timeout: 3500 });
+        } else {
+          run();
         }
-      };
-      await Promise.all([worker(), worker()]);
+      }, delay);
     };
-    const t = setTimeout(run, 250);
+
+    schedule();
     return () => {
       cancelled = true;
-      clearTimeout(t);
+      clearTimeout(timeoutId);
+      if (idleId != null && 'cancelIdleCallback' in window) {
+        window.cancelIdleCallback(idleId);
+      }
     };
-  }, [cogUrl, loadCogYear]);
+  }, [cogOpacity, cogUrl, loadCogYear]);
 
   // ── COG temperature layer: pre-fetch neighbours for smoother slider drag ──
   useEffect(() => {
@@ -521,14 +543,21 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
   // ── COG temperature layer: fade in/out when cogOpacity changes ────────────
   useEffect(() => {
     if (!cogLayer) return;
-    const slot = cogSlotRef.current;
-    if (slot === 'a') setSlotAOpacity(cogOpacity);
-    else              setSlotBOpacity(cogOpacity);
+    const frame = requestAnimationFrame(() => {
+      const slot = cogSlotRef.current;
+      if (slot === 'a') setSlotAOpacity(cogOpacity);
+      else              setSlotBOpacity(cogOpacity);
+    });
+    return () => cancelAnimationFrame(frame);
   }, [cogOpacity, cogLayer]);
 
  
   useLayoutEffect(() => {
     return () => {
+      if (resizeFrameRef.current) {
+        cancelAnimationFrame(resizeFrameRef.current);
+        resizeFrameRef.current = null;
+      }
       disableTerrainSafely(cleanupResources?.map);
       cleanupResources?.observer?.disconnect();
     };
@@ -547,9 +576,13 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
 
     const container = map.getContainer();
     const observer = new ResizeObserver(entries => {
-      mapRef.current?.getMap().resize();
       const rect = entries[0]?.contentRect;
-      if (rect) setMapSize({ width: rect.width, height: rect.height });
+      if (!rect || resizeFrameRef.current) return;
+      resizeFrameRef.current = requestAnimationFrame(() => {
+        resizeFrameRef.current = null;
+        mapRef.current?.getMap().resize();
+        setMapSize({ width: rect.width, height: rect.height });
+      });
     });
     observer.observe(container);
     setMapSize({ width: container.clientWidth, height: container.clientHeight });
@@ -1078,4 +1111,4 @@ export default function NewMap({ cameraKey, quizMode, bathymetryMode, completion
 
     </Map>
   );
-}
+});

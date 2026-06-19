@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { memo, useState, useEffect, useRef, useCallback } from 'react';
 import Plot from 'react-plotly.js';
 import { track } from '../tracker.js';
 
@@ -11,7 +11,7 @@ const QUIZ_OPTIONS = [
   { label: 'North America', correct: false },
 ];
 
-export function TempQuiz({ onCorrectAnswer, onAnswer }) {
+export const TempQuiz = memo(function TempQuiz({ onCorrectAnswer, onAnswer }) {
   const [selected, setSelected] = useState(null);
 
   const handleClick = (opt) => {
@@ -49,7 +49,7 @@ export function TempQuiz({ onCorrectAnswer, onAnswer }) {
       </div>
     </div>
   );
-}
+});
 
 function interpolateY(data, year) {
   if (!data || year == null) return null;
@@ -70,7 +70,7 @@ const REGION_LINES = {
   'North America':{ file: `${BASE}average_temp_north_america.json`,color: '#9b59b6', width: 2 },
 };
 
-export default function TemperatureLineChart({ step, currentYear, startYear = 1885, endYear = 2025, onYearSelect, arcticRevealed = false, showAllRegions = false }) {
+export default memo(function TemperatureLineChart({ step, currentYear, startYear = 1885, endYear = 2025, onYearSelect, arcticRevealed = false, showAllRegions = false }) {
   const containerRef = useRef(null);
   const animFrameRef = useRef(null);
   const prevYearRef  = useRef(null);
@@ -321,4 +321,4 @@ export default function TemperatureLineChart({ step, currentYear, startYear = 18
       )}
     </div>
   );
-}
+});

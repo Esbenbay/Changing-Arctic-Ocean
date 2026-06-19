@@ -232,7 +232,7 @@ export default function FrontPage({ progress = 0, fading, imageSequenceEnd = IMA
           </span>
           <div className="scroll-chevron">
             <svg viewBox="0 0 24 24" width="52" height="52" fill="none" aria-hidden="true">
-              <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
         </div>

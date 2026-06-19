@@ -1,6 +1,7 @@
+import { memo } from 'react';
 import { SEASONS } from '../story-data.js';
 
-export default function SeasonDisplay({ activeIndex }) {
+export default memo(function SeasonDisplay({ activeIndex }) {
   return (
     <div style={{ position: 'absolute', inset: 0, background: 'white' }}>
       {SEASONS.map((season, i) => (
@@ -21,4 +22,4 @@ export default function SeasonDisplay({ activeIndex }) {
       ))}
     </div>
   );
-}
+});

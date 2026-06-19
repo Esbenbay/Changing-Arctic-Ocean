@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { memo, useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { zoomToLayer, findAnchor } from './svgHelpers.js';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
@@ -63,7 +63,7 @@ const MOTION_PATH_ANIMS = {
   Ship_2:    { elementLabel: 'Ship_2',    pathLabel: 'Ship_2_path',   triggerStep: 'g84',   duration: 4, repeat: 0 },
 };
 
-export default function PhotosynthesisPanel({ activeLayerId, anchorLayerId, active, erosionProgress, onAnchorPosition }) {
+export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId, active, erosionProgress, onAnchorPosition }) {
   const containerRef      = useRef(null);
   const svgRef            = useRef(null);
   const iceTweenRef       = useRef(null);
@@ -307,4 +307,4 @@ export default function PhotosynthesisPanel({ activeLayerId, anchorLayerId, acti
   }, [erosionProgress]);
 
   return <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />;
-}
+});

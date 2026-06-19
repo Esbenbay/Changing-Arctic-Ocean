@@ -113,6 +113,40 @@ export default function StoryScene() {
     window.scrollTo({ top: window.scrollY + rect.top - window.innerHeight * offset });
   }, []);
 
+  const handleQuizCorrect = useCallback(() => {
+    setArcticRevealed(true);
+    trackEvent('quiz_correct');
+  }, []);
+
+  const handleQuizAnswer = useCallback((answer) => {
+    setShowAllRegions(true);
+    trackEvent('quiz_answer', { answer });
+  }, []);
+
+  const handleChartYearSelect = useCallback((year) => {
+    setScrollYear(year);
+  }, []);
+
+  const handleIntroFlyOutComplete = useCallback(() => {
+    setIntroMapShrunk(true);
+    setViewPoint(1);
+    setIntroHandoffPhase('crossfading');
+
+    requestAnimationFrame(() => {
+      const el = document.querySelector('[data-step="1"]');
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        window.scrollTo({ top: window.scrollY + rect.top - window.innerHeight * 0.60 });
+      }
+    });
+
+    setTimeout(() => {
+      setIntroHandoffPhase('settling');
+      setScrollLocked(false);
+      setTimeout(() => setIntroHandoffPhase('settled'), 650);
+    }, 1400);
+  }, []);
+
   const startSvgChapterDissolve = useCallback((from, to) => {
     svgChapterDissolveTimersRef.current.forEach(clearTimeout);
     svgChapterDissolveTimersRef.current = [];
@@ -192,6 +226,16 @@ export default function StoryScene() {
   );
   const controlledStartIndex = controlledStepIndices[0] ?? -1;
   const controlledEndIndex = controlledStepIndices[controlledStepIndices.length - 1] ?? -1;
+  const firstSvgStepIndex = useMemo(() => STEPS.findIndex(s => s.chapter === 'svg'), []);
+  const firstPhotoStepIndex = useMemo(() => STEPS.findIndex(s => s.chapter === 'photosynthesis'), []);
+  const firstShippingStepIndex = useMemo(() => STEPS.findIndex(s => s.chapter === 'shipping'), []);
+  const firstPolarStepIndex = useMemo(() => STEPS.findIndex(s => s.chapter === 'polar'), []);
+  const shouldMountSvgPanel = firstSvgStepIndex >= 0 &&
+    (viewPoint >= firstSvgStepIndex - 3 || inSvgChapter || svgChapterDissolveActive);
+  const shouldMountPhotoPanel = firstPhotoStepIndex >= 0 &&
+    (viewPoint >= firstPhotoStepIndex - 3 || inPhotoChapter || svgChapterDissolveActive);
+  const shouldMountShippingPanel = firstShippingStepIndex >= 0 && viewPoint >= firstShippingStepIndex - 2;
+  const shouldMountPolarMap = firstPolarStepIndex >= 0 && viewPoint >= firstPolarStepIndex - 1;
 
   useEffect(() => {
     if (!inControlledSvgChapter || controlledStartIndex < 0 || controlledEndIndex < 0) return undefined;
@@ -312,18 +356,18 @@ export default function StoryScene() {
 
   // Steps with a title or figure use the structured card layout (left-aligned);
   // plain intro/map steps render as centred text.
-  const textInput = STEPS.map(s => {
+  const textInput = useMemo(() => STEPS.map(s => {
     const figure = s.layerId === 'Sea_ice_early'
       ? <IceExtentMap getUrl={ICE_EXTENT_URL} onYearChange={setIceYear} />
-      : s.lineChartStep === 'quiz'
-        ? <TempQuiz onCorrectAnswer={() => { setArcticRevealed(true); trackEvent('quiz_correct'); }} onAnswer={answer => { setShowAllRegions(true); trackEvent('quiz_answer', { answer }); }} />
-        : s.isErosionSlider
-          ? <ErosionSlider onChange={setErosionProgress} />
-          : s.figure;
+    : s.lineChartStep === 'quiz'
+        ? <TempQuiz onCorrectAnswer={handleQuizCorrect} onAnswer={handleQuizAnswer} />
+    : s.isErosionSlider
+      ? <ErosionSlider onChange={setErosionProgress} />
+      : s.figure;
     return (s.title !== undefined || figure || s.image)
       ? { title: s.title, body: s.text, figure, image: s.image }
       : s.text;
-  });
+  }), [handleQuizAnswer, handleQuizCorrect]);
 
   const glacierCameraKey   = step.glacierCamera ?? STEPS[viewPoint + 1]?.glacierCamera ?? null;
   const glacierStepIndices = STEPS.map((s, i) => s.glacierCamera ? i : -1).filter(i => i >= 0);
@@ -403,25 +447,7 @@ export default function StoryScene() {
                 initialViewState={{ longitude: 16.57969, latitude: 77.82355, zoom: 9.508 }}
                 mapRevealed={mapRevealed}
                 introFlyTriggered={introFlyTriggered}
-                onFlyOutComplete={() => {
-                  setIntroMapShrunk(true);
-                  setViewPoint(1);
-                  setIntroHandoffPhase('crossfading');
-
-                  requestAnimationFrame(() => {
-                    const el = document.querySelector('[data-step="1"]');
-                    if (el) {
-                      const rect = el.getBoundingClientRect();
-                      window.scrollTo({ top: window.scrollY + rect.top - window.innerHeight * 0.60 });
-                    }
-                  });
-
-                  setTimeout(() => {
-                    setIntroHandoffPhase('settling');
-                    setScrollLocked(false);
-                    setTimeout(() => setIntroHandoffPhase('settled'), 650);
-                  }, 1400);
-                }}
+                onFlyOutComplete={handleIntroFlyOutComplete}
               />
             </div>
           );
@@ -442,13 +468,15 @@ export default function StoryScene() {
           pointerEvents: inSvgChapter ? 'auto' : 'none',
           background:    'white',
         }}>
-          <SvgPanel
-            src={`${import.meta.env.BASE_URL}SVG/Late_summer.svg`}
-            activeLayerId={svgPanelLayerId}
-            iceYear={iceYear}
-            erosionProgress={erosionProgress}
-            onAnchorPosition={setAnchorPos}
-          />
+          {shouldMountSvgPanel && (
+            <SvgPanel
+              src={`${import.meta.env.BASE_URL}SVG/Late_summer.svg`}
+              activeLayerId={svgPanelLayerId}
+              iceYear={iceYear}
+              erosionProgress={erosionProgress}
+              onAnchorPosition={setAnchorPos}
+            />
+          )}
         </div>
 
         {/* Full-screen Photosynthesis overlay */}
@@ -466,7 +494,9 @@ export default function StoryScene() {
           pointerEvents: inPhotoChapter ? 'auto' : 'none',
           background:    'white',
         }}>
-          <PhotosynthesisPanel activeLayerId={photoPanelLayerId} anchorLayerId={photoPanelAnchorLayerId} active={photoPanelActive} erosionProgress={erosionProgress} onAnchorPosition={setPhotoAnchorPos} />
+          {shouldMountPhotoPanel && (
+            <PhotosynthesisPanel activeLayerId={photoPanelLayerId} anchorLayerId={photoPanelAnchorLayerId} active={photoPanelActive} erosionProgress={erosionProgress} onAnchorPosition={setPhotoAnchorPos} />
+          )}
         </div>
 
         {/* Light wash during the SVG chapter crossfade */}
@@ -596,10 +626,12 @@ export default function StoryScene() {
             opacity:    inShippingChapter ? 1 : 0,
             transition: 'opacity 1200ms ease',
           }}>
-            <ShippingRoutesPanel
-              active={inShippingChapter}
-              stepIndex={step.chapter === 'shipping' ? step.stepIndex : -1}
-            />
+            {shouldMountShippingPanel && (
+              <ShippingRoutesPanel
+                active={inShippingChapter}
+                stepIndex={step.chapter === 'shipping' ? step.stepIndex : -1}
+              />
+            )}
           </div>
 
           {/* Arctic polar map — Mapbox globe view */}
@@ -608,7 +640,9 @@ export default function StoryScene() {
             opacity:    inPolarChapter ? 1 : 0,
             transition: 'opacity 1200ms ease',
           }}>
-            <NewMap cameraKey={inPolarChapter ? step.camera : undefined} embed />
+            {shouldMountPolarMap && (
+              <NewMap cameraKey={inPolarChapter ? step.camera : undefined} embed />
+            )}
           </div>
 
         </div>
@@ -653,7 +687,7 @@ export default function StoryScene() {
           sticky2EndIndex={sticky2EndIndex}
           sticky2Content={mapRevealed && lineChartStep && introMapShrunk
             ? <div style={{ animation: 'slowFadeIn 2500ms ease forwards' }}>
-                <TemperatureLineChart step={lineChartStep} currentYear={scrollYear ?? COG_START_YEAR} startYear={COG_START_YEAR} endYear={COG_END_YEAR} onYearSelect={y => setScrollYear(y)} arcticRevealed={arcticRevealed} showAllRegions={showAllRegions} />
+                <TemperatureLineChart step={lineChartStep} currentYear={scrollYear ?? COG_START_YEAR} startYear={COG_START_YEAR} endYear={COG_END_YEAR} onYearSelect={handleChartYearSelect} arcticRevealed={arcticRevealed} showAllRegions={showAllRegions} />
               </div>
             : null}
         />

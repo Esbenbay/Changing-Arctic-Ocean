@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { memo, useRef, useEffect } from 'react';
 import { findAnchor, getLayerEl, zoomToLayer } from './svgHelpers.js';
 
 const INTERACTIVE_LAYERS = {
@@ -61,7 +61,7 @@ const setOutline = (layer, color) => {
 const ICE_START = 1979;
 const ICE_END   = 2025;
 
-export default function SvgPanel({ src, activeLayerId, iceYear, onAnchorPosition }) {
+export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPosition }) {
   const containerRef   = useRef(null);
   const svgRef         = useRef(null);
   const activeLayerIdRef = useRef(activeLayerId);
@@ -245,4 +245,4 @@ export default function SvgPanel({ src, activeLayerId, iceYear, onAnchorPosition
   }, [iceYear]);
 
   return <div ref={containerRef} style={{ position: 'absolute', inset: 0, overflow: 'hidden' }} />;
-}
+});
