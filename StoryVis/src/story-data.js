@@ -257,7 +257,7 @@ export const STEPS = [
   layerId: 'Benthic_highlight',
   bubble:  { arrow: 'bottom' },
   title:   'Expanding Benthic Communities',
-  text:    'As sea ice retreats, more sunlight can reach shallow parts of the Arctic seafloor. This may allow algae, seaweed, and microscopic benthic communities to expand into areas that were previously too dark or ice-covered for much of the year.\n\nBut large uncertainties remain. We still do not know how widespread suitable habitats are, or how changing the changing environmental conditions will impact these communities.',
+  text:    'As sea ice retreats, more sunlight can reach shallow parts of the Arctic seafloor. This may allow algae, seaweed, and microscopic benthic communities to expand into areas that were previously too dark or ice-covered for much of the year.\n\nBut large uncertainties remain. We still do not know how widespread suitable habitats are, or how the changing environmental conditions will impact these communities.',
 },
   {
   chapter: 'photosynthesis',
