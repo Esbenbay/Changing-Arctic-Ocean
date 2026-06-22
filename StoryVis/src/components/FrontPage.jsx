@@ -28,6 +28,8 @@ const progressForFrame = (index, sequenceEnd = IMAGE_SEQUENCE_END) => {
   return Math.min(sequenceEnd - 0.02, (index / FRAMES.length) * sequenceEnd + 0.025);
 };
 
+const evaluationIsActive = () => document.body?.dataset.storyEvaluationActive === 'true';
+
 export default function FrontPage({ progress = 0, fading, imageSequenceEnd = IMAGE_SEQUENCE_END }) {
   const [loadedCount, setLoadedCount] = useState(0);
   const [activeIdx, setActiveIdx] = useState(() => idxFromProgress(progress, imageSequenceEnd));
@@ -85,6 +87,7 @@ export default function FrontPage({ progress = 0, fading, imageSequenceEnd = IMA
     };
 
     const onWheel = (event) => {
+      if (evaluationIsActive()) return;
       event.preventDefault();
       clearTimeout(wheelIdleTimer);
       wheelIdleTimer = setTimeout(() => {
@@ -98,11 +101,13 @@ export default function FrontPage({ progress = 0, fading, imageSequenceEnd = IMA
     };
 
     const onTouchStart = (event) => {
+      if (evaluationIsActive()) return;
       touchGestureActiveRef.current = false;
       touchStartYRef.current = event.touches[0]?.clientY ?? null;
     };
 
     const onTouchMove = (event) => {
+      if (evaluationIsActive()) return;
       const startY = touchStartYRef.current;
       if (startY == null) return;
       const currentY = event.touches[0]?.clientY;
@@ -117,11 +122,13 @@ export default function FrontPage({ progress = 0, fading, imageSequenceEnd = IMA
     };
 
     const onTouchEnd = () => {
+      if (evaluationIsActive()) return;
       touchGestureActiveRef.current = false;
       touchStartYRef.current = null;
     };
 
     const onKeyDown = (event) => {
+      if (evaluationIsActive()) return;
       if (['ArrowDown', 'PageDown', ' '].includes(event.key)) {
         event.preventDefault();
         goToFrame(1);

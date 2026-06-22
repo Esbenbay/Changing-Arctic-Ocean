@@ -200,22 +200,36 @@ export default function StoryScene() {
   const cogUrl = useCallback(year => `${import.meta.env.BASE_URL}tif_data/anom_${year}.tif`, []);
 
   const step = STEPS[viewPoint] ?? STEPS[0];
+  const isEvaluationStep = step.chapter === 'evaluation';
   useEffect(() => {
     viewPointRef.current = viewPoint;
   }, [viewPoint]);
+  useEffect(() => {
+    document.body.dataset.storyEvaluationActive = isEvaluationStep ? 'true' : 'false';
+    let frame = 0;
+    if (isEvaluationStep) {
+      frame = requestAnimationFrame(() => setScrollLocked(false));
+    }
+    return () => {
+      cancelAnimationFrame(frame);
+      if (isEvaluationStep) {
+        document.body.dataset.storyEvaluationActive = 'false';
+      }
+    };
+  }, [isEvaluationStep]);
   const mapRevealed = true;
   const landingFading = introProgress >= MAP_TRANSITION_START;
   const introFlyTriggered = landingFading;
 
   // Lock scroll during fly-out + clip animation so the user can't skip past them
   useEffect(() => {
-    if (!landingFading || scrollLocked || introMapShrunk) return undefined;
+    if (isEvaluationStep || !landingFading || scrollLocked || introMapShrunk) return undefined;
     const frame = requestAnimationFrame(() => setScrollLocked(true));
     return () => cancelAnimationFrame(frame);
-  }, [landingFading, scrollLocked, introMapShrunk]);
+  }, [isEvaluationStep, landingFading, scrollLocked, introMapShrunk]);
 
   useEffect(() => {
-    if (!scrollLocked) return;
+    if (!scrollLocked || isEvaluationStep) return;
     const block = e => e.preventDefault();
     window.addEventListener('wheel',     block, { passive: false });
     window.addEventListener('touchmove', block, { passive: false });
@@ -223,7 +237,7 @@ export default function StoryScene() {
       window.removeEventListener('wheel',     block);
       window.removeEventListener('touchmove', block);
     };
-  }, [scrollLocked]);
+  }, [scrollLocked, isEvaluationStep]);
   const introMapOpacity = viewPoint === 0
     ? clamp01((introProgress - MAP_TRANSITION_START + 0.08) / 0.14)
     : 1;
@@ -318,7 +332,7 @@ export default function StoryScene() {
   const inControlledSvgChapter = CONTROLLED_SVG_CHAPTERS.includes(step.chapter);
   const inShippingChapter    = step.chapter === 'shipping';
   const inPolarChapter       = step.chapter === 'polar';
-  const inEvaluationChapter  = step.chapter === 'evaluation';
+  const inEvaluationChapter  = isEvaluationStep;
   const inMapIntroStep     = step.chapter === 'intro' && !!step.camera;
   const mapIsFullScreen    = inMapIntroStep && !introMapShrunk;
   const introHandoffActive = introHandoffPhase === 'crossfading';
@@ -695,7 +709,7 @@ export default function StoryScene() {
           pointerEvents: inEvaluationChapter ? 'auto' : 'none',
           background:    'white',
         }}>
-          <Evaluation />
+          {inEvaluationChapter && <Evaluation />}
         </div>
 
         {/* Text bubbles on top of the overlay */}

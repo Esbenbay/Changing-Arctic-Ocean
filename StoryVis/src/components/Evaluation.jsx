@@ -250,6 +250,17 @@ export default function Evaluation() {
 
   const go = (delta) => setPageIndex(i => i + delta);
 
+  useEffect(() => {
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, []);
+
   const updateScrollHint = useCallback(() => {
     const el = scrollAreaRef.current;
     if (!el) return;
@@ -305,6 +316,8 @@ export default function Evaluation() {
       <div
         ref={scrollAreaRef}
         onScroll={updateScrollHint}
+        onWheel={event => event.stopPropagation()}
+        onTouchMove={event => event.stopPropagation()}
         style={{ height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
       >
         <div style={{ width: '100%', maxWidth: 960, margin: 'auto', padding: '56px 8% 92px' }}>
