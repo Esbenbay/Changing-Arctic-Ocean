@@ -73,6 +73,15 @@ body {
   --col-gap: 2vh;
   --row-gap: 2vh;
   --timeline-h: 68px;
+  --story-step-title-size: clamp(1.25rem, 1.02rem + 1.05vw, 2rem);
+  --story-step-body-size: clamp(1rem, 0.84rem + 0.72vw, 1.5rem);
+  --story-step-body-line-height: 1.68;
+  --story-caption-size: clamp(0.72rem, 0.67rem + 0.18vw, 0.85rem);
+  --front-title-size: clamp(2.35rem, 7.2vw, 5rem);
+  --front-subtitle-size: clamp(1rem, 2.2vw, 2rem);
+  --front-frame-text-size: clamp(1.75rem, 5.4vw, 4rem);
+  --svg-panel-title-size: clamp(1rem, 0.72rem + 1.08vw, 1.7rem);
+  --svg-panel-body-size: clamp(0.82rem, 0.68rem + 0.5vw, 1.08rem);
 }
 
 .hero {
@@ -233,6 +242,122 @@ body {
   text-shadow: 0 1px 0 rgba(255,255,255,0.68);
 }
 
+.story-step-title {
+  margin: 0 0 10px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: var(--story-step-title-size);
+  line-height: 1.16;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #222;
+}
+
+.story-step-body {
+  font-size: var(--story-step-body-size);
+  line-height: var(--story-step-body-line-height);
+  color: #2f3f4f;
+  text-align: left;
+}
+
+.story-caption {
+  font-size: var(--story-caption-size);
+  color: #888;
+  margin-top: 5px;
+  text-align: center;
+  font-style: italic;
+  line-height: 1.35;
+}
+
+.front-hero-title {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: var(--front-title-size);
+  line-height: 1.04;
+  margin: 0 0 clamp(22px, 4vh, 40px);
+  text-align: center;
+}
+
+.front-hero-subtitle {
+  font-size: var(--front-subtitle-size);
+  text-align: center;
+  max-width: min(700px, 86vw);
+  color: #102033;
+  line-height: 1.45;
+  text-shadow: 0 1px 12px rgba(255,255,255,0.72);
+}
+
+.front-frame-text {
+  font-size: var(--front-frame-text-size);
+  line-height: 1.12;
+}
+
+.svg-split-title {
+  font-size: var(--svg-panel-title-size);
+}
+
+.svg-split-body {
+  font-size: var(--svg-panel-body-size);
+  line-height: 1.52;
+}
+
+.temperature-chart-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.temp-quiz {
+  margin-top: clamp(12px, 2vh, 20px);
+}
+
+.temp-quiz-title {
+  margin-bottom: clamp(8px, 1.3vh, 12px);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(0.9rem, 0.78rem + 0.42vw, 1rem);
+  line-height: 1.28;
+  font-weight: 700;
+  color: #222;
+}
+
+.temp-quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1vh, 8px);
+}
+
+.temp-quiz-option {
+  padding: clamp(7px, 1.2vh, 10px) clamp(10px, 1.8vw, 16px);
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(0.86rem, 0.75rem + 0.34vw, 1rem);
+  line-height: 1.25;
+  font-weight: 500;
+  color: #333;
+  transition: all 800ms ease;
+}
+
+@media (max-width: 1450px), (max-height: 840px) {
+  :root {
+    --story-step-title-size: clamp(1.04rem, 0.9rem + 0.72vw, 1.42rem);
+    --story-step-body-size: clamp(0.82rem, 0.72rem + 0.34vw, 0.98rem);
+    --story-step-body-line-height: 1.44;
+    --front-title-size: clamp(2rem, 5.4vw, 3.8rem);
+    --front-subtitle-size: clamp(0.84rem, 1.15vw, 1.08rem);
+    --front-frame-text-size: clamp(1.2rem, 3.5vw, 2.25rem);
+    --svg-panel-title-size: clamp(0.88rem, 0.7rem + 0.72vw, 1.22rem);
+    --svg-panel-body-size: clamp(0.66rem, 0.58rem + 0.26vw, 0.78rem);
+  }
+
+  .temp-quiz-title {
+    font-size: clamp(0.82rem, 0.72rem + 0.28vw, 0.92rem);
+  }
+
+  .temp-quiz-option {
+    font-size: clamp(0.78rem, 0.7rem + 0.24vw, 0.9rem);
+  }
+}
+
 .story-text-panel {
   background: rgba(255,255,255,0.82);
   border: 1px solid rgba(18,38,58,0.08);
@@ -354,7 +479,7 @@ body {
 }
 
 .scroll-indicator-label {
-  font-size:      1.3rem;
+  font-size:      clamp(0.82rem, 0.52rem + 0.95vw, 1.3rem);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   font-weight:    800;
@@ -525,6 +650,13 @@ body {
 
 /* --- Mobile: stack columns --- */
 @media (max-width: 900px) {
+  :root {
+    --story-step-title-size: clamp(1rem, 0.88rem + 0.85vw, 1.32rem);
+    --story-step-body-size: clamp(0.78rem, 0.7rem + 0.36vw, 0.92rem);
+    --story-step-body-line-height: 1.4;
+    --front-frame-text-size: clamp(1.12rem, 5.2vw, 2.1rem);
+  }
+
   .scrolly-layout {
     flex-direction: column;
     min-height: auto;
@@ -556,5 +688,18 @@ body {
     width: 100% !important;
     height: 100% !important;
     display: block;
+  }
+}
+
+@media (max-height: 760px) {
+  :root {
+    --story-step-title-size: clamp(0.98rem, 0.84rem + 0.72vw, 1.28rem);
+    --story-step-body-size: clamp(0.76rem, 0.68rem + 0.3vw, 0.88rem);
+    --story-step-body-line-height: 1.38;
+    --front-title-size: clamp(1.85rem, 5vw, 3.3rem);
+    --front-subtitle-size: clamp(0.78rem, 1vw, 0.96rem);
+    --front-frame-text-size: clamp(1.08rem, 3.1vw, 2rem);
+    --svg-panel-title-size: clamp(0.82rem, 0.66rem + 0.62vw, 1.08rem);
+    --svg-panel-body-size: clamp(0.62rem, 0.56rem + 0.22vw, 0.72rem);
   }
 }

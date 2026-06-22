@@ -121,8 +121,23 @@ const getViewBoxBBox = (svg, el) => {
   return bbox;
 };
 
+const unionBBoxes = (boxes) => {
+  const valid = boxes.filter(Boolean);
+  if (!valid.length) return null;
+  const left = Math.min(...valid.map(box => box.x));
+  const top = Math.min(...valid.map(box => box.y));
+  const right = Math.max(...valid.map(box => box.x + box.width));
+  const bottom = Math.max(...valid.map(box => box.y + box.height));
+  return {
+    x: left,
+    y: top,
+    width: right - left,
+    height: bottom - top,
+  };
+};
+
 export function zoomToLayer(svg, containerEl, labelOrEl, opts = {}) {
-  const { maxZoom: maxZoomOverride, noTransition = false, transition = '1500ms ease', anchorEl, onAnchorPosition } = opts;
+  const { maxZoom: maxZoomOverride, noTransition = false, transition = '1500ms ease', anchorEl, onAnchorPosition, avoidEls = [], splitZoom = false } = opts;
   const requestId = opts.requestId ?? ((svg.__storyZoomRequestId = (svg.__storyZoomRequestId ?? 0) + 1));
 
   if (!labelOrEl) {
@@ -153,16 +168,38 @@ export function zoomToLayer(svg, containerEl, labelOrEl, opts = {}) {
 
   const bbox = getViewBoxBBox(svg, layerEl);
   if (!bbox) return;
+  const avoidBBox = unionBBoxes([
+    bbox,
+    ...avoidEls.map(el => getViewBoxBBox(svg, el)),
+  ]) ?? bbox;
 
   const pixW  = bbox.width  * s;
   const pixH  = bbox.height * s;
 
   const fillZoom = Math.max(cW / svgPixW, cH / svgPixH);
   const labelKey = typeof labelOrEl === 'string' ? labelOrEl : null;
-  const compactViewport = cW < 820 || cH < 680;
-  const targetPadding = compactViewport ? 1.85 : 1.4;
+  const tightViewport = cW < 640 || cH < 560;
+  const compactViewport = cW < 900 || cH < 680;
+  const laptopViewport = cW <= 1536 || cH <= 960;
+  const targetPadding = splitZoom
+    ? (tightViewport ? 1.65 : compactViewport ? 1.45 : laptopViewport ? 1.25 : 1.4)
+    : tightViewport
+      ? 2.45
+      : compactViewport
+        ? 2.1
+        : laptopViewport
+          ? 1.5
+          : 1.4;
   const configuredMaxZoom = maxZoomOverride ?? INTERACTIVE_LAYER_ZOOM[labelKey] ?? 3.5;
-  const maxZoom = compactViewport ? configuredMaxZoom * 0.84 : configuredMaxZoom;
+  const maxZoom = splitZoom
+    ? configuredMaxZoom * 1.18
+    : tightViewport
+      ? configuredMaxZoom * 0.66
+      : compactViewport
+        ? configuredMaxZoom * 0.76
+        : laptopViewport
+          ? configuredMaxZoom * 0.98
+          : configuredMaxZoom;
   const zoom = Math.max(fillZoom, Math.min(cW / (pixW * targetPadding), cH / (pixH * targetPadding), maxZoom));
 
   const targetWidth  = Math.min(baseVb.width,  cW / (s * zoom));
@@ -180,17 +217,21 @@ export function zoomToLayer(svg, containerEl, labelOrEl, opts = {}) {
 
   if (onAnchorPosition) {
     const anchorBBox = anchorEl ? getViewBoxBBox(svg, anchorEl) : null;
-    if (anchorBBox) {
-      const vx = anchorBBox.x + anchorBBox.width / 2;
-      const vy = anchorBBox.y + anchorBBox.height / 2;
-      const cRect = containerEl.getBoundingClientRect();
-      onAnchorPosition({
-        x: (cRect.left + ((vx - targetViewBox.x) / targetViewBox.width)  * cW) / window.innerWidth  * 100,
-        y: (cRect.top  + ((vy - targetViewBox.y) / targetViewBox.height) * cH) / window.innerHeight * 100,
-      });
-    } else {
-      onAnchorPosition(null);
-    }
+    const referenceBBox = anchorBBox ?? bbox;
+    const vx = referenceBBox.x + referenceBBox.width / 2;
+    const vy = referenceBBox.y + referenceBBox.height / 2;
+    const cRect = containerEl.getBoundingClientRect();
+    const avoidRect = {
+      left:   cRect.left + ((avoidBBox.x - targetViewBox.x) / targetViewBox.width) * cW,
+      top:    cRect.top + ((avoidBBox.y - targetViewBox.y) / targetViewBox.height) * cH,
+      right:  cRect.left + ((avoidBBox.x + avoidBBox.width - targetViewBox.x) / targetViewBox.width) * cW,
+      bottom: cRect.top + ((avoidBBox.y + avoidBBox.height - targetViewBox.y) / targetViewBox.height) * cH,
+    };
+    onAnchorPosition({
+      x: (cRect.left + ((vx - targetViewBox.x) / targetViewBox.width)  * cW) / window.innerWidth  * 100,
+      y: (cRect.top  + ((vy - targetViewBox.y) / targetViewBox.height) * cH) / window.innerHeight * 100,
+      avoidRect,
+    });
   }
 
   setSvgCamera(svg, targetViewBox, { noTransition, transition, requestId });

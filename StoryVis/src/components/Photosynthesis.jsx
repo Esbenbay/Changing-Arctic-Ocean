@@ -1,4 +1,4 @@
-import { memo, useRef, useEffect } from 'react';
+import { memo, useRef, useEffect, useState } from 'react';
 import gsap from 'gsap';
 import { zoomToLayer, findAnchor } from './svgHelpers.js';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
@@ -65,7 +65,18 @@ const MOTION_PATH_ANIMS = {
   Ship_2:   { elementLabel: 'Ship_2',    pathLabel: 'Ship_2_path', triggerStep: 'g84',      duration: 4, repeat: 0 },
 };
 
-export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId, active, erosionProgress, onAnchorPosition }) {
+const getAvoidLayerLabels = (activeLayerId, cfg, zoomLabel) => {
+  const labels = new Set([activeLayerId, zoomLabel, ...(cfg?.show ?? [])]);
+  Object.entries(PHOTO_FADE_LAYERS).forEach(([name, fadeCfg]) => {
+    if (fadeCfg.trigger === activeLayerId) labels.add(name);
+  });
+  Object.values(MOTION_PATH_ANIMS).forEach(animCfg => {
+    if (animCfg.triggerStep === activeLayerId) labels.add(animCfg.elementLabel);
+  });
+  return [...labels].filter(Boolean);
+};
+
+export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId, active, erosionProgress, onAnchorPosition, splitZoom = false }) {
   const containerRef      = useRef(null);
   const svgHostRef        = useRef(null);
   const svgRef            = useRef(null);
@@ -76,17 +87,38 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
   const randomFadeRef     = useRef({});   // active setInterval IDs keyed by layer name
   const motionTweensRef   = useRef({});   // keyed by MOTION_PATH_ANIMS key
   const quickSettersRef   = useRef({});   // gsap.quickSetter functions for erosion slider
+  const [layoutVersion, setLayoutVersion] = useState(0);
+
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return undefined;
+    let frame = 0;
+    const update = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => setLayoutVersion(v => v + 1));
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    window.addEventListener('resize', update);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
     const svgHost = svgHostRef.current;
     if (!container || !svgHost) return;
+    let cancelled = false;
     const randomFadeIntervals = randomFadeRef.current;
 
     fetch(`${BASE}Phytosynthesis_Arctic_summer_layers.svg`)
       .then(r => r.text())
       .then(svgText => {
-        if (!containerRef.current || !svgHostRef.current) return;
+        if (cancelled || !containerRef.current || !svgHostRef.current) return;
+        const backgroundSrc = `${BASE}Phytosynthesis_Arctic_summer.webp`;
         svgHost.innerHTML = svgText;
 
         const svg = svgHost.querySelector('svg');
@@ -103,7 +135,6 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
 
         const vb = svg.viewBox.baseVal;
         const backgroundImage = document.createElementNS(SVG_NS, 'image');
-        const backgroundSrc = `${BASE}Phytosynthesis_Arctic_summer.webp`;
         backgroundImage.setAttribute('href', backgroundSrc);
         backgroundImage.setAttributeNS(XLINK_NS, 'href', backgroundSrc);
         backgroundImage.setAttribute('x', String(vb.x));
@@ -195,6 +226,7 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
       });
 
     return () => {
+      cancelled = true;
       iceTweenRef.current?.kill();
       Object.values(motionTweensRef.current).forEach(t => t.kill());
       Object.values(randomFadeIntervals).forEach(clearInterval);
@@ -235,6 +267,10 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
         maxZoom:          5,
         anchorEl,
         onAnchorPosition,
+        splitZoom,
+        avoidEls: getAvoidLayerLabels(activeLayerId, cfg, cfg.zoomTarget ?? activeLayerId)
+          .map(label => getEl(label))
+          .filter(Boolean),
       });
     } else if (activeLayerId === null) {
       const seaWeedEl    = getEl('Sea_weed');
@@ -242,10 +278,28 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
       const anchorEl     = anchorTarget ? findAnchor(anchorTarget) : null;
       if (seaWeedEl) {
         if (!hasInitialZoomRef.current) {
-          zoomToLayer(svg, container, seaWeedEl, { noTransition: true, maxZoom: 10, anchorEl, onAnchorPosition });
+          zoomToLayer(svg, container, seaWeedEl, {
+            noTransition: true,
+            maxZoom: 10,
+            anchorEl,
+            onAnchorPosition,
+            splitZoom,
+            avoidEls: getAvoidLayerLabels('Sea_weed', PHOTO_LAYERS.Sea_weed, 'Sea_weed')
+              .map(label => getEl(label))
+              .filter(Boolean),
+          });
           hasInitialZoomRef.current = true;
         } else {
-          zoomToLayer(svg, container, seaWeedEl, { transition: '1400ms cubic-bezier(0.4, 0, 0.2, 1)', maxZoom: 10, anchorEl, onAnchorPosition });
+          zoomToLayer(svg, container, seaWeedEl, {
+            transition: '1400ms cubic-bezier(0.4, 0, 0.2, 1)',
+            maxZoom: 10,
+            anchorEl,
+            onAnchorPosition,
+            splitZoom,
+            avoidEls: getAvoidLayerLabels('Sea_weed', PHOTO_LAYERS.Sea_weed, 'Sea_weed')
+              .map(label => getEl(label))
+              .filter(Boolean),
+          });
         }
       } else {
         onAnchorPosition?.(null);
@@ -315,7 +369,7 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
         }, 1000);
       }
     });
-  }, [activeLayerId, anchorLayerId, onAnchorPosition]);
+  }, [activeLayerId, anchorLayerId, onAnchorPosition, layoutVersion, splitZoom]);
 
   
   useEffect(() => {

@@ -148,7 +148,7 @@ export const STEPS = [
     chapter: 'svg',
     layerId: 'Sea_ice_early',
     title:   'Declining Sea Ice',
-    bubble:  { arrow: 'right' },
+    bubble:  { arrow: 'right', width: 560, offsetY: -4, minScale: 0.86, fontScale: 1.1 },
     text:    'The Arctic minimum sea ice extent has declined ~13% per decade since satellite records began in 1979. The old sea ice has been replaced by thinner, younger ice that forms each autumn and melts again by summer. The shallow coastal zone is now mostly ice-free during the summer season and the retreating sea ice is exposing more of the Arctic ocean to sunlight. This is a fundamental change for the Arctic ecosystem.',
   },
   {

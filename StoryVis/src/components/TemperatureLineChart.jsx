@@ -1,4 +1,4 @@
-import { memo, useState, useEffect, useRef, useCallback } from 'react';
+import { memo, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Plot from 'react-plotly.js';
 import { track } from '../tracker.js';
 
@@ -21,11 +21,11 @@ export const TempQuiz = memo(function TempQuiz({ onCorrectAnswer, onAnswer }) {
   };
 
   return (
-    <div style={{ marginTop: 20, animation: 'slideUpFade 1100ms cubic-bezier(0.22,1,0.36,1) 200ms both' }}>
-      <div style={{ fontWeight: 700, fontSize: '1rem', color: '#222', marginBottom: 12 }}>
+    <div className="temp-quiz" style={{ animation: 'slideUpFade 1100ms cubic-bezier(0.22,1,0.36,1) 200ms both' }}>
+      <div className="temp-quiz-title">
         Which region has seen the largest increase in average temperature?
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="temp-quiz-options">
         {QUIZ_OPTIONS.map(opt => {
           const picked = selected === opt;
           const bg    = picked ? (opt.correct ? '#e8f5e9' : '#ffebee') : 'white';
@@ -34,12 +34,9 @@ export const TempQuiz = memo(function TempQuiz({ onCorrectAnswer, onAnswer }) {
             <button
               key={opt.label}
               onClick={() => handleClick(opt)}
+              className="temp-quiz-option"
               style={{
-                padding: '10px 16px', borderRadius: 8,
                 border: `2px solid ${border}`, background: bg,
-                cursor: 'pointer', textAlign: 'left',
-                fontWeight: 500, color: '#333',
-                transition: 'all 800ms ease',
               }}
             >
               {opt.label}{picked && (opt.correct ? ' ✓' : ' ✗')}
@@ -61,8 +58,7 @@ function interpolateY(data, year) {
   return y0 + (y1 - y0) * ((year - x0) / (x1 - x0));
 }
 
-const MARGIN  = { l: 50, r: 12, t: 36, b: 44 };
-const CHART_H = 340;
+const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 const REGION_LINES = {
   'Europe':       { file: `${BASE}average_temp_europe.json`,       color: '#e67e22', width: 2 },
@@ -76,6 +72,10 @@ export default memo(function TemperatureLineChart({ step, currentYear, startYear
   const prevYearRef  = useRef(null);
 
   const [width, setWidth]               = useState(320);
+  const [viewport, setViewport]         = useState(() => ({
+    width:  typeof window === 'undefined' ? 1024 : window.innerWidth,
+    height: typeof window === 'undefined' ? 768 : window.innerHeight,
+  }));
   const [worldData, setWorldData]       = useState(null);
   const [hasDragged, setHasDragged]     = useState(false);
   const [arcticData, setArcticData]     = useState(null);
@@ -85,15 +85,37 @@ export default memo(function TemperatureLineChart({ step, currentYear, startYear
 
   const dragYearRef = useRef(null);
 
+  const isTinyChart = width < 430 || viewport.height < 680;
+  const isCompactChart = isTinyChart || width < 560 || viewport.height < 780;
+  const chartHeight = Math.round(clamp(
+    width * (isTinyChart ? 0.62 : 0.52),
+    isTinyChart ? 210 : 245,
+    clamp(viewport.height * 0.34, isTinyChart ? 220 : 260, isCompactChart ? 300 : 340)
+  ));
+  const margin = useMemo(() => ({
+    l: isTinyChart ? 38 : isCompactChart ? 44 : 50,
+    r: isTinyChart ? 6 : 12,
+    t: isTinyChart ? 28 : isCompactChart ? 32 : 38,
+    b: isTinyChart ? 34 : isCompactChart ? 40 : 46,
+  }), [isCompactChart, isTinyChart]);
+  const chartFontSize = isTinyChart ? 9 : isCompactChart ? 10 : 12;
+  const titleFontSize = isTinyChart ? 13 : isCompactChart ? 15 : 20;
+  const lineWidth = isTinyChart ? 2 : isCompactChart ? 2.2 : 2.5;
+  const markerSize = isTinyChart ? 7 : isCompactChart ? 8 : 10;
+  const handleHitWidth = isTinyChart ? 24 : 28;
+  const handlePillWidth = isTinyChart ? 36 : isCompactChart ? 40 : 44;
+  const handlePillHeight = isTinyChart ? 20 : 24;
+  const plotWidth = Math.max(260, Math.round(width));
+  const plotAreaWidth = Math.max(1, plotWidth - margin.l - margin.r);
+
   const handleDragMove = useCallback((e) => {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const pw = width - MARGIN.l - MARGIN.r;
-    const t  = Math.max(0, Math.min(1, (e.clientX - rect.left - MARGIN.l) / pw));
+    const t  = Math.max(0, Math.min(1, (e.clientX - rect.left - margin.l) / plotAreaWidth));
     const yr = Math.min(endYear, Math.max(startYear, Math.round(startYear + t * (endYear - startYear))));
     onYearSelect?.(yr);
     dragYearRef.current = yr;
-  }, [width, startYear, endYear, onYearSelect]);
+  }, [margin.l, plotAreaWidth, startYear, endYear, onYearSelect]);
 
   const handleDragStart = useCallback((e) => {
     e.preventDefault();
@@ -120,9 +142,16 @@ export default memo(function TemperatureLineChart({ step, currentYear, startYear
 
   useEffect(() => {
     if (!containerRef.current) return;
-    const ro = new ResizeObserver(entries => setWidth(entries[0].contentRect.width));
+    const ro = new ResizeObserver(entries => setWidth(Math.max(260, entries[0].contentRect.width)));
     ro.observe(containerRef.current);
     return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const onResize = () => setViewport({ width: window.innerWidth, height: window.innerHeight });
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
 
   useEffect(() => {
@@ -182,57 +211,94 @@ export default memo(function TemperatureLineChart({ step, currentYear, startYear
   const traces = worldData ? [
     {
       x: worldData.x, y: worldData.y,
-      type: 'scatter', mode: 'lines', name: 'Global Anomely Average (Diviation from 1951-1980 means)',
-      line: { color: '#5b8dd9', width: 2 },
+      type: 'scatter', mode: 'lines', name: 'Global',
+      line: { color: '#5b8dd9', width: isTinyChart ? 1.6 : 2 },
       hovertemplate: '%{x}: %{y:.2f}°C<extra>Global</extra>',
     },
     ...(showAllRegions ? Object.entries(REGION_LINES).map(([name, cfg]) => {
       const d = regionData[name];
       if (!d) return null;
       return { x: d.x, y: d.y, type: 'scatter', mode: 'lines', name,
-        line: { color: cfg.color, width: cfg.width },
+        line: { color: cfg.color, width: isTinyChart ? Math.max(1.5, cfg.width - 0.4) : cfg.width },
         hovertemplate: `%{x}: %{y:.2f}°C<extra>${name}</extra>` };
     }).filter(Boolean) : []),
     ...(showArctic && arcticData ? [{
       x: arcticData.x, y: arcticData.y,
       type: 'scatter', mode: 'lines', name: 'Arctic',
-      line: { color: '#e74c3c', width: 2.5 },
+      line: { color: '#e74c3c', width: lineWidth },
       hovertemplate: '%{x}: %{y:.2f}°C<extra>Arctic</extra>',
     }] : []),
     ...(displayYear != null && dotY != null ? [{
       x: [displayYear], y: [dotY],
       type: 'scatter', mode: 'markers',
       showlegend: false,
-      marker: { color: '#f39c12', size: 10, line: { color: 'white', width: 2 } },
+      marker: { color: '#f39c12', size: markerSize, line: { color: 'white', width: isTinyChart ? 1.4 : 2 } },
       hovertemplate: `${Math.round(displayYear)}: %{y:.2f}°C<extra></extra>`,
     }] : []),
   ] : [];
 
   const lineX = displayYear != null
-    ? MARGIN.l + (displayYear - startYear) / (endYear - startYear) * (width - MARGIN.l - MARGIN.r)
+    ? margin.l + (displayYear - startYear) / (endYear - startYear) * plotAreaWidth
     : null;
+  const titleText = showArctic
+    ? isTinyChart ? 'Global vs Arctic Warming' : 'Global vs Arctic Warming (1880-2025)'
+    : isTinyChart ? 'Global Temperature Anomaly' : 'Global Temperature Anomaly (1880-2025)';
+  const legend = isCompactChart
+    ? {
+        orientation: 'h',
+        x: 0,
+        y: -0.18,
+        xanchor: 'left',
+        yanchor: 'top',
+        bgcolor: 'rgba(255,255,255,0.86)',
+        font: { size: chartFontSize },
+        itemwidth: 30,
+      }
+    : {
+        x: 0.02,
+        y: 0.98,
+        bgcolor: 'rgba(255,255,255,0.8)',
+        font: { size: chartFontSize },
+      };
 
   return (
-    <div ref={containerRef} style={{ width: '100%' }}>
+    <div ref={containerRef} className="temperature-chart-wrap">
       {worldData && (
         <div style={{ position: 'relative', userSelect: 'none' }}>
         <Plot
           data={traces}
           layout={{
             autosize: false,
-            width,
-            height: CHART_H,
-            margin: MARGIN,
-            xaxis: { title: { text: 'Year', standoff: 16 }, gridcolor: '#eee', range: [startYear, endYear], autorange: false, ticklen: 6 },
-            yaxis: { title: { text: 'Anomaly (°C)', standoff: 10 }, gridcolor: '#eee', zeroline: true, zerolinecolor: '#bbb', range: yRange, autorange: false, ticklen: 10 },
-            legend: { x: 0.02, y: 0.98, bgcolor: 'rgba(255,255,255,0.8)' },
+            width: plotWidth,
+            height: chartHeight,
+            margin,
+            font: { family: 'Arial, Helvetica, sans-serif', size: chartFontSize, color: '#24384c' },
+            xaxis: {
+              title: { text: 'Year', standoff: isTinyChart ? 7 : 12, font: { size: chartFontSize } },
+              gridcolor: '#eee',
+              range: [startYear, endYear],
+              autorange: false,
+              ticklen: isTinyChart ? 3 : 6,
+              tickfont: { size: chartFontSize },
+              nticks: isTinyChart ? 4 : isCompactChart ? 5 : 7,
+            },
+            yaxis: {
+              title: { text: isTinyChart ? 'Anomaly' : 'Anomaly (°C)', standoff: isTinyChart ? 4 : 10, font: { size: chartFontSize } },
+              gridcolor: '#eee',
+              zeroline: true,
+              zerolinecolor: '#bbb',
+              range: yRange,
+              autorange: false,
+              ticklen: isTinyChart ? 4 : 10,
+              tickfont: { size: chartFontSize },
+              nticks: isTinyChart ? 5 : 7,
+            },
+            legend,
             plot_bgcolor: 'white',
             paper_bgcolor: 'white',
             title: {
-              text: showArctic
-                ? 'Global vs Arctic Warming (1880–2025)'
-                : 'Global Temperature Anomaly (1880–2025)',
-              font: { size: 20 },
+              text: titleText,
+              font: { size: titleFontSize },
             },
           }}
           config={{ displayModeBar: false, responsive: false, staticPlot: true }}
@@ -244,9 +310,9 @@ export default memo(function TemperatureLineChart({ step, currentYear, startYear
             style={{
               position: 'absolute',
               left: lineX,
-              top: MARGIN.t,
-              height: CHART_H - MARGIN.t - MARGIN.b,
-              width: 28,
+              top: margin.t,
+              height: chartHeight - margin.t - margin.b,
+              width: handleHitWidth,
               cursor: 'ew-resize',
               transform: 'translateX(-50%)',
               display: 'flex',
@@ -257,10 +323,10 @@ export default memo(function TemperatureLineChart({ step, currentYear, startYear
           >
             <div style={{
               position: 'absolute',
-              top: -16,
+              top: isTinyChart ? -13 : -16,
               left: '50%',
-              width: 44,
-              height: 24,
+              width: handlePillWidth,
+              height: handlePillHeight,
               borderRadius: 999,
               background: '#f39c12',
               border: '2px solid white',

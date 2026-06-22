@@ -1,4 +1,4 @@
-import { memo, useRef, useEffect } from 'react';
+import { memo, useRef, useEffect, useState } from 'react';
 import { findAnchor, getLayerEl, zoomToLayer } from './svgHelpers.js';
 
 const BASE = import.meta.env.BASE_URL;
@@ -95,7 +95,16 @@ const setOutline = (layer, color) => {
 const ICE_START = 1979;
 const ICE_END   = 2025;
 
-export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPosition }) {
+const getRelatedLayerLabels = (activeLayerId, zoomLabel) => {
+  const labels = new Set([activeLayerId, zoomLabel]);
+  Object.entries(INTERACTIVE_LAYERS).forEach(([label, cfg]) => {
+    const trigger = cfg.fadeWithLayer ?? cfg.fadeOutWithLayer;
+    if (trigger === activeLayerId || label === activeLayerId) labels.add(label);
+  });
+  return [...labels].filter(Boolean);
+};
+
+export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPosition, splitZoom = false }) {
   const containerRef   = useRef(null);
   const svgRef         = useRef(null);
   const activeLayerIdRef = useRef(activeLayerId);
@@ -103,12 +112,31 @@ export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPos
   const fadeLayersRef       = useRef({});
   const highlightedLayerRef = useRef(null);
   const activeAnimLayerRef  = useRef(null);
+  const [layoutVersion, setLayoutVersion] = useState(0);
 
   // Keep ref in sync so fetch callback can read latest value
   activeLayerIdRef.current = activeLayerId;
 
   // scroll-driven mode: activeLayerId prop is explicitly passed (even as null)
   const scrollDriven = activeLayerId !== undefined;
+
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return undefined;
+    let frame = 0;
+    const update = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => setLayoutVersion(v => v + 1));
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    window.addEventListener('resize', update);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, []);
 
   // Helper: apply current scroll-driven highlight state to the loaded SVG
   const applyHighlight = (svg, label) => {
@@ -128,11 +156,13 @@ export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPos
   // Load and wire up SVG
   useEffect(() => {
     if (!containerRef.current) return;
+    let cancelled = false;
     const { svgSrc, backgroundSrc } = getSceneAssets(src);
 
     fetch(svgSrc)
       .then(r => r.text())
       .then(svgText => {
+        if (cancelled || !containerRef.current) return;
         containerRef.current.innerHTML = svgText;
         const svg = containerRef.current.querySelector('svg');
         if (!svg) return;
@@ -178,11 +208,18 @@ export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPos
             maxZoom: fallbackCfg.maxZoom,
             anchorEl,
             onAnchorPosition,
+            splitZoom,
+            avoidEls: getRelatedLayerLabels(activeLayerIdRef.current, zoomLabel)
+              .map(label => getLayerEl(svg, label))
+              .filter(Boolean),
           });
         }
 
 
       });
+    return () => {
+      cancelled = true;
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src]);
 
@@ -202,6 +239,10 @@ export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPos
       maxZoom: cfg.maxZoom,
       anchorEl,
       onAnchorPosition,
+      splitZoom,
+      avoidEls: getRelatedLayerLabels(activeLayerId, zoomLabel)
+        .map(label => getLayerEl(svg, label))
+        .filter(Boolean),
     });
     // Apply / remove activeAnimation on the current layer
     if (activeAnimLayerRef.current) {
@@ -269,7 +310,7 @@ export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPos
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeLayerId]);
+  }, [activeLayerId, layoutVersion, splitZoom]);
 
   // Fade individual Sea_ice_early shapes as the year slider moves.
   // Each shape has a random threshold — once the slider passes it, that piece fades out.

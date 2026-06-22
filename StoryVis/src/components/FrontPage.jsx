@@ -205,10 +205,10 @@ export default function FrontPage({ progress = 0, fading, imageSequenceEnd = IMA
         transition:     'opacity 800ms ease',
         pointerEvents:  hasScrolled ? 'none' : 'auto',
       }}>
-        <h1 style={{ fontSize: '5em', marginBottom: '40px' }}>
+        <h1 className="front-hero-title">
           A Changing Arctic Ocean
         </h1>
-        <p className="story-body-text" style={{ fontSize: '2em', textAlign: 'center', maxWidth: '700px', color: '#102033', lineHeight: 1.45, textShadow: '0 1px 12px rgba(255,255,255,0.72)' }}>
+        <p className="story-body-text front-hero-subtitle" style={{ margin: 0 }}>
           Explore the Arctic Ocean through our interactive storytelling visualization.
           Dive into the unique features, ecosystems, and challenges of this remote
           and captivating region.
@@ -253,14 +253,12 @@ export default function FrontPage({ progress = 0, fading, imageSequenceEnd = IMA
         {FRAME_TEXTS.map((text, i) => text && (
           <p
             key={text}
-            className="story-body-text"
+            className="story-body-text front-frame-text"
             style={{
               position:      'absolute',
               margin:        0,
-              fontSize:      '4em',
               fontWeight:    600,
               color:         'rgba(12, 25, 38, 0.96)',
-              lineHeight:    1.12,
               maxWidth:      '980px',
               textAlign:     'left',
               textShadow:    '0 1px 14px rgba(255,255,255,0.72)',

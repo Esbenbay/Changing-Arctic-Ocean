@@ -36,7 +36,7 @@ export default function ScrollamaDemo({
           {entry && typeof entry === 'object' && !Array.isArray(entry) ? (
             <div style={{ textAlign: 'left', width: '100%' }}>
               {entry.title && (
-                <div style={{ fontWeight: 700, fontSize: '2rem', marginBottom: 10, color: '#222' }}>
+                <div className="story-step-title">
                   {entry.title}
                 </div>
               )}
@@ -50,7 +50,7 @@ export default function ScrollamaDemo({
                   <div style={{ marginBottom: 12 }}>
                     <img src={src} alt={alt} style={{ width: width ?? '100%', borderRadius: 8, display: 'block', objectFit: 'cover', ...(height ? { height } : {}) }} />
                     {caption && (
-                      <div style={{ fontSize: '0.85rem', color: '#888', marginTop: 5, textAlign: 'center', fontStyle: 'italic' }}>
+                      <div className="story-caption">
                         {caption}
                       </div>
                     )}
@@ -58,7 +58,7 @@ export default function ScrollamaDemo({
                 );
               })()}
               {entry.body && (
-                <div className="story-body-text" style={{ fontSize: '1.5rem', color: '#2f3f4f', lineHeight: 1.75 }}>
+                <div className="story-body-text story-step-body">
                   {entry.body}
                 </div>
               )}
@@ -71,7 +71,7 @@ export default function ScrollamaDemo({
               )}
             </div>
           ) : (
-            <div className="story-body-text" style={{ fontSize: '1.5rem', color: '#2f3f4f', lineHeight: 1.75, textAlign: 'left' }}>
+            <div className="story-body-text story-step-body">
               {entry}
             </div>
           )}

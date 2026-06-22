@@ -29,6 +29,145 @@ const CONTROLLED_SVG_CHAPTERS = ['svg', 'photosynthesis'];
 const SVG_CHAPTER_DISSOLVE_MS = 1900;
 const SVG_CHAPTER_VEIL_HOLD_MS = 320;
 const SVG_CHAPTER_WASH_OPACITY = 0.14;
+const SVG_SPLIT_ENABLED = false;
+const SVG_SPLIT_PANEL_W = 'clamp(280px, 26vw, 390px)';
+const SVG_SPLIT_BREAKPOINT_W = 900;
+const SVG_SPLIT_BREAKPOINT_H = 560;
+
+function useSvgSplitViewport() {
+  const getShouldSplit = () => (
+    SVG_SPLIT_ENABLED && (
+      window.innerWidth < SVG_SPLIT_BREAKPOINT_W ||
+      window.innerHeight < SVG_SPLIT_BREAKPOINT_H
+    )
+  );
+  const [shouldSplit, setShouldSplit] = useState(getShouldSplit);
+
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => setShouldSplit(getShouldSplit()));
+    };
+    window.addEventListener('resize', update);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+
+  return shouldSplit;
+}
+
+function SvgChapterTextPanel({ panel, onCta }) {
+  if (!panel) return null;
+  const items = Array.isArray(panel.text) ? panel.text : [panel.text].filter(Boolean);
+
+  return (
+    <aside style={{
+      width:                SVG_SPLIT_PANEL_W,
+      height:               '100%',
+      minWidth:             0,
+      overflowY:            'auto',
+      padding:              'clamp(18px, 2.2vw, 34px)',
+      display:              'flex',
+      flexDirection:        'column',
+      justifyContent:       'center',
+      gap:                  14,
+      background:           'rgba(255,255,255,0.94)',
+      borderLeft:           '1px solid rgba(18,38,58,0.12)',
+      boxShadow:            '-18px 0 42px rgba(18,38,58,0.08)',
+      fontFamily:           'Arial, Helvetica, sans-serif',
+      color:                '#1b2e3f',
+    }}>
+      {panel.title && (
+        <h2 className="svg-split-title" style={{
+          margin:       0,
+          lineHeight:   1.15,
+          fontWeight:   750,
+          letterSpacing: 0,
+          color:        '#102235',
+        }}>
+          {panel.title}
+        </h2>
+      )}
+
+      <div style={{ display: 'grid', gap: 12 }}>
+        {items.map((item, i) => {
+          if (typeof item === 'string') {
+            return (
+              <p className="story-body-text svg-split-body" key={i} style={{
+                margin:     0,
+                color:      '#2f4356',
+                whiteSpace: 'pre-line',
+              }}>
+                {item}
+              </p>
+            );
+          }
+          if (item?.image) {
+            return (
+              <figure key={i} style={{ margin: 0 }}>
+                <img
+                  src={item.image}
+                  alt={item.alt ?? ''}
+                  style={{
+                    width:        '100%',
+                    maxHeight:    220,
+                    objectFit:    'cover',
+                    display:      'block',
+                    borderRadius: 7,
+                  }}
+                />
+                {item.caption && (
+                  <figcaption style={{ marginTop: 5, fontSize: '0.78rem', color: '#697887', lineHeight: 1.35 }}>
+                    {item.caption}
+                  </figcaption>
+                )}
+                {item.text && (
+                  <p className="story-body-text svg-split-body" style={{
+                    margin:     '10px 0 0',
+                    color:      '#2f4356',
+                    whiteSpace: 'pre-line',
+                  }}>
+                    {item.text}
+                  </p>
+                )}
+              </figure>
+            );
+          }
+          return null;
+        })}
+      </div>
+
+      {panel.figure && (
+        <div style={{ borderTop: '1px solid rgba(18,38,58,0.12)', paddingTop: 12 }}>
+          {panel.figure}
+        </div>
+      )}
+
+      {panel.cta && (
+        <button
+          onClick={onCta}
+          style={{
+            alignSelf:     'flex-start',
+            padding:       '9px 14px',
+            borderRadius:  7,
+            border:        'none',
+            background:    '#2c7fb8',
+            color:         'white',
+            fontSize:      '0.9rem',
+            fontWeight:    700,
+            cursor:        'pointer',
+            letterSpacing: 0,
+          }}
+        >
+          {panel.cta}
+        </button>
+      )}
+    </aside>
+  );
+}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function StoryScene() {
@@ -52,6 +191,7 @@ export default function StoryScene() {
   const controlledTouchStartYRef = useRef(null);
   const controlledScrollamaEntryLockedRef = useRef(false);
   const svgChapterDissolveTimersRef = useRef([]);
+  const useSvgSplitLayout = useSvgSplitViewport();
   const [retainedSvgLayerId, setRetainedSvgLayerId] = useState(null);
   const [retainedPhotoLayerId, setRetainedPhotoLayerId] = useState(null);
   const [retainedPhotoAnchorLayerId, setRetainedPhotoAnchorLayerId] = useState(null);
@@ -199,7 +339,7 @@ export default function StoryScene() {
   const showTwoColumnMap = !showCinematicIntroMap && !inEvaluationChapter && twoColumnStarted && !!retainedTwoColumnMapStep;
   const twoColumnMapCamera = retainedTwoColumnMapStep?.chapter === 'map'
     ? retainedTwoColumnMapStep.camera
-    : 'world-overview';
+    : 'global-temp';
   const mapCompletionOverlayImage = retainedTwoColumnMapStep?.chapter === 'map' && retainedTwoColumnMapStep.camera === 'svalbard'
     ? `${import.meta.env.BASE_URL}Images/2022-05-29.jpg`
     : null;
@@ -389,7 +529,8 @@ export default function StoryScene() {
       : null;
 
   const effectiveAnchorPos = inSvgChapter ? anchorPos : inPhotoChapter ? photoAnchorPos : null;
-  const bubbleConfig = !effectiveAnchorPos || !step.bubble ? null
+  const svgSplitMode = useSvgSplitLayout && (inSvgChapter || inPhotoChapter);
+  const bubbleConfig = !step.bubble ? null
     : Array.isArray(step.bubble) ? step.bubble[0]
     : step.bubble;
   const bubbleImage = step.image
@@ -403,7 +544,13 @@ export default function StoryScene() {
         : bubbleImage
           ? [step.text, bubbleImage].filter(Boolean)
           : step.text);
-  const bubbles = bubbleConfig ? [{
+  const svgNarrativePanel = svgSplitMode && bubbleConfig ? {
+    title:  bubbleConfig.title ?? step.title,
+    text:   bubbleText,
+    figure: bubbleFigure,
+    cta:    bubbleConfig.cta ?? null,
+  } : null;
+  const bubbles = bubbleConfig && effectiveAnchorPos && !svgSplitMode ? [{
     title:  bubbleConfig.title ?? step.title,
     text:   bubbleText,
     arrow:  bubbleConfig.arrow,
@@ -412,6 +559,12 @@ export default function StoryScene() {
     cta:    bubbleConfig.cta ?? null,
     x:      effectiveAnchorPos.x,
     y:      effectiveAnchorPos.y,
+    offsetX: bubbleConfig.offsetX ?? 0,
+    offsetY: bubbleConfig.offsetY ?? 0,
+    figureScale: bubbleConfig.figureScale ?? 1,
+    minScale: bubbleConfig.minScale,
+    fontScale: bubbleConfig.fontScale ?? 1,
+    avoidRect: effectiveAnchorPos.avoidRect,
   }] : [];
 
   return (
@@ -460,6 +613,8 @@ export default function StoryScene() {
           left:          0,
           right:         0,
           bottom:        TIMELINE_H,
+          display:       svgSplitMode ? 'grid' : 'block',
+          gridTemplateColumns: svgSplitMode ? `minmax(0, 1fr) ${SVG_SPLIT_PANEL_W}` : undefined,
           zIndex:        svgToPhotoDissolve ? 7 : 5,
           opacity:       svgPanelOpacity,
           transition:    svgChapterDissolveActive
@@ -468,14 +623,20 @@ export default function StoryScene() {
           pointerEvents: inSvgChapter ? 'auto' : 'none',
           background:    'white',
         }}>
-          {shouldMountSvgPanel && (
-            <SvgPanel
-              src={`${import.meta.env.BASE_URL}SVG/Late_summer.svg`}
-              activeLayerId={svgPanelLayerId}
-              iceYear={iceYear}
-              erosionProgress={erosionProgress}
-              onAnchorPosition={setAnchorPos}
-            />
+          <div style={{ position: 'relative', minWidth: 0, height: '100%', overflow: 'hidden' }}>
+            {shouldMountSvgPanel && (
+              <SvgPanel
+                src={`${import.meta.env.BASE_URL}SVG/Late_summer.svg`}
+                activeLayerId={svgPanelLayerId}
+                iceYear={iceYear}
+                erosionProgress={erosionProgress}
+                onAnchorPosition={setAnchorPos}
+                splitZoom={svgSplitMode}
+              />
+            )}
+          </div>
+          {svgSplitMode && (
+            <SvgChapterTextPanel panel={inSvgChapter ? svgNarrativePanel : null} onCta={() => navigateToChapter('evaluation')} />
           )}
         </div>
 
@@ -486,6 +647,8 @@ export default function StoryScene() {
           left:          0,
           right:         0,
           bottom:        TIMELINE_H,
+          display:       svgSplitMode ? 'grid' : 'block',
+          gridTemplateColumns: svgSplitMode ? `minmax(0, 1fr) ${SVG_SPLIT_PANEL_W}` : undefined,
           zIndex:        photoToSvgDissolve ? 7 : 6,
           opacity:       photoPanelOpacity,
           transition:    svgChapterDissolveActive
@@ -494,8 +657,13 @@ export default function StoryScene() {
           pointerEvents: inPhotoChapter ? 'auto' : 'none',
           background:    'white',
         }}>
-          {shouldMountPhotoPanel && (
-            <PhotosynthesisPanel activeLayerId={photoPanelLayerId} anchorLayerId={photoPanelAnchorLayerId} active={photoPanelActive} erosionProgress={erosionProgress} onAnchorPosition={setPhotoAnchorPos} />
+          <div style={{ position: 'relative', minWidth: 0, height: '100%', overflow: 'hidden' }}>
+            {shouldMountPhotoPanel && (
+              <PhotosynthesisPanel activeLayerId={photoPanelLayerId} anchorLayerId={photoPanelAnchorLayerId} active={photoPanelActive} erosionProgress={erosionProgress} onAnchorPosition={setPhotoAnchorPos} splitZoom={svgSplitMode} />
+            )}
+          </div>
+          {svgSplitMode && (
+            <SvgChapterTextPanel panel={inPhotoChapter ? svgNarrativePanel : null} onCta={() => navigateToChapter('evaluation')} />
           )}
         </div>
 
@@ -543,6 +711,12 @@ export default function StoryScene() {
             width={b.width}
             cta={b.cta}
             onCta={b.cta ? () => navigateToChapter('evaluation') : undefined}
+            offsetX={b.offsetX}
+            offsetY={b.offsetY}
+            figureScale={b.figureScale}
+            minScaleOverride={b.minScale}
+            fontScale={b.fontScale}
+            avoidRect={b.avoidRect}
           />
         ))}
 

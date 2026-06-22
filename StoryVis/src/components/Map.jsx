@@ -106,6 +106,45 @@ const COMPLETION_OVERLAY_LEAD_MS = 1400;
 const snapCogYear = year =>
   Math.max(1880, Math.min(2025, Math.round(year / 10) * 10));
 
+const getMapSizeMode = ({ width, height }) => ({
+  compact: width < 620 || height < 500,
+  tiny: width < 430 || height < 370,
+  short: height < 430,
+});
+
+const getResponsiveCamera = (key, cam, mapSize, embed) => {
+  const { compact, tiny, short } = getMapSizeMode(mapSize);
+  if (!cam) return cam;
+
+  let zoomOffset = 0;
+  if (tiny) zoomOffset -= 0.45;
+  else if (compact) zoomOffset -= 0.24;
+  else if (short) zoomOffset -= 0.16;
+
+  if (['svalbard', 'greenland-glaciers'].includes(key)) {
+    zoomOffset += tiny ? -0.28 : compact ? -0.18 : 0;
+  } else if (['polar-overview', 'polar-shelf', 'arctic-coastline', 'arctic-quiz'].includes(key)) {
+    zoomOffset += tiny ? -0.12 : 0;
+  } else if (key === 'global-temp') {
+    zoomOffset += tiny ? -0.22 : compact ? -0.12 : 0;
+  } else if (key === 'world-overview') {
+    zoomOffset += tiny ? -0.06 : 0;
+  }
+
+  const zoom = typeof cam.zoom === 'number'
+    ? Math.max(0.4, cam.zoom + zoomOffset)
+    : cam.zoom;
+  const speed = cam.speed && (compact || embed)
+    ? Math.max(0.35, cam.speed * 0.88)
+    : cam.speed;
+
+  return {
+    ...cam,
+    zoom,
+    speed,
+  };
+};
+
 // ── Named camera positions ────────────────────────────────────────────────────
 // Keys are referenced from the `camera` field in Story.jsx's STEPS array.
 
@@ -124,7 +163,7 @@ const CAMERAS = {
   // Intro arctic step (interactive, no bathymetry)
   'intro-arctic':   { center: [16.57969, 77.82355], zoom: 9.508,  pitch: 0, bearing: 0, jump: true, projection: 'mercator' },
   // Global temperature overview — used when temperature layer is active
-  'global-temp':    { center: [0, 20], zoom: 1.0, pitch: 0, bearing: 0, jump: true, projection: 'mercator' },
+  'global-temp':    { center: [0, 22], zoom: 0.55, pitch: 0, bearing: 0, jump: true, projection: 'mercator' },
 
   // Polar chapter
   'polar-overview': { center: [0, 90], zoom: 2.5, pitch: 0, bearing: 0, projection: 'globe' },
@@ -325,9 +364,10 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
     let onMoveEnd = null;
     let onCompletionMoveEnd = null;
     let completionOverlayTimer = null;
+    map.resize();
     if (cameraKey === 'intro-globe') {
       map.setProjection('globe');
-      map.jumpTo({ center: [20, 78], zoom: 1.5, pitch: 20, bearing: 0 });
+      map.jumpTo(getResponsiveCamera('intro-globe', { center: [20, 78], zoom: 1.5, pitch: 20, bearing: 0 }, mapSize, embed));
       const rotate = () => {
         map.setBearing((map.getBearing() + 0.06) % 360);
         rotateRef.current = requestAnimationFrame(rotate);
@@ -335,11 +375,11 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
       rotateRef.current = requestAnimationFrame(rotate);
     } else if (cameraKey === 'greenland-glaciers' && embed) {
       map.setProjection('globe');
-      map.flyTo({ center: [-41, 74], zoom: 3, pitch: 0, bearing: 0, duration: 1200 });
-      onMoveEnd = () => map.flyTo(CAMERAS['greenland-glaciers']);
+      map.flyTo(getResponsiveCamera('greenland-overview', { center: [-41, 74], zoom: 3, pitch: 0, bearing: 0, duration: 1200 }, mapSize, embed));
+      onMoveEnd = () => map.flyTo(getResponsiveCamera('greenland-glaciers', CAMERAS['greenland-glaciers'], mapSize, embed));
       map.once('moveend', onMoveEnd);
     } else if (CAMERAS[cameraKey] && cameraKey !== 'intro-arctic') {
-      const cam = CAMERAS[cameraKey];
+      const cam = getResponsiveCamera(cameraKey, CAMERAS[cameraKey], mapSize, embed);
       map.setProjection(cam.projection ?? (cam.jump ? 'globe' : 'mercator'));
       if (cam.jump) {
         map.jumpTo(cam);
@@ -417,7 +457,7 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
         flyOutTimerRef.current = null;
       }
     };
-  }, [cameraKey, completionOverlayImage, embed, styleLoaded]);
+  }, [cameraKey, completionOverlayImage, embed, mapSize, styleLoaded]);
 
   // ── Intro fly-out: triggered by Scrollama, then played by Mapbox ─────────
   useEffect(() => {
@@ -428,7 +468,7 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
 
     flyOutFiredRef.current = true;
     const FLY_DURATION = 9000;
-    const targetCamera = CAMERAS['world-overview'];
+    const targetCamera = getResponsiveCamera('global-temp', CAMERAS['global-temp'], mapSize, embed);
     map.stop();
     map.setProjection(targetCamera.projection ?? 'mercator');
     map.flyTo({
@@ -448,7 +488,7 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
         flyOutTimerRef.current = null;
       }
     };
-  }, [mapRevealed, introFlyTriggered, styleLoaded, cameraKey]);
+  }, [mapRevealed, introFlyTriggered, styleLoaded, cameraKey, mapSize, embed]);
 
   // ── COG temperature layer: warm the cache gently during idle time ────────
   useEffect(() => {
@@ -645,8 +685,7 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
   const shelfEdgeOpacity = shelfHighlightActive
     ? (shelfPulse ? 0.95 : 0.72)
     : ['polar-overview'].includes(cameraKey) ? 0.12 : 0;
-  const mapCompact = mapSize.width < 560 || mapSize.height < 460;
-  const mapTiny = mapSize.width < 390 || mapSize.height < 340;
+  const { compact: mapCompact, tiny: mapTiny } = getMapSizeMode(mapSize);
   const overlayInset = mapTiny ? 8 : mapCompact ? 10 : 16;
   const legendWidth = Math.min(mapTiny ? 168 : mapCompact ? 184 : 230, Math.max(150, mapSize.width - overlayInset * 2));
   const bathymetryLegendWidth = Math.min(mapTiny ? 156 : mapCompact ? 172 : 190, Math.max(140, mapSize.width - overlayInset * 2));
@@ -657,6 +696,12 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
   const quizPanelPadding = mapTiny ? '9px 10px' : mapCompact ? '11px 13px' : '14px 18px';
   const globeFontSize = mapTiny ? 13 : mapCompact ? 15 : 20;
   const globeButtonPadding = mapTiny ? '7px 12px' : mapCompact ? '8px 14px' : '8px 18px';
+  const countryLabelFont = mapTiny ? 8.5 : mapCompact ? 9.5 : 11;
+  const shelfGlowWidth = shelfHighlightActive ? (mapTiny ? 8 : mapCompact ? 10 : 13) : (mapTiny ? 2.4 : 4);
+  const shelfGlowBlur = shelfHighlightActive ? (mapTiny ? 4.5 : mapCompact ? 5.5 : 7) : (mapTiny ? 1 : 1.5);
+  const shelfEdgeWidth = shelfHighlightActive ? (mapTiny ? 2 : mapCompact ? 2.6 : 3.2) : 0.6;
+  const coastlineGlowWidth = mapTiny ? 1.4 : mapCompact ? 1.7 : 2;
+  const coastlineLineWidth = mapTiny ? 0.8 : 1;
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -777,13 +822,13 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
               track('globe_toggle');
               map.setProjection('globe');
               setIsGlobe(true);
-              map.flyTo({
+              map.flyTo(getResponsiveCamera('polar-shelf', {
                 center: [0, 90],
                 zoom: 2.6,
                 pitch: 0,
                 bearing: 0,
                 duration: 5000,
-              });
+              }, mapSize, embed));
             }}
             style={{
               padding:        globeButtonPadding,
@@ -915,9 +960,9 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
           <Marker key={name} longitude={longitude} latitude={latitude} anchor="center">
             <div style={{
               color:         '#ffffff',
-              fontSize:      11,
+              fontSize:      countryLabelFont,
               fontWeight:    700,
-              letterSpacing: '0.12em',
+              letterSpacing: mapTiny ? '0.06em' : '0.12em',
               whiteSpace:    'nowrap',
               pointerEvents: 'none',
               textShadow:    '0 1px 3px rgba(0,0,0,0.8), 0 0 6px rgba(0,0,0,0.6)',
@@ -963,8 +1008,8 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
             filter={["any", ["==", ["get", "depth"], 0], ["==", ["get", "depth"], "0"]]}
             paint={{
               "line-color": "#d9cfaa",
-              "line-width": shelfHighlightActive ? 13 : 4,
-              "line-blur":  shelfHighlightActive ? 7 : 1.5,
+              "line-width": shelfGlowWidth,
+              "line-blur":  shelfGlowBlur,
               "line-opacity": shelfGlowOpacity,
               "line-opacity-transition": { duration: 1500, delay: 0 },
             }}
@@ -975,7 +1020,7 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
             filter={["any", ["==", ["get", "depth"], 0], ["==", ["get", "depth"], "0"]]}
             paint={{
               "line-color": "#5d777b",
-              "line-width": shelfHighlightActive ? 3.2 : 0.6,
+              "line-width": shelfEdgeWidth,
               "line-opacity": shelfEdgeOpacity,
               "line-opacity-transition": { duration: 1500, delay: 0 },
             }}
@@ -989,7 +1034,7 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
             type="line"
             paint={{
               "line-color":   "#00bfff",
-              "line-width":   2,
+              "line-width":   coastlineGlowWidth,
               "line-opacity": 0,
               "line-blur":    0.60,
             }}
@@ -999,7 +1044,7 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
             type="line"
             paint={{
               "line-color":   "#00bfff",
-              "line-width":   1,
+              "line-width":   coastlineLineWidth,
               "line-opacity": 0,
             }}
           />
