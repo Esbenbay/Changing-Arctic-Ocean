@@ -14,7 +14,7 @@ const PHOTO_LAYERS = {
    g84:          { show: ['g84', 'Ships', 'Eddy', 'Ship_1', 'Ship_2', 'Oil', 'Erosion_layer'] },
   Sea_weed:          { show: ['Sea_weed','Ice_layer', 'Ice_not_move'] },
   O2_micro:          { show: ['O2_micro'] },
-  Sun:               { show: ['Eddy', 'Ice_layer', 'Ice_not_move'], zoomTarget: 'g84' },
+  Sun:               { show: ['Eddy', 'Ice_layer', 'Ice_not_move', 'Light_ray'], zoomTarget: 'g84' },
   Light_ray:         { show: ['Light_ray'] },
   Carbon_non_turbid: { show: ['Light_ray', 'Carbon_non_turbid'] },
   O2:                { show: ['Light_ray', 'Carbon_non_turbid', 'O2'] },

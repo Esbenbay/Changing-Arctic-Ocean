@@ -250,7 +250,7 @@ export const STEPS = [
     layerId: 'Instruments',
     bubble:  { arrow: 'right' },
     title:   'Measuring Instruments',
-    text:     'The eddy covariance system measures tiny changes in oxygen concentration together with the movement of water just above the seafloor.\n\n By combining these measurements, we can estimate how much oxygen the seafloor community produces during photosynthesis and how much it consumes through respiration. This gives us a direct window into the productivity of Arctic seafloor habitats without disturbing them.',
+    text:     'The eddy covariance system measures tiny changes in oxygen concentration together with the movement of water just above the seafloor.\n\n By combining these measurements, we can estimate how much oxygen the seafloor community produces during photosynthesis and how much it consumes through respiration. This gives us a direct window into the productivity of Arctic seafloor habitat.',
   },
  {
   chapter: 'photosynthesis',

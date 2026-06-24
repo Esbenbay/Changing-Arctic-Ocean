@@ -9,7 +9,7 @@ const getSceneAssets = (src) => {
   if (src?.endsWith('SVG/Late_summer.svg')) {
     return {
       svgSrc: `${BASE}SVG/Late_summer_layers.svg`,
-      backgroundSrc: `${BASE}SVG/Late_summer.webp`,
+      backgroundSrc: `${BASE}SVG/Late_summer_layers.webp`,
     };
   }
   return { svgSrc: src, backgroundSrc: null };

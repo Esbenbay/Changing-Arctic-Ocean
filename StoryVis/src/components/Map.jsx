@@ -264,6 +264,7 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
   const flyOutFiredRef    = useRef(false);
   const onFlyOutCompleteRef = useRef(onFlyOutComplete);
   const resizeFrameRef    = useRef(null);
+  const globeRequestAppliedRef = useRef(false);
 
   // COG temperature layer
   const cogCacheRef = useRef(new window.Map());
@@ -278,6 +279,7 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
   const [isGlobe, setIsGlobe]                   = useState(false);
   const [styleLoaded, setStyleLoaded]           = useState(false);
   const [globeClicked, setGlobeClicked]         = useState(false);
+  const [globeRequested, setGlobeRequested]     = useState(false);
   const [cleanupResources, setCleanupResources] = useState(null);
   const [appliedMapStyle, setAppliedMapStyle]   = useState(targetMapStyle);
   const [shelfPulse, setShelfPulse]             = useState(false);
@@ -295,6 +297,18 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
   useEffect(() => {
     onFlyOutCompleteRef.current = onFlyOutComplete;
   }, [onFlyOutComplete]);
+
+  useEffect(() => {
+    if (cameraKey !== 'world-overview') {
+      globeRequestAppliedRef.current = false;
+      const frame = requestAnimationFrame(() => {
+        setGlobeRequested(false);
+        setGlobeClicked(false);
+        setIsGlobe(false);
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+  }, [cameraKey]);
 
   useEffect(() => {
     if (cameraKey !== 'polar-shelf' || bathymetryMode !== 'shelf') {
@@ -609,6 +623,39 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
     if (map?.isStyleLoaded()) setStyleLoaded(true);
   }, []);
 
+  const requestGlobeView = useCallback(() => {
+    globeRequestAppliedRef.current = false;
+    setGlobeClicked(true);
+    setIsGlobe(true);
+    setGlobeRequested(true);
+    track('globe_toggle');
+  }, []);
+
+  useEffect(() => {
+    if (!globeRequested || globeRequestAppliedRef.current) return;
+    if (!styleLoaded || cameraKey !== 'world-overview') return;
+
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+
+    const frame = requestAnimationFrame(() => {
+      globeRequestAppliedRef.current = true;
+      map.stop();
+      map.resize();
+      map.setProjection('globe');
+      map.flyTo(getResponsiveCamera('polar-shelf', {
+        center: [0, 90],
+        zoom: 2.6,
+        pitch: 0,
+        bearing: 0,
+        duration: 5000,
+        projection: 'globe',
+      }, mapSize, embed));
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [cameraKey, embed, globeRequested, mapSize, styleLoaded]);
+
   // ── Map load ───────────────────────────────────────────────────────────────
   const handleMapLoad = useCallback(() => {
     const map = mapRef.current?.getMap();
@@ -815,21 +862,7 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
           zIndex:    10,
         }}>
           <button
-            onClick={() => {
-              const map = mapRef.current?.getMap();
-              if (!map) return;
-              setGlobeClicked(true);
-              track('globe_toggle');
-              map.setProjection('globe');
-              setIsGlobe(true);
-              map.flyTo(getResponsiveCamera('polar-shelf', {
-                center: [0, 90],
-                zoom: 2.6,
-                pitch: 0,
-                bearing: 0,
-                duration: 5000,
-              }, mapSize, embed));
-            }}
+            onClick={requestGlobeView}
             style={{
               padding:        globeButtonPadding,
               borderRadius:   30,
