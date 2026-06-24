@@ -481,13 +481,14 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
     if (!map) return;
 
     flyOutFiredRef.current = true;
-    const FLY_DURATION = 9000;
+    const FLY_DURATION = 8000;
     const targetCamera = getResponsiveCamera('global-temp', CAMERAS['global-temp'], mapSize, embed);
+    const introFlyZoom = Math.min(1.12, targetCamera.zoom + 0.40);
     map.stop();
     map.setProjection(targetCamera.projection ?? 'mercator');
     map.flyTo({
       center: targetCamera.center,
-      zoom: targetCamera.zoom,
+      zoom: introFlyZoom,
       duration: FLY_DURATION,
       pitch: targetCamera.pitch ?? 0,
       bearing: targetCamera.bearing ?? 0,

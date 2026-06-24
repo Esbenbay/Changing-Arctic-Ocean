@@ -8,6 +8,7 @@ const STATIC_STORY_ASSETS = [
   `${BASE}SVG/Late_summer.svg`,
   `${BASE}SVG/Late_summer.webp`,
   `${BASE}SVG/Late_summer_layers.svg`,
+  `${BASE}SVG/Late_summer_layers.webp`,
   `${BASE}Phytosynthesis_Arctic_summer.webp`,
   `${BASE}Phytosynthesis_Arctic_summer_layers.svg`,
   `${BASE}Transpolar_shipping_routes.svg`,
