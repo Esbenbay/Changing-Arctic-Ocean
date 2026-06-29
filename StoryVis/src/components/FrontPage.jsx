@@ -170,7 +170,6 @@ export default function FrontPage({ progress = 0, fading, imageSequenceEnd = IMA
       className={`hero${fading ? ' is-fading' : ''}`}
     >
 
-      {/* Image stack — crossfades as scroll advances activeIdx */}
       <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: '#07111c' }}>
         {FRAMES.map(({ src }, i) => {
           return (
@@ -198,7 +197,6 @@ export default function FrontPage({ progress = 0, fading, imageSequenceEnd = IMA
         })}
       </div>
 
-      {/* Title + subtitle — fades out on first scroll */}
       <div style={{
         position:       'relative',
         zIndex:         2,
@@ -222,7 +220,6 @@ export default function FrontPage({ progress = 0, fading, imageSequenceEnd = IMA
         </p>
       </div>
 
-      {/* Scroll indicator — bottom-center, fades out on first scroll */}
       <div style={{
         position:      'absolute',
         bottom:        '5vh',
@@ -245,7 +242,6 @@ export default function FrontPage({ progress = 0, fading, imageSequenceEnd = IMA
         </div>
       </div>
 
-      {/* Narrative overlay — one settled line per fully visible image */}
       <div style={{
         position:      'absolute',
         inset:         0,

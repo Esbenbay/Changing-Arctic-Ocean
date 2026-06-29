@@ -32,7 +32,7 @@ const disableTerrainSafely = (map) => {
   try {
     map?.setTerrain?.(null);
   } catch {
-    // Mapbox can throw while styles/sources are already tearing down.
+    return undefined;
   }
 };
 
@@ -89,8 +89,6 @@ async function decodeCOG(url, vmin, vmax) {
   return { dataUrl: canvas.toDataURL('image/png'), coordinates: [[west, N], [east, N], [east, S], [west, S]] };
 }
 
-// ── Config ────────────────────────────────────────────────────────────────────
-
 const TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 const BASE  = import.meta.env.BASE_URL;
 const SATELLITE_MAP_STYLE = "mapbox://styles/mapbox/standard-satellite";
@@ -145,53 +143,22 @@ const getResponsiveCamera = (key, cam, mapSize, embed) => {
   };
 };
 
-// ── Named camera positions ────────────────────────────────────────────────────
-// Keys are referenced from the `camera` field in Story.jsx's STEPS array.
-
 const CAMERAS = {
-  // Map chapter
   'arctic-quiz':    { center: [0, 85], zoom: 2.7,    speed: alterSpeed, pitch: 0, bearing: 0, projection: 'globe' },
   'world-overview': { center: [0,           20      ], zoom: 1, pitch: 0, bearing: 0, projection: 'mercator' },
   'svalbard':       { center: [16.57969, 77.82355], zoom: 9.508, duration: 5200, projection: 'globe' },
   'canada-arctic':  { center: [-99.214076,  73.476835], zoom: 3.7,  speed: alterSpeed, pitch: alterPitch, projection: 'globe' },
-
-  //'arctic-coastline':  { center: [120.734026, 85.53], zoom: 2.6,    speed: alterSpeed, pitch: 25, duration: 10000},
   'arctic-coastline':  { center: [0, 90], zoom: 2.6,    speed: alterSpeed, pitch: 0 , projection: 'globe'    },
   'greenland-overview':  { center: [-42, 72],              zoom: 3, speed: alterSpeed, pitch: alterPitch },
   'greenland-glaciers':  { center: [-41.338798, 64.249670], zoom: 9, speed: alterSpeed, pitch: alterPitch },
-
-  // Intro arctic step (interactive, no bathymetry)
   'intro-arctic':   { center: [16.57969, 77.82355], zoom: 9.508,  pitch: 0, bearing: 0, jump: true, projection: 'mercator' },
-  // Global temperature overview — used when temperature layer is active
   'global-temp':    { center: [0, 22], zoom: 0.55, pitch: 0, bearing: 0, jump: true, projection: 'mercator' },
-
-  // Polar chapter
   'polar-overview': { center: [0, 90], zoom: 2.5, pitch: 0, bearing: 0, projection: 'globe' },
   'polar-shelf':    { center: [0, 90], zoom: 2.6, pitch: 0, bearing: 0, speed: 0.6, projection: 'globe' },
-
-  // Available for future steps
   'arctic-overview':  { center: [1.558794,    79.96449 ], zoom: 2.3,  speed: alterSpeed, pitch: alterPitch },
-  // 'isfjorden':        { center: [15.066763,   78.349172], zoom: 6.7,  speed: alterSpeed, pitch: alterPitch },
-  // 'kongsfjorden':     { center: [11.918895,   78.931950], zoom: 8.3,  speed: alterSpeed, pitch: alterPitch },
-  // 'young-sound':      { center: [-21.022543,  74.343009], zoom: 7.8,  speed: alterSpeed, pitch: alterPitch },
-  // 'nuuk':             { center: [-50.892017,  64.280048], zoom: 7.7,  speed: alterSpeed, pitch: alterPitch },
-  // 'porsangerfjorden': { center: [25.786149,   70.525686], zoom: 7.3,  speed: alterSpeed, pitch: alterPitch },
-  // 'disko':            { center: [-51.984934,  69.278638], zoom: 6.55, speed: alterSpeed, pitch: alterPitch },
-  // 'greenland-sea':    { center: [-18.123336,  68.135691], zoom: 3.55, speed: alterSpeed, pitch: alterPitch },
-  // 'laptev-sea':       { center: [125.723552,  74.594426], zoom: 3.85, speed: alterSpeed, pitch: alterPitch },
-  // 'chukchi-sea':      { center: [-171.974262, 69.589304], zoom: 4.2,  speed: alterSpeed, pitch: alterPitch },
-  // 'baffin-bay':       { center: [-67.800772,  74.206607], zoom: 3,    speed: alterSpeed, pitch: alterPitch },
-  // 'barents-sea':      { center: [37.533459,   72.728405], zoom: 3.6,  speed: alterSpeed, pitch: alterPitch },
-  // 'east-siberian-sea':{ center: [162.250417,  72.365280], zoom: 4,    speed: alterSpeed, pitch: alterPitch },
-  // 'beaufort-sea':     { center: [-141.148989, 71.841302], zoom: 4,    speed: alterSpeed, pitch: alterPitch },
 };
 
-// ── Arctic country highlights ─────────────────────────────────────────────────
-
-// ISO codes for countries surrounding the Arctic
 const ARCTIC_COUNTRIES = ["RU", "CA", "NO", "GL", "IS", "US", "SJ"];
-
-// ── Country name labels ───────────────────────────────────────────────────────
 
 const ARCTIC_LABELS = [
   { iso: "RU", name: "RUSSIA",        longitude: 96,   latitude: 66 },
@@ -202,9 +169,6 @@ const ARCTIC_LABELS = [
   { iso: "US", name: "UNITED STATES", longitude: -153, latitude: 64 },
 ];
 
-// ── Static GeoJSON shapes ─────────────────────────────────────────────────────
-
-// Semi-transparent fill covering 60°N and above to highlight the Arctic Ocean
 const ARCTIC_OCEAN_GEOJSON = {
   type: "Feature",
   geometry: {
@@ -219,9 +183,6 @@ const ARCTIC_OCEAN_GEOJSON = {
   },
 };
 
-// ── Country quiz ─────────────────────────────────────────────────────────────
-
-// The 6 countries the user must identify in the quiz
 const QUIZ_COUNTRIES = [
   { iso: "RU", name: "Russia",        color: "#1565C0" },
   { iso: "CA", name: "Canada",        color: "#D32F2F" },
@@ -236,7 +197,7 @@ function buildQuizColorExpr(found) {
   const entries = QUIZ_COUNTRIES.flatMap(({ iso, color }) => {
     const c = found.has(iso) ? color : "#444";
     return iso === "NO"
-      ? ["NO", c, "SJ", c]   // Svalbard matches Norway
+      ? ["NO", c, "SJ", c]
       : [iso, c];
   });
   return ["match", ["get", "iso_3166_1"], ...entries, "transparent"];
@@ -251,8 +212,6 @@ function buildQuizOpacityExpr(found) {
   return ["match", ["get", "iso_3166_1"], ...entries, 0];
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
-
 export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, completionOverlayImage, embed = false, hideGlobeToggle = false, initialViewState, mapRevealed = false, introFlyTriggered = false, onFlyOutComplete, cogUrl, cogYear, cogOpacity = 0, cogFadeDuration = 250, cogVmin = -3, cogVmax = 3, useLightStyle = false }) {
   const temperatureMapActive = cogUrl && cogOpacity > 0.3;
   const targetMapStyle = useLightStyle ? TEMPERATURE_MAP_STYLE : SATELLITE_MAP_STYLE;
@@ -266,7 +225,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
   const resizeFrameRef    = useRef(null);
   const globeRequestAppliedRef = useRef(false);
 
-  // COG temperature layer
   const cogCacheRef = useRef(new window.Map());
   const cogSlotRef  = useRef('a');
   const cogReqRef   = useRef(0);
@@ -289,9 +247,7 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
     height: window.innerHeight,
   }));
 
-  // Quiz: which ISO codes the user has clicked so far
   const [quizFound, setQuizFound] = useState(new Set());
-  // Ref lets the click-handler closure always read the latest set without re-binding
   const quizFoundRef = useRef(new Set());
 
   useEffect(() => {
@@ -358,13 +314,11 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
     return () => clearTimeout(t);
   }, [appliedMapStyle, targetMapStyle]);
 
-  // ── Scroll-driven camera ───────────────────────────────────────────────────
   useEffect(() => {
     const map = mapRef.current?.getMap();
     if (!map || !styleLoaded) return;
     const resetOverlayFrame = requestAnimationFrame(() => setCompletionOverlayVisible(false));
 
-    // Cancel any running animations
     if (rotateRef.current) {
       cancelAnimationFrame(rotateRef.current);
       rotateRef.current = null;
@@ -374,7 +328,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
       coastlineAnimRef.current = null;
     }
 
-    // ── Camera ──────────────────────────────────────────────────────────────
     let onMoveEnd = null;
     let onCompletionMoveEnd = null;
     let completionOverlayTimer = null;
@@ -413,10 +366,8 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
           }
         }
       }
-      // 'intro-arctic': initialViewState positions the map; fly-out effect owns all animation
     }
 
-    // ── Coastline draw-on animation ──────────────────────────────────────────
     if (cameraKey === 'arctic-coastline') {
       const hidden = ['interpolate', ['linear'], ['line-progress'], 0, 'rgba(0,191,255,0)', 1, 'rgba(0,191,255,0)'];
       map.setPaintProperty('arctic-coastline-line', 'line-gradient', hidden);
@@ -432,7 +383,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
         const tail = 0.05;
         const from = Math.max(0, t - tail);
 
-        // When from === 0, omit the redundant first stop so all inputs are strictly ascending.
         const lineStops = from > 0
           ? [0, 'rgba(0,191,255,1)', from, 'rgba(0,191,255,1)', t, 'rgba(0,191,255,0)', 1, 'rgba(0,191,255,0)']
           : [0, 'rgba(0,191,255,1)',                             t, 'rgba(0,191,255,0)', 1, 'rgba(0,191,255,0)'];
@@ -473,7 +423,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
     };
   }, [cameraKey, completionOverlayImage, embed, mapSize, styleLoaded]);
 
-  // ── Intro fly-out: triggered by Scrollama, then played by Mapbox ─────────
   useEffect(() => {
     if (flyOutFiredRef.current) return;
     if (!mapRevealed || !introFlyTriggered || !styleLoaded || cameraKey !== 'intro-arctic') return;
@@ -505,7 +454,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
     };
   }, [mapRevealed, introFlyTriggered, styleLoaded, cameraKey, mapSize, embed]);
 
-  // ── COG temperature layer: warm the cache gently during idle time ────────
   useEffect(() => {
     if (!cogUrl || cogOpacity <= 0.05) return undefined;
     let cancelled = false;
@@ -546,7 +494,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
     };
   }, [cogOpacity, cogUrl, loadCogYear]);
 
-  // ── COG temperature layer: pre-fetch neighbours for smoother slider drag ──
   useEffect(() => {
     if (!cogUrl || cogYear == null) return;
     const yr = snapCogYear(cogYear);
@@ -557,7 +504,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
       });
   }, [cogUrl, cogYear, loadCogYear]);
 
-  // ── COG temperature layer: decode + swap slots on year change ────────────
   useEffect(() => {
     if (!cogUrl || cogYear == null || !styleLoaded) return;
     const id = ++cogReqRef.current;
@@ -580,14 +526,12 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
       const next = cogSlotRef.current === 'a' ? 'b' : 'a';
       const prev = cogSlotRef.current;
       if (!hasCogLayer(map, next) || !hasCogLayer(map, prev)) {
-        // Fallback: reset to slot-a with new data
         setCogLayer(result);
         cogSlotRef.current = 'a';
         setSlotAOpacity(cogOpacity);
         setSlotBOpacity(0);
         return;
       }
-      // Normal crossfade: update next slot image then swap opacities via state
       map.getSource(`cog-${next}`).updateImage({ url: result.dataUrl, coordinates: result.coordinates });
       cogSlotRef.current = next;
       if (next === 'a') { setSlotAOpacity(cogOpacity); setSlotBOpacity(0); }
@@ -595,7 +539,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
     }).catch(() => {});
   }, [cogYear, cogUrl, styleLoaded, cogOpacity, loadCogYear]);
 
-  // ── COG temperature layer: fade in/out when cogOpacity changes ────────────
   useEffect(() => {
     if (!cogLayer) return;
     const frame = requestAnimationFrame(() => {
@@ -657,7 +600,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
     return () => cancelAnimationFrame(frame);
   }, [cameraKey, embed, globeRequested, mapSize, styleLoaded]);
 
-  // ── Map load ───────────────────────────────────────────────────────────────
   const handleMapLoad = useCallback(() => {
     const map = mapRef.current?.getMap();
     if (!map) return;
@@ -678,16 +620,12 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
 
     map.on('error', ({ error }) => {
       if (error?.status === 404) return;
-      console.error(error);
     });
 
-    // style.load is the authoritative signal — fires as soon as style JSON is
-    // applied, before tiles load, so COG appears without waiting for tiles.
     map.on('style.load', () => setStyleLoaded(true));
 
   }, []);
 
-  // ── Quiz: pointer cursor when hovering over countries ─────────────────────
   useEffect(() => {
     const map = mapRef.current?.getMap();
     if (!map || !styleLoaded || !quizMode) return;
@@ -702,8 +640,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
     };
   }, [quizMode, styleLoaded]);
 
-  // ── Quiz: handle country click via react-map-gl's onClick ─────────────────
-  // Paint is driven reactively through the Layer components below — no setPaintProperty needed.
   const handleMapClick = useCallback((e) => {
     if (!quizMode) return;
     const iso = e.features?.[0]?.properties?.iso_3166_1;
@@ -751,7 +687,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
   const coastlineGlowWidth = mapTiny ? 1.4 : mapCompact ? 1.7 : 2;
   const coastlineLineWidth = mapTiny ? 0.8 : 1;
 
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <Map
       ref={mapRef}
@@ -778,7 +713,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
       keyboard={!embed}
     >
 
-      {/* ── Quiz overlay panel ─────────────────────────────────────────────── */}
       {quizMode && (
         <div style={{
           position:       'absolute',
@@ -850,7 +784,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
         </div>
       )}
 
-      {/* ── Globe toggle — disappears after switching ──────────────────────── */}
       {!isGlobe && !embed && !hideGlobeToggle && (
         <div style={{
           height:    mapTiny ? 32 : 40,
@@ -937,7 +870,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
 
       {styleLoaded && <>
 
-        {/* Soft white wash: fades the satellite basemap back as temperature anomalies fade in. */}
         {cogUrl && (
           <Layer
             id="temperature-basemap-wash"
@@ -950,8 +882,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
           />
         )}
 
-        {/* Coloured fill and border for each Arctic country.
-            In quiz mode paint is driven by quizFound state — colours only appear after clicking. */}
         <Source id="country-boundaries" type="vector" url="mapbox://mapbox.country-boundaries-v1">
           <Layer
             id="arctic-countries-fill"
@@ -974,8 +904,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
               "line-opacity": quizMode ? buildQuizOpacityExpr(quizFound) : 0,
             }}
           />
-          {/* Hit-area layer: fill-opacity 0 blocks queryRenderedFeatures, so we keep a
-              near-invisible fill solely for click detection during quiz mode. */}
           <Layer
             id="arctic-countries-hit"
             type="fill"
@@ -989,7 +917,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
         </Source>
         
 
-        {/* Country name labels — only shown in quiz mode, and only once the country is found */}
         {quizMode && ARCTIC_LABELS.filter(l => quizFound.has(l.iso)).map(({ name, longitude, latitude }) => (
           <Marker key={name} longitude={longitude} latitude={latitude} anchor="center">
             <div style={{
@@ -1006,7 +933,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
           </Marker>
         ))}
 
-        {/* Bathymetry depth bands — polar chapter */}
         <Source id="bathymetry" type="geojson" data={`${BASE}Final_depth_map.geojson`}>
           <Layer
             id="bathymetry-fill"
@@ -1061,7 +987,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
           />
         </Source>
 
-        {/* 200 m depth contour — drawn on via line-gradient animation when camera enters */}
         <Source id="arctic-coastline" type="geojson" data={`${BASE}arctic-ocean-coastline.geojson`} lineMetrics={true}>
           <Layer
             id="arctic-coastline-glow"
@@ -1084,7 +1009,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
           />
         </Source>
 
-        {/* Glacier retreat lines — only visible on the greenland-glaciers camera */}
         <Source id="glacier-retreat" type="geojson" data={`${BASE}Glacier_retreat_greenland.geojson`}>
           <Layer
             id="glacier-retreat-line"
@@ -1101,7 +1025,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
           />
         </Source>
 
-        {/* COG temperature anomaly — two-slot crossfade, opacity driven by parent */}
         {cogLayer && <>
           <Source id="cog-a" type="image" url={cogLayer.dataUrl} coordinates={cogLayer.coordinates}>
             <Layer id="cog-raster-a" type="raster" paint={{ 'raster-opacity': slotAOpacity, 'raster-opacity-transition': { duration: cogFadeDuration, delay: 0 } }} />
@@ -1177,7 +1100,6 @@ export default memo(function NewMap({ cameraKey, quizMode, bathymetryMode, compl
         </div>
       )}
 
-      {/* Cover the blank canvas during style switches */}
       <div style={{
         position:      'absolute',
         inset:         0,

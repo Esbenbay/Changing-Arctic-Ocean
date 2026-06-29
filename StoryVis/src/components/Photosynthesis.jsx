@@ -9,10 +9,9 @@ const XLINK_NS = 'http://www.w3.org/1999/xlink';
 
 gsap.registerPlugin(MotionPathPlugin);
 
-// Layers visible at each step — cumulative: once shown, stays shown
 const PHOTO_LAYERS = {
-   g84:          { show: ['g84', 'Ships', 'Eddy', 'Ship_1', 'Ship_2', 'Oil', 'Erosion_layer'] },
-  Sea_weed:          { show: ['Sea_weed','Ice_layer', 'Ice_not_move'] },
+  g84:               { show: ['g84', 'Ships', 'Eddy', 'Ship_1', 'Ship_2', 'Oil', 'Erosion_layer'] },
+  Sea_weed:          { show: ['Sea_weed', 'Ice_layer', 'Ice_not_move'] },
   O2_micro:          { show: ['O2_micro'] },
   Sun:               { show: ['Eddy', 'Ice_layer', 'Ice_not_move', 'Light_ray'], zoomTarget: 'g84' },
   Light_ray:         { show: ['Light_ray'] },
@@ -20,7 +19,7 @@ const PHOTO_LAYERS = {
   O2:                { show: ['Light_ray', 'Carbon_non_turbid', 'O2'] },
   Eddy:              { show: ['Eddy', 'Erosion_layer'] },
   Instruments:       { show: ['Eddy', 'Erosion_layer'] },
-  Ships:            { show: ['Light_ray', 'Erosion_layer', 'O2', 'Ship_1', 'Ship_2', 'smoke', 'smoke_1'] },
+  Ships:             { show: ['Light_ray', 'Erosion_layer', 'O2', 'Ship_1', 'Ship_2', 'smoke', 'smoke_1'] },
   Oil:               { show: ['Light_ray', 'Erosion_layer', 'O2', 'Ship_1', 'Ship_2', 'Oil'] },
   Benthic_highlight: { show: ['Instruments', 'Eddy', 'fade_in_benthic', 'O_2_benthic', 'Carbon_non_turbid', 'Erosion_layer'] },
   ice_layer:         { show: ['Ice_layer'] },
@@ -29,35 +28,22 @@ const PHOTO_LAYERS = {
 
 };
 
-const ALL_FADE_LAYERS = ['Carbon_non_turbid','Light_ray','O2', 'Eddy', 'Ship_1', 'Ship_2', 'Oil', 'fade_in_benthic', 'O_2_benthic', 'smoke', 'smoke_1', 'Ice_layer', 'Ice_not_move', 'Erosion_layer'];
+const ALL_FADE_LAYERS = ['Carbon_non_turbid', 'Light_ray', 'O2', 'Eddy', 'Ship_1', 'Ship_2', 'Oil', 'fade_in_benthic', 'O_2_benthic', 'smoke', 'smoke_1', 'Ice_layer', 'Ice_not_move', 'Erosion_layer'];
 
-// Trigger-based fade layers — fire when `trigger` step becomes active.
-//   trigger:         layerId string that activates this layer
-//   oneWay:          true → stays visible permanently once triggered
-//   fadeInDuration:  seconds for fade-in  (default 1.5)
-//   fadeOutDuration: seconds for fade-out (default 1.5)
 const PHOTO_FADE_LAYERS = {
   Carbon_non_turbid: { trigger: 'Sea_weed', oneWay: true },
   Light_ray:         { trigger: 'Sea_weed', oneWay: true },
   O2_micro:          { trigger: 'Sea_weed', fadeInDuration: 2.0 },
   Oil:               { trigger: 'g84', fadeInDuration: 6.0 },
-  smoke:               { trigger: 'Ships', fadeInDuration: 3.0 },
-  smoke_1:               { trigger: 'Ships', fadeInDuration: 3.0 },
+  smoke:             { trigger: 'Ships', fadeInDuration: 3.0 },
+  smoke_1:           { trigger: 'Ships', fadeInDuration: 3.0 },
 };
 
-// Layers whose direct children randomly blink in/out while the layer is visible.
 const RANDOM_FADE_LAYERS = [
   'Carbon_non_turbid',
   'O_2_benthic'
 ];
 
-// ── Motion-path animations ─────────────────────────────────────────────────────
-// Add entries here to wire up new motion-path loops.
-//   elementLabel: inkscape:label (or id) of the element to move
-//   pathLabel:    inkscape:label (or id) of the <path> (or group containing one)
-//   triggerStep:  activeLayerId value that starts the animation
-//   duration:     seconds per loop
-//   repeat:       GSAP repeat count (-1 = infinite)
 const MOTION_PATH_ANIMS = {
   O2_micro: { elementLabel: 'O2_micro',  pathLabel: 'Micro_path_', triggerStep: 'Sea_weed', duration: 6, repeat: -1 },
   Eddy:     { elementLabel: 'Eddy',      pathLabel: 'Eddy_path',   triggerStep: 'Sun',      duration: 3, repeat: 0 },
@@ -83,10 +69,10 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
   const iceTweenRef       = useRef(null);
   const hasInitialZoomRef = useRef(false);
   const zoomTimerRef      = useRef(null);
-  const fadeLayersRef     = useRef({});   // PHOTO_FADE_LAYERS runtime state
-  const randomFadeRef     = useRef({});   // active setInterval IDs keyed by layer name
-  const motionTweensRef   = useRef({});   // keyed by MOTION_PATH_ANIMS key
-  const quickSettersRef   = useRef({});   // gsap.quickSetter functions for erosion slider
+  const fadeLayersRef     = useRef({});
+  const randomFadeRef     = useRef({});
+  const motionTweensRef   = useRef({});
+  const quickSettersRef   = useRef({});
   const [layoutVersion, setLayoutVersion] = useState(0);
 
   useEffect(() => {
@@ -145,7 +131,6 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
         backgroundImage.style.pointerEvents = 'none';
         svg.insertBefore(backgroundImage, svg.firstElementChild);
 
-        // Prefix all IDs to avoid clashing with Late_summer.svg in DOM
         const P = 'ph__';
         svg.querySelectorAll('[id]').forEach(el => { el.id = P + el.id; });
         svg.querySelectorAll('*').forEach(el => {
@@ -155,8 +140,8 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
           });
           const s = el.getAttribute('style');
           if (s) el.setAttribute('style', s.replace(/url\(#([^)]+)\)/g, `url(#${P}$1)`));
-          const xl = el.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
-          if (xl?.startsWith('#')) el.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#' + P + xl.slice(1));
+          const xl = el.getAttributeNS(XLINK_NS, 'href');
+          if (xl?.startsWith('#')) el.setAttributeNS(XLINK_NS, 'href', '#' + P + xl.slice(1));
           const href = el.getAttribute('href');
           if (href?.startsWith('#')) el.setAttribute('href', '#' + P + href.slice(1));
         });
@@ -167,13 +152,11 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
           svg.querySelector(`[inkscape\\:label="${label}"]`) ??
           svg.querySelector(`#${P}${label}`);
 
-        // Hide all show-driven layers — GSAP owns opacity from the start
         ALL_FADE_LAYERS.forEach(name => {
           const el = getEl(name);
           if (el) gsap.set(el, { opacity: 0 });
         });
 
-        // Register trigger-based fade layers — GSAP owns opacity from the start
         fadeLayersRef.current = {};
         Object.entries(PHOTO_FADE_LAYERS).forEach(([name, cfg]) => {
           const el = getEl(name);
@@ -187,19 +170,17 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
         const iceEl      = getEl('Ice_layer');
         if (erosionEl) gsap.set(erosionEl, { opacity: 0 });
 
-        // quickSetters for rapid erosion-slider updates (no tween overhead per tick)
         quickSettersRef.current = {
           iceOpacity:     iceEl      ? gsap.quickSetter(iceEl,      'opacity') : null,
           iceNotOpacity:  iceNotMove ? gsap.quickSetter(iceNotMove, 'opacity') : null,
           erosionOpacity: erosionEl  ? gsap.quickSetter(erosionEl,  'opacity') : null,
         };
 
-        // Ice moves along Ice_path when the erosion slider is dragged
         const icePathEl = getEl('Ice_path');
         const icePath   = icePathEl?.tagName?.toLowerCase() === 'path'
           ? icePathEl : icePathEl?.querySelector('path');
         if (iceEl && icePath) {
-          const w = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          const w = document.createElementNS(SVG_NS, 'g');
           iceEl.parentNode.insertBefore(w, iceEl);
           w.appendChild(iceEl);
           iceTweenRef.current = gsap.to(w, {
@@ -208,14 +189,13 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
           });
         }
 
-        // Motion-path animations — driven by MOTION_PATH_ANIMS config
         motionTweensRef.current = {};
         Object.entries(MOTION_PATH_ANIMS).forEach(([key, animCfg]) => {
           const el     = getEl(animCfg.elementLabel);
           const pathEl = getEl(animCfg.pathLabel);
           const path   = pathEl?.tagName?.toLowerCase() === 'path' ? pathEl : pathEl?.querySelector('path');
           if (!el || !path) return;
-          const w = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          const w = document.createElementNS(SVG_NS, 'g');
           el.parentNode.insertBefore(w, el);
           w.appendChild(el);
           motionTweensRef.current[key] = gsap.to(w, {
@@ -234,7 +214,6 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
     };
   }, []);
 
-  // Reset zoom flag and stop micro animation when leaving the chapter
   useEffect(() => {
     if (!active) {
       hasInitialZoomRef.current = false;
@@ -242,7 +221,6 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
     }
   }, [active]);
 
-  // Show/hide layers, zoom, and trigger fade/random effects based on active layer
   useEffect(() => {
     clearTimeout(zoomTimerRef.current);
 
@@ -256,7 +234,6 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
 
     const cfg = activeLayerId != null ? PHOTO_LAYERS[activeLayerId] : null;
 
-    // ── Zoom ──────────────────────────────────────────────────────────────────
     if (cfg) {
       const zoomEl   = 'zoomTarget' in cfg
         ? (cfg.zoomTarget ? getEl(cfg.zoomTarget) : null)
@@ -306,14 +283,12 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
       }
     }
 
-    // ── Show-driven fades (ALL_FADE_LAYERS) ───────────────────────────────────
     const visible = new Set(cfg?.show ?? []);
     ALL_FADE_LAYERS.forEach(name => {
       const el = getEl(name);
       if (el) gsap.to(el, { opacity: visible.has(name) ? 1 : 0, duration: 1.0, ease: 'power2.inOut', overwrite: 'auto' });
     });
 
-    // ── Trigger-based fade layers (PHOTO_FADE_LAYERS) ─────────────────────────
     Object.entries(fadeLayersRef.current).forEach(([, entry]) => {
       const { el, cfg: fadeCfg } = entry;
       const isActive    = fadeCfg.trigger === activeLayerId;
@@ -325,7 +300,6 @@ export default memo(function PhotosynthesisPanel({ activeLayerId, anchorLayerId,
       } else if (!stayVisible) {
         gsap.to(el, { opacity: 0, duration: fadeCfg.fadeOutDuration ?? 1.5, ease: 'power2.inOut', overwrite: 'auto' });
       }
-      // stayVisible && !isActive: already at 1, GSAP leaves it alone
     });
 
     

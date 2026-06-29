@@ -97,26 +97,21 @@ export default function ScrollamaDemo({
 
   return (
     <div>
-      {/* Steps before first sticky section */}
       <Scrollama offset={0.60} onStepEnter={onStepEnter} onStepProgress={onStepProgress}>
         {textInput.slice(0, hasChart ? sticky2StartIndex : hasGlacier ? stickyStartIndex : textInput.length)
           .map((_, i) => renderStep(i))}
       </Scrollama>
 
-      {/* Temperature chart sticky section */}
       {hasChart && renderStickySection(sticky2StartIndex, sticky2EndIndex, sticky2Content)}
 
-      {/* Steps between chart and glacier sections */}
       {hasChart && hasGlacier && (
         <Scrollama offset={0.60} onStepEnter={onStepEnter} onStepProgress={onStepProgress}>
           {textInput.slice(sticky2EndIndex + 1, stickyStartIndex).map((_, i) => renderStep(sticky2EndIndex + 1 + i))}
         </Scrollama>
       )}
 
-      {/* Glacier sticky section */}
       {hasGlacier && renderStickySection(stickyStartIndex, stickyEndIndex, stickyContent)}
 
-      {/* Steps after last sticky section */}
       {(hasGlacier || hasChart) && (
         <Scrollama offset={0.60} onStepEnter={onStepEnter} onStepProgress={onStepProgress}>
           {textInput.slice((hasGlacier ? stickyEndIndex : sticky2EndIndex) + 1)

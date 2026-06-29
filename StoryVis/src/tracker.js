@@ -1,5 +1,3 @@
-// ── Session tracker for HCI evaluation ───────────────────────────────────────
-
 const SHEET_URL    = import.meta.env.VITE_SHEET_URL;
 const sessionStart = new Date().toISOString();
 export const sessionId = Math.random().toString(36).slice(2, 10);
@@ -42,11 +40,9 @@ function normalizeEvalValue(value) {
 export function trackEvent(type, data = {}) {
   const event = { t: new Date().toISOString(), type, ...data };
   events.push(event);
-  console.log('[tracker] event:', event);
 }
 export const track = trackEvent;
 
-// Call on every step change — records chapter transitions only
 export function trackStep(chapter) {
   if (chapter !== lastChapter) {
     lastChapter = chapter;
@@ -54,12 +50,10 @@ export function trackStep(chapter) {
   }
 }
 
-// ── Send compiled session JSON when story is complete ─────────────────────────
 let flushed = false;
-// evalAnswers: optional object { U1: 4, U2: 6, ... } from the evaluation form
-// evalAnswers: optional object { U1: 4, U_comment: '...', ... } from the evaluation form
+
 export function flushToSheet(evalAnswers = {}) {
-  if (!SHEET_URL) { console.warn('[tracker] VITE_SHEET_URL not defined'); return; }
+  if (!SHEET_URL) return;
   if (flushed) return;
   flushed = true;
   trackEvent('story_complete');
@@ -81,17 +75,14 @@ export function flushToSheet(evalAnswers = {}) {
     erosionFinal:   events.filter(e => e.type === 'erosion_drag_complete').at(-1)?.value ?? 'NaN',
     chartDragYear:  events.filter(e => e.type === 'chart_drag_complete').at(-1)?.year ?? 'NaN',
     ...evalFields,
-    _t:             Date.now(), // cache-buster
+    _t:             Date.now(),
   };
-  console.log('[tracker] flushing', summary);
   fetch(`${SHEET_URL}?${new URLSearchParams(summary)}`, { mode: 'no-cors' })
-    .then(() => console.log('[tracker] sent'))
-    .catch(err => console.error('[tracker] fetch error', err));
+    .catch(() => {});
 }
 
 trackEvent('session_start');
 
-// ── Local CSV/JSON download ───────────────────────────────────────────────────
 function triggerDownload(content, filename, mime) {
   const blob = new Blob([content], { type: mime });
   const url  = URL.createObjectURL(blob);

@@ -1,6 +1,6 @@
 const BASE = import.meta.env.BASE_URL;
 
-export const TIMELINE_H = 68; // px — height of the bottom chapter bar
+export const TIMELINE_H = 68;
 
 export const COG_START_YEAR      = 1880;
 export const COG_END_YEAR        = 2025;
@@ -9,18 +9,14 @@ export const MAP_TRANSITION_START = IMAGE_SEQUENCE_END;
 
 export const ICE_EXTENT_URL = year => `${BASE}Ice_extent/N_${year}09_extent_v4.0.tif`;
 
-// ── Chapter timeline ──────────────────────────────────────────────────────────
 export const CHAPTERS = [
   { id: 'intro',          label: 'Introduction' },
   { id: 'map',            label: 'Arctic Ocean' },
-  // { id: 'polar',          label: 'Coastal Zone' },
   { id: 'seasons',        label: 'Seasons'      },
   { id: 'svg',            label: 'Ecosystem'    },
   { id: 'photosynthesis', label: 'Seafloor'     },
-  // { id: 'shipping',       label: 'Shipping'     },
 ];
 
-// ── Season SVG sources ────────────────────────────────────────────────────────
 export const SEASONS = [
   { label: 'Arctic Night', src: `${BASE}SVG/Arctic_night.svg` },
   { label: 'Early Spring', src: `${BASE}SVG/Early_spring.svg` },
@@ -29,40 +25,21 @@ export const SEASONS = [
   { label: 'Summer',       src: `${BASE}SVG/Late_summer.svg`  },
 ];
 
-// ── Master step config ────────────────────────────────────────────────────────
-//
-// Every scroll step lives here. `chapter` controls layout and which panel is
-// shown; the remaining keys supply that step's content.
-//
-//   chapter: 'intro'    full-width right panel, map not visible
-//            'map'      split layout with Mapbox map
-//            'seasons'  split layout; map replaced by season accordion
-//            'svg'      split layout; seasons replaced by SVG infographic
-//
-//   map steps     → camera (key from CAMERAS in Map.jsx), quiz (boolean)
-//   season steps  → seasonIndex
-//   svg steps     → layerId (string | null), figure (JSX, optional)
-//   all steps     → text (required), title (optional)
+const INTRO_WARMING_TEXT = 'The planet is getting warmer, but the change is not spread evenly. Some regions are heating much faster than others. Drag the year marker across the chart to see how warming has unfolded around the world.';
 
 export const STEPS = [
-
-  // ── Intro ─────────────────────────────────────────────────────────────────
-
-  // Step 0: full-screen satellite map at Svalbard; fly-out starts when FrontPage fades.
-  // This is an invisible 600 vh spacer — the camera / fly logic live here.
   {
     chapter:       'intro',
     camera:        'intro-arctic',
     lineChartStep: 'world',
     title:         'A Warming World',
-    text:          'The planet is getting warmer, but the change is not spread evenly. Some regions are heating much faster than others. Drag the year marker across the chart to see how warming has unfolded around the world.',
+    text:          INTRO_WARMING_TEXT,
   },
-  // Step 1: first visible card — scrolls into view after the clip animation.
   {
     chapter:       'intro',
     lineChartStep: 'world',
     title:         'A Warming World',
-    text:          'The planet is getting warmer, but the change is not spread evenly. Some regions are heating much faster than others. Drag the year marker across the chart to see how warming has unfolded around the world.',
+    text:          INTRO_WARMING_TEXT,
   },
   {
     chapter:       'intro',
@@ -71,7 +48,6 @@ export const STEPS = [
     text:          'Some regions are warming two, three, or even four times faster than the global average. Looking at the colors on the map, which region do you think has warmed the most?',
   },
 
-  // ── Map chapter ───────────────────────────────────────────────────────────
   {
     chapter: 'map',
     camera:  'world-overview',
@@ -106,7 +82,6 @@ export const STEPS = [
     text:    'We now turn to the Arctic seasonal cycle. Each year, light, sea ice, and open water shift dramatically, shaping one of the most dynamic environments on Earth.',
   },
 
-  // ── Season chapter ────────────────────────────────────────────────────────
   {
     chapter:     'seasons',
     seasonIndex: 0,
@@ -136,12 +111,11 @@ export const STEPS = [
     text:        'The summer is the peak of biological productivity in the Arctic ocean and sea ice is at its minimum extent in mid-September. However, soon sea ice begins to shape the coastal waters again. Lets dive into how the ecosystem response to the changing climate.',
   },
 
-  // ── SVG infographic chapter ───────────────────────────────────────────────
   {
     chapter:     'svg',
-    layerId: 'illustration_layers',
+    layerId:     'illustration_layers',
     title:       'Changing Arctic Ecosystem',
-    bubble:  {  },
+    bubble:      {},
     text:        'The Arctic coastal ecosystem is complex and the changes we are seeing are interconnected. Let\'s break down some of the key changes happening in the coastal zone.',
   },
   {
@@ -173,14 +147,6 @@ export const STEPS = [
     bubble:        { arrow: 'left' },
     text:          "Arctic glaciers and inland snow are losing mass, which is contributing roughly ~1 mm per year to global sea level rise and reshaping coastal landscapes.",
   },
-  // {
-  //   chapter:       'svg',
-  //   layerId:       'Mountain',
-  //   glacierCamera: 'greenland-glaciers',
-  //   title:         'Retreating Ice Fronts',
-  //   bubble:        { arrow: 'left' },
-  //   text:          "Each coloured line marks a historic glacier terminus — yellow lines show the oldest recorded positions, red the most recent. Decades of retreat visible in a single view.",
-  // },
   {
     chapter: 'svg',
     layerId: 'River',
@@ -213,7 +179,6 @@ export const STEPS = [
     text:    'Our research is focusing on how the Arctic seafloor is adapting to this complex web of change in the Arctic ocean. We want to understand how much the microorganisms on the seafloor grow, when they grow, and how the energy they produce moves through the food web around them.',
   },
 
-  // ── Photosynthesis chapter ────────────────────────────────────────────────
   {
     chapter:             'photosynthesis',
     layerId:             null,
@@ -241,7 +206,7 @@ export const STEPS = [
     chapter: 'photosynthesis',
     layerId: 'Eddy',
     bubble:  { arrow: 'right' },
-     image:   { src: `${BASE}Eddy_deploy.webp`, caption: 'Baltic Sea' },
+    image:   { src: `${BASE}Eddy_deploy.webp`, caption: 'Baltic Sea' },
     title:   'Eddy Covariance System',
     text:    'To estimate the impacts of changing ocean conditions on the seafloor, we deploy an eddy covariance system on the seafloor.',
   },
@@ -250,44 +215,34 @@ export const STEPS = [
     layerId: 'Instruments',
     bubble:  { arrow: 'right' },
     title:   'Measuring Instruments',
-    text:     'The eddy covariance system measures tiny changes in oxygen concentration together with the movement of water just above the seafloor.\n\n By combining these measurements, we can estimate how much oxygen the seafloor community produces during photosynthesis and how much it consumes through respiration. This gives us a direct window into the productivity of Arctic seafloor habitat.',
+    text:    'The eddy covariance system measures tiny changes in oxygen concentration together with the movement of water just above the seafloor.\n\nBy combining these measurements, we can estimate how much oxygen the seafloor community produces during photosynthesis and how much it consumes through respiration. This gives us a direct window into the productivity of Arctic seafloor habitat.',
   },
- {
-  chapter: 'photosynthesis',
-  layerId: 'Benthic_highlight',
-  bubble:  { arrow: 'bottom' },
-  title:   'Expanding Benthic Communities',
-  text:    'As sea ice retreats, more sunlight can reach shallow parts of the Arctic seafloor. This may allow algae, seaweed, and microscopic benthic communities to expand into areas that were previously too dark or ice-covered for much of the year.\n\nBut large uncertainties remain. We still do not know how widespread suitable habitats are, or how the changing environmental conditions will impact these communities.',
-},
   {
-  chapter: 'photosynthesis',
-  layerId: 'g84',
-  bubble:  {  },
-  title:   'A Changing Cycle',
-  text:    'Longer ice-free seasons can extend the period when sunlight reaches the Arctic seafloor, potentially increasing photosynthesis in shallow coastal areas.\n But this change also reshapes the entire ecosystem. Less sea ice, more light, and increasing water turbidity can alter when and where the seafloor algae expand to.',
-},
+    chapter: 'photosynthesis',
+    layerId: 'Benthic_highlight',
+    bubble:  { arrow: 'bottom' },
+    title:   'Expanding Benthic Communities',
+    text:    'As sea ice retreats, more sunlight can reach shallow parts of the Arctic seafloor. This may allow algae, seaweed, and microscopic benthic communities to expand into areas that were previously too dark or ice-covered for much of the year.\n\nBut large uncertainties remain. We still do not know how widespread suitable habitats are, or how the changing environmental conditions will impact these communities.',
+  },
   {
-  chapter: 'photosynthesis',
-  layerId: 'Ships',
-  bubble:  {  cta: 'Take the evaluation →' },
-  title:   'The Future Arctic Ocean',
-  text:    'As the temperature increases and the sea ice retreats, the Arctic Ocean is becoming more accessible for longer parts of the year.\nThis future brings new opportunities and pressures on the fragile marine ecosystems - so let’s understand the current complexities before new ones are introduced.\n\n Before you leave, we invite you to reflect on the story and share your perspective.',
-},
+    chapter: 'photosynthesis',
+    layerId: 'g84',
+    bubble:  {},
+    title:   'A Changing Cycle',
+    text:    'Longer ice-free seasons can extend the period when sunlight reaches the Arctic seafloor, potentially increasing photosynthesis in shallow coastal areas.\n\nBut this change also reshapes the entire ecosystem. Less sea ice, more light, and increasing water turbidity can alter when and where the seafloor algae expand to.',
+  },
+  {
+    chapter: 'photosynthesis',
+    layerId: 'Ships',
+    bubble:  { cta: 'Take the evaluation →' },
+    title:   'The Future Arctic Ocean',
+    text:    'As the temperature increases and the sea ice retreats, the Arctic Ocean is becoming more accessible for longer parts of the year.\nThis future brings new opportunities and pressures on the fragile marine ecosystems - so let’s understand the current complexities before new ones are introduced.\n\nBefore you leave, we invite you to reflect on the story and share your perspective.',
+  },
 
-  // ── Evaluation (shown after final chapter, not in ChapterTimeline) ───────────
   {
     chapter: 'evaluation',
     layerId: null,
     title:   null,
     text:    null,
   },
-
-  // ── Shipping routes chapter (commented out) ───────────────────────────────
-  // {
-  //   chapter:   'shipping',
-  //   stepIndex: 0,
-  //   layerId:   'Ship-1',
-  //   title:     'The Opening Arctic',
-  //   text:      'As sea ice retreats, Arctic shipping routes are becoming viable year-round ...',
-  // },
 ];

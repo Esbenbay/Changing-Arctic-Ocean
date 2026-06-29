@@ -1,4 +1,4 @@
-import { memo, useRef, useEffect, useState } from 'react';
+import { memo, useCallback, useRef, useEffect, useState } from 'react';
 import { findAnchor, getLayerEl, zoomToLayer } from './svgHelpers.js';
 
 const BASE = import.meta.env.BASE_URL;
@@ -56,7 +56,6 @@ const INTERACTIVE_LAYERS = {
   fade_in_benthic:       { name: 'Benthic Highlight_fade', description: "Benthic highlights are areas of increased biological activity on the seafloor, often associated with underwater features like reefs or shipwrecks.", fadeIn: true, noHighlight: true, fadeWithLayer: 'Benthic_highlight', fadeInTransition: 'opacity 1000ms ease 2000ms' },
   illustration_layers: { name: 'Illustration', description: "This illustration synthesizes the complex interactions and feedback loops in the Arctic ecosystem, highlighting key processes and vulnerabilities in a rapidly changing environment.", noHighlight: true },
   Instruments: { name: 'Instruments', description: "Instruments are essential for monitoring and understanding the changing Arctic environment. They provide critical data on temperature, ice thickness, and ecosystem health.", maxZoom: 10 },
-  // 'Ship-1':         { name: 'Ship', description: '', maxZoom: 12, noHighlight: true },
   'kelp_highlight': { name: 'Kelp Highlight', description: '', maxZoom: 9, noHighlight: true, },
   Microphytobenthos:    { name: 'Microphytobenthos',   description: '', fadeIn: true, noHighlight: true, fadeWithLayer: 'kelp_highlight', fadeInTransition: 'opacity 1000ms ease 2000ms' },
   Sun_rays:         { name: 'Sun Rays',          description: '', fadeIn: true, noHighlight: true, fadeWithLayer: 'Light_production', pulseAnimation: 'lightPulse 2.8s ease-in-out infinite', oneWay: true },
@@ -66,8 +65,6 @@ const INTERACTIVE_LAYERS = {
 
 const HIGHLIGHT_COLOR = '#00000073';
 
-// Add/remove an outline stroke on every shape in the layer.
-// vector-effect: non-scaling-stroke keeps the width constant in screen pixels at any zoom.
 const setOutline = (layer, color) => {
   layer.querySelectorAll('path, circle, rect, polygon, polyline').forEach(p => {
     if (color) {
@@ -79,7 +76,7 @@ const setOutline = (layer, color) => {
       p.style.vectorEffect = 'non-scaling-stroke';
     } else {
       const restore = (prop, key) => {
-        if (!(key in p.dataset)) return; // never highlighted, leave original alone
+        if (!(key in p.dataset)) return;
         const orig = p.dataset[key];
         if (orig === '__none__') p.style.removeProperty(prop);
         else p.style.setProperty(prop, orig);
@@ -114,11 +111,11 @@ export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPos
   const activeAnimLayerRef  = useRef(null);
   const [layoutVersion, setLayoutVersion] = useState(0);
 
-  // Keep ref in sync so fetch callback can read latest value
-  activeLayerIdRef.current = activeLayerId;
-
-  // scroll-driven mode: activeLayerId prop is explicitly passed (even as null)
   const scrollDriven = activeLayerId !== undefined;
+
+  useEffect(() => {
+    activeLayerIdRef.current = activeLayerId;
+  }, [activeLayerId]);
 
   useEffect(() => {
     const node = containerRef.current;
@@ -138,9 +135,7 @@ export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPos
     };
   }, []);
 
-  // Helper: apply current scroll-driven highlight state to the loaded SVG
-  const applyHighlight = (svg, label) => {
-    // Only clear the one layer that actually has an outline — not all layers.
+  const applyHighlight = useCallback((svg, label) => {
     if (highlightedLayerRef.current) {
       const prev = getLayerEl(svg, highlightedLayerRef.current);
       if (prev) setOutline(prev, null);
@@ -150,10 +145,9 @@ export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPos
       const l = getLayerEl(svg, label);
       if (l) { setOutline(l, HIGHLIGHT_COLOR); highlightedLayerRef.current = label; }
     }
-  };
+  }, []);
 
 
-  // Load and wire up SVG
   useEffect(() => {
     if (!containerRef.current) return;
     let cancelled = false;
@@ -173,7 +167,6 @@ export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPos
         svgRef.current = svg;
         insertRasterBackground(svg, backgroundSrc);
 
-        // Register fade-controlled layers
         Object.entries(INTERACTIVE_LAYERS).forEach(([label, cfg]) => {
           if (!cfg.fadeIn && !cfg.fadeOutWithLayer) return;
             const el = getLayerEl(svg, label);
@@ -184,7 +177,6 @@ export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPos
             fadeLayersRef.current[label] = { el, inverted, triggered: false };
           });
 
-        // Assign each shape in Sea_ice_early a random fade threshold year
         const earlyLayer = getLayerEl(svg, 'Sea_ice_early');
         if (earlyLayer) {
           iceShapesRef.current = [...earlyLayer.children]
@@ -194,7 +186,6 @@ export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPos
             });
         }
 
-        // Apply whatever highlight + zoom is already active (handles late SVG load)
         if (activeLayerIdRef.current !== undefined) {
           applyHighlight(svg, activeLayerIdRef.current);
           const fallbackCfg  = INTERACTIVE_LAYERS[activeLayerIdRef.current] ?? {};
@@ -220,10 +211,8 @@ export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPos
     return () => {
       cancelled = true;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [src]);
+  }, [applyHighlight, onAnchorPosition, splitZoom, src]);
 
-  // Apply scroll-driven highlight + zoom when activeLayerId changes
   useEffect(() => {
     const svg = svgRef.current;
     if (!svg || !scrollDriven) return;
@@ -244,7 +233,6 @@ export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPos
         .map(label => getLayerEl(svg, label))
         .filter(Boolean),
     });
-    // Apply / remove activeAnimation on the current layer
     if (activeAnimLayerRef.current) {
       const prev = getLayerEl(svg, activeAnimLayerRef.current);
       if (prev) {
@@ -274,7 +262,6 @@ export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPos
       layerEl.style.animation       = activeAnim;
       activeAnimLayerRef.current    = zoomLabel;
     }
-    // Fade layers in or out based on their trigger
     Object.entries(fadeLayersRef.current).forEach(([label, entry]) => {
       const { el, inverted } = entry;
       const cfg         = INTERACTIVE_LAYERS[label];
@@ -284,15 +271,12 @@ export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPos
       if (triggerActive) entry.triggered = true;
       const isVisible = inverted ? !triggerActive : triggerActive;
       if (cfg?.pulseAnimation) {
-        // Inverted layers (fadeOutWithLayer) start visible and pulse when triggered.
-        // Normal layers (fadeIn) start hidden and pulse when triggered.
         const isPulseActive = inverted ? triggerActive : (isVisible || activeLayerId === label);
         if (isPulseActive) {
           el.style.transition = 'none';
           el.style.opacity    = '1';
           el.style.animation  = cfg.pulseAnimation;
         } else if (cfg?.oneWay && wasTriggered) {
-          // stop pulsing but stay visible
           el.style.animation  = 'none';
           el.style.transition = 'none';
           el.style.opacity    = '1';
@@ -302,18 +286,15 @@ export default memo(function SvgPanel({ src, activeLayerId, iceYear, onAnchorPos
           el.style.opacity    = inverted ? '1' : '0';
         }
       } else {
-        if (cfg?.oneWay && wasTriggered) return; // already fired once — lock in place
+        if (cfg?.oneWay && wasTriggered) return;
         el.style.transition = isVisible
           ? (cfg?.fadeInTransition  ?? 'opacity 1500ms ease 600ms')
           : (cfg?.fadeOutTransition ?? 'opacity 1500ms ease');
         el.style.opacity = isVisible ? '1' : '0';
       }
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeLayerId, layoutVersion, splitZoom]);
+  }, [activeLayerId, applyHighlight, layoutVersion, onAnchorPosition, scrollDriven, splitZoom]);
 
-  // Fade individual Sea_ice_early shapes as the year slider moves.
-  // Each shape has a random threshold — once the slider passes it, that piece fades out.
   useEffect(() => {
     if (iceYear == null) return;
     iceShapesRef.current.forEach(({ el, fadeYear }) => {

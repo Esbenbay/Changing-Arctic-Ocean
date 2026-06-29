@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { trackEvent, flushToSheet } from '../tracker.js';
 
-// ── Page definitions ──────────────────────────────────────────────────────────
 const PAGES = [
   {
     id: 'background', label: 'Background', color: '#546e7a',
@@ -72,7 +71,6 @@ const PAGES = [
   },
 ];
 
-// ── Sub-components ─────────────────────────────────────────────────────────────
 function LikertScale({ value, onChange, color, leftLabel = 'Strongly disagree', rightLabel = 'Strongly agree' }) {
   return (
     <div style={{ display: 'inline-flex', flexDirection: 'column', gap: 10 }}>
@@ -234,7 +232,6 @@ function PageProgress({ pages, currentIndex }) {
   );
 }
 
-// ── Main component ─────────────────────────────────────────────────────────────
 export default function Evaluation() {
   const [pageIndex, setPageIndex] = useState(0);
   const [answers,   setAnswers]   = useState({});
@@ -286,7 +283,6 @@ export default function Evaluation() {
     if (!pageComplete) return;
     const allQ = PAGES.flatMap(p => p.questions);
     allQ.forEach(q => trackEvent('eval_answer', { question: q.id, value: answers[q.id] ?? '' }));
-    console.log('[eval] submitting answers:', answers);
     flushToSheet(Object.fromEntries(allQ.map(q => [q.id, answers[q.id] ?? ''])));
     setSubmitted(true);
   };
@@ -306,12 +302,10 @@ export default function Evaluation() {
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: '#f7f9fb', overflow: 'hidden' }}>
 
-      {/* ── Top: progress bar ── */}
       <div style={{ padding: '16px 8% 14px', flexShrink: 0, borderBottom: '1px solid #edf0f3' }}>
         <PageProgress pages={PAGES} currentIndex={pageIndex} />
       </div>
 
-      {/* ── Middle: header + questions — vertically centred, scrollable on overflow ── */}
       <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
       <div
         ref={scrollAreaRef}
@@ -415,7 +409,6 @@ export default function Evaluation() {
       </div>
       </div>
 
-      {/* ── Bottom: navigation — pinned to bottom ── */}
       <div style={{ padding: '22px 8% 36px', borderTop: '1px solid #e8ecf0', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f7f9fb' }}>
         <button
           onClick={() => go(-1)}

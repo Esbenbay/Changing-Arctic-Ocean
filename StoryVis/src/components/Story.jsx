@@ -169,7 +169,6 @@ function SvgChapterTextPanel({ panel, onCta }) {
   );
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
 export default function StoryScene() {
   const [viewPoint,  setViewPoint]  = useState(0);
   const [introProgress, setIntroProgress] = useState(0);
@@ -221,7 +220,6 @@ export default function StoryScene() {
   const landingFading = introProgress >= MAP_TRANSITION_START;
   const introFlyTriggered = landingFading;
 
-  // Lock scroll during fly-out + clip animation so the user can't skip past them
   useEffect(() => {
     if (isEvaluationStep || !landingFading || scrollLocked || introMapShrunk) return undefined;
     const frame = requestAnimationFrame(() => setScrollLocked(true));
@@ -247,13 +245,10 @@ export default function StoryScene() {
     if (stepIndex < 0) return;
     setChapterTransitioning(true);
     setTimeout(() => {
-      // Force viewPoint immediately so chapter panels switch without waiting for Scrollama
       setViewPoint(stepIndex);
       const el = document.querySelector(`[data-step="${stepIndex}"]`);
       if (el) {
         const rect = el.getBoundingClientRect();
-        // Place element top at 45% from viewport top — above Scrollama's 0.60 offset trigger,
-        // so the step registers as active when the user resumes scrolling.
         window.scrollTo({ top: window.scrollY + rect.top - window.innerHeight * 0.45 });
       }
       setTimeout(() => setChapterTransitioning(false), 80);
@@ -325,7 +320,6 @@ export default function StoryScene() {
     svgChapterDissolveTimersRef.current.forEach(clearTimeout);
   }, []);
 
-  // Derive layout flags directly from the step's chapter — no magic offsets
   const inWideChapter    = step.chapter === 'seasons' || step.chapter === 'svg' || step.chapter === 'photosynthesis' || step.chapter === 'shipping' || step.chapter === 'polar';
   const inSvgChapter       = step.chapter === 'svg';
   const inPhotoChapter     = step.chapter === 'photosynthesis';
@@ -358,7 +352,6 @@ export default function StoryScene() {
     ? `${import.meta.env.BASE_URL}Images/2022-05-29.jpg`
     : null;
 
-  // Season accordion active tab: clamped to last index once SVG chapter starts
   const seasonIndex = step.chapter === 'seasons' ? step.seasonIndex
                     : step.chapter === 'svg'     ? SEASONS.length - 1
                     : -1;
@@ -508,8 +501,6 @@ export default function StoryScene() {
     };
   }, [controlledEndIndex, controlledStartIndex, controlledStepIndices, inControlledSvgChapter, scrollToStep, startSvgChapterDissolve]);
 
-  // Steps with a title or figure use the structured card layout (left-aligned);
-  // plain intro/map steps render as centred text.
   const textInput = useMemo(() => STEPS.map(s => {
     const figure = s.layerId === 'Sea_ice_early'
       ? <IceExtentMap getUrl={ICE_EXTENT_URL} onYearChange={setIceYear} />
@@ -535,7 +526,6 @@ export default function StoryScene() {
 
   const leftClass = `scrolly-left ${twoColumnStarted ? 'show' : ''}`;
 
-  // Map a layer ID to a figure component for that bubble.
   const bubbleFigure = step.layerId === 'Sea_ice_early'
     ? <IceExtentMap getUrl={ICE_EXTENT_URL} onYearChange={setIceYear} />
     : step.isErosionSlider
@@ -593,8 +583,6 @@ export default function StoryScene() {
           />
         )}
 
-        {/* Cinematic intro map: full-screen only for the Svalbard fly-out, then
-            fades away while the normal two-column layout fades in underneath. */}
         {showCinematicIntroMap && (() => {
           return (
             <div style={{
@@ -620,7 +608,6 @@ export default function StoryScene() {
           );
         })()}
 
-        {/* Full-screen SVG overlay — circle-reveals in when svg chapter starts */}
         <div style={{
           position:      'fixed',
           top:           0,
@@ -654,7 +641,6 @@ export default function StoryScene() {
           )}
         </div>
 
-        {/* Full-screen Photosynthesis overlay */}
         <div style={{
           position:      'fixed',
           top:           0,
@@ -681,7 +667,6 @@ export default function StoryScene() {
           )}
         </div>
 
-        {/* Light wash during the SVG chapter crossfade */}
         <div style={{
           position:      'fixed',
           top:           0,
@@ -699,7 +684,6 @@ export default function StoryScene() {
           background:    'white',
         }} />
 
-        {/* Full-screen Evaluation overlay — covers entire screen including chapter bar */}
         <div style={{
           position:      'fixed', top: 0, left: 0, right: 0, bottom: 0,
           height:        '100vh', width: '100vw',
@@ -712,7 +696,6 @@ export default function StoryScene() {
           {inEvaluationChapter && <Evaluation />}
         </div>
 
-        {/* Text bubbles on top of the overlay */}
         {bubbles.map((b, i) => (
           <TextBubble
             key={`${viewPoint}-${i}`}
@@ -738,7 +721,6 @@ export default function StoryScene() {
           <ChapterTimeline currentChapter={step.chapter} onNavigate={navigateToChapter} />
         </div>
 
-        {/* Chapter-jump fade overlay — prevents seeing scroll fly through intermediate steps */}
         <div style={{
           position:      'fixed', inset: 0,
           background:    'white',
@@ -761,7 +743,6 @@ export default function StoryScene() {
     >
       <aside className={leftClass}>
 
-        {/* Map — fades out when wide chapter starts */}
         <div
           className="left-top"
           style={{
@@ -786,7 +767,6 @@ export default function StoryScene() {
           )}
         </div>
 
-        {/* Wide chapter panel — fades in after map has finished fading out */}
         <div style={{
           position:      'absolute', inset: 0,
           borderRadius:  12, overflow: 'hidden',
@@ -798,7 +778,6 @@ export default function StoryScene() {
           background:    'white',
         }}>
 
-          {/* Season display — hidden once SVG or Photosynthesis full-screen portal takes over */}
           <div style={{
             position:      'absolute', inset: 0,
             opacity:       (inSvgChapter || inPhotoChapter || inShippingChapter || inPolarChapter) ? 0 : 1,
@@ -808,7 +787,6 @@ export default function StoryScene() {
             <SeasonDisplay activeIndex={seasonIndex} />
           </div>
 
-          {/* Shipping routes — ending chapter */}
           <div style={{
             position:   'absolute', inset: 0,
             opacity:    inShippingChapter ? 1 : 0,
@@ -822,7 +800,6 @@ export default function StoryScene() {
             )}
           </div>
 
-          {/* Arctic polar map — Mapbox globe view */}
           <div style={{
             position:   'absolute', inset: 0,
             opacity:    inPolarChapter ? 1 : 0,

@@ -3,7 +3,6 @@ import { Map, Source, Layer } from 'react-map-gl/mapbox';
 import { fromArrayBuffer } from 'geotiff';
 import proj4 from 'proj4';
 
-// NSIDC Polar Stereographic North (EPSG:3411) — Hughes 1980 ellipsoid
 proj4.defs('EPSG:3411', '+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +a=6378273 +b=6356889.449 +units=m +no_defs');
 
 const TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -31,7 +30,6 @@ function iceExtentColor(val) {
   return val > 0.5 ? [200, 230, 255, 220] : [0, 0, 0, 0];
 }
 
-// Decode one COG band → { dataUrl, coordinates, year }
 async function decodeCOG(url, year, vmin, vmax, colorFn) {
   const resp = await fetch(url);
   if (!resp.ok) throw new Error(`No data available for ${year}`);
@@ -43,7 +41,6 @@ async function decodeCOG(url, year, vmin, vmax, colorFn) {
   const [west, south, east, north] = bbox;
   const isProjected = Math.abs(west) > 360 || Math.abs(east) > 360;
 
-  // Read source raster at native resolution for accurate lookups
   const srcW = image.getWidth();
   const srcH = image.getHeight();
   const rasters = await image.readRasters({ interleave: false, fillValue: nodata ?? NaN });
@@ -53,7 +50,6 @@ async function decodeCOG(url, year, vmin, vmax, colorFn) {
   const ctx = canvas.getContext('2d');
 
   if (isProjected) {
-    // Inverse-warp: for each output geographic pixel, look up source value in PS grid
     const outW = 720, outH = 360;
     canvas.width = outW;
     canvas.height = outH;
@@ -84,7 +80,6 @@ async function decodeCOG(url, year, vmin, vmax, colorFn) {
     };
   }
 
-  // Geographic CRS: render at native resolution so pixel indices map correctly
   canvas.width  = srcW;
   canvas.height = srcH;
   const imgData = ctx.createImageData(srcW, srcH);
@@ -104,17 +99,6 @@ async function decodeCOG(url, year, vmin, vmax, colorFn) {
   };
 }
 
-// ─────────────────────────────────────────────────────────────
-// Props:
-//   getUrl(year) → string        URL template
-//   startYear / endYear          year range  (default 1950 / 2025)
-//   yearStep                     step size   (default 5)
-//   vmin / vmax                  color scale bounds (default ±3)
-//   mode                         'anomaly' (default) | 'ice'
-//   legendTitle                  label above the legend
-//   legendGradient               CSS gradient string for the color bar
-//   legendLabels                 [left, center, right] label strings
-// ─────────────────────────────────────────────────────────────
 export default function CogTemperatureMap({
   getUrl,
   startYear   = 1900,
@@ -156,7 +140,6 @@ export default function CogTemperatureMap({
 
   useEffect(() => () => resizeObserverRef.current?.disconnect(), []);
 
-  // Pre-decode all years in the background after a short delay
   useEffect(() => {
     const cache = tifCacheRef.current;
     const years = [];
@@ -206,7 +189,6 @@ export default function CogTemperatureMap({
       .then(result => {
         if (id !== requestId.current) return;
         setError(null);
-        // Pre-fetch adjacent decades in the background
         [-1, 1].forEach(d => {
           const adj = year + d * yearStep;
           if (adj >= startYear && adj <= endYear && !cache.has(adj))
@@ -272,65 +254,6 @@ export default function CogTemperatureMap({
         </>)}
       </Map>
 
-      {/* Animation controls
-      <div style={{
-        position: 'absolute', bottom: 28, left: '50%', transform: 'translateX(-50%)',
-        background: 'white', borderRadius: 14, padding: '14px 22px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
-        minWidth: 300, maxHeight: 30,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, width: '100%' }}>
-          <button
-            onClick={() => {
-              if (year >= endYear) { setYear(startYear); setPlaying(true); }
-              else setPlaying(p => !p);
-            }}
-            style={{
-              width: 28, height: 28, borderRadius: '50%', border: 'none',
-              background: '#c0392b', color: 'white', cursor: 'pointer',
-              fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            {playing ? '⏸' : '▶'}
-          </button>
-          <button
-            onClick={() => { setYear(startYear); setPlaying(true); }}
-            style={{
-              width: 28, height: 28, borderRadius: '50%', border: 'none',
-              background: '#eee', color: '#555', cursor: 'pointer',
-              fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            ↺
-          </button>
-          <span style={{
-            flex: 1, textAlign: 'right',
-            fontSize: '1rem', fontWeight: 700,
-            color: loading ? '#aaa' : '#222',
-            fontVariantNumeric: 'tabular-nums',
-          }}>
-            {year}
-          </span>
-        </div>
-
-        <div style={{ width: '100%', height: 4, borderRadius: 2, background: '#eee', overflow: 'hidden' }}>
-          <div style={{
-            height: '100%', borderRadius: 2, background: '#c0392b',
-            width: `${progress * 100}%`,
-            transition: `width ${intervalMs}ms linear`,
-          }} />
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-          <span style={{ fontSize: '0.75rem', color: '#aaa' }}>{startYear}</span>
-          <span style={{ fontSize: '0.75rem', color: '#aaa' }}>{endYear}</span>
-        </div>
-      </div> */}
-
-      {/* Color legend */}
       <div style={{
         position: 'absolute', top: 12, right: 12,
         background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)',

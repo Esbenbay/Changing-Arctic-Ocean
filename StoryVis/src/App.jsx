@@ -26,7 +26,6 @@ function App() {
     };
   }, []);
 
-  // Ctrl+Shift+E → download JSON, Ctrl+Shift+C → download CSV
   useEffect(() => {
     const handler = (e) => {
       if (!e.ctrlKey || !e.shiftKey) return;

@@ -5,7 +5,6 @@ import gsap from 'gsap';
 
 const BASE = import.meta.env.BASE_URL;
 
-// Camera positions per step
 const CAMERAS = {
   overview: { scaleFactor: 0.86 },
   shelf:    { scaleFactor: 1.10 },
@@ -25,8 +24,6 @@ function drawBase(canvas, w, h, land, shelf, cam, highlightShelf) {
   const cw  = Math.round(w * dpr);
   const ch  = Math.round(h * dpr);
 
-  // Only rebuild the backing store on resize — skipping this during animation
-  // frames avoids expensive canvas teardown on every GSAP tick.
   if (canvas.width !== cw || canvas.height !== ch) {
     canvas.width  = cw;
     canvas.height = ch;
@@ -40,14 +37,11 @@ function drawBase(canvas, w, h, land, shelf, cam, highlightShelf) {
   ctx.lineJoin = 'round';
   ctx.lineCap  = 'round';
 
-  // Ocean background fills the whole rectangle
   ctx.fillStyle = '#1a4a7a';
   ctx.fillRect(0, 0, w, h);
 
-  // 0–200 m shelf
   if (shelf) {
     if (highlightShelf) {
-      // Glow pass
       ctx.save();
       ctx.shadowColor = '#7ab8de';
       ctx.shadowBlur  = 18;
@@ -57,14 +51,12 @@ function drawBase(canvas, w, h, land, shelf, cam, highlightShelf) {
       ctx.fill('evenodd');
       ctx.restore();
     }
-    // Solid fill
     ctx.beginPath();
     path(shelf);
     ctx.fillStyle = highlightShelf ? '#aad4ec' : '#7ab8de';
     ctx.fill('evenodd');
   }
 
-  // Land
   ctx.beginPath();
   path(land);
   ctx.fillStyle = '#e8e4dc';
@@ -76,7 +68,6 @@ function drawBase(canvas, w, h, land, shelf, cam, highlightShelf) {
   ctx.strokeStyle = '#aaa';
   ctx.stroke();
 
-  // Graticule
   ctx.beginPath();
   path(d3.geoGraticule10());
   ctx.globalAlpha = 0.12;
@@ -94,6 +85,7 @@ export default function ArcticPolarMap({ step }) {
   const sizeRef      = useRef(null);
   const camRef       = useRef({ ...CAMERAS.overview });
   const animRef      = useRef(null);
+  const redrawRef    = useRef(() => {});
 
   const redraw = useCallback(() => {
     const size = sizeRef.current;
@@ -102,7 +94,10 @@ export default function ArcticPolarMap({ step }) {
     drawBase(canvasRef.current, size.w, size.h, worldRef.current, shelfRef.current, camRef.current, highlightShelf);
   }, [step]);
 
-  // Fly to camera on step change
+  useEffect(() => {
+    redrawRef.current = redraw;
+  }, [redraw]);
+
   useEffect(() => {
     const target = CAMERAS[step] || CAMERAS.overview;
     animRef.current?.kill();
@@ -112,8 +107,7 @@ export default function ArcticPolarMap({ step }) {
       ease:        'expo.inOut',
       onUpdate:    () => redraw(),
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
+  }, [step, redraw]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -123,22 +117,22 @@ export default function ArcticPolarMap({ step }) {
       .then(r => r.json())
       .then(topo => {
         worldRef.current = feature(topo, topo.objects.land);
-        if (sizeRef.current) redraw();
+        if (sizeRef.current) redrawRef.current();
       })
-      .catch(e => console.error('[ArcticMap] land failed:', e));
+      .catch(() => {});
 
     fetch(`${BASE}0_200m_final.geojson`)
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => {
         shelfRef.current = data.features[0];
-        if (sizeRef.current) redraw();
+        if (sizeRef.current) redrawRef.current();
       })
-      .catch(e => console.error('[ArcticMap] shelf failed:', e));
+      .catch(() => {});
 
     const ro = new ResizeObserver(entries => {
       const { width: w, height: h } = entries[0].contentRect;
       sizeRef.current = { w, h };
-      redraw();
+      redrawRef.current();
     });
     ro.observe(container);
 
@@ -146,7 +140,6 @@ export default function ArcticPolarMap({ step }) {
       ro.disconnect();
       animRef.current?.kill();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

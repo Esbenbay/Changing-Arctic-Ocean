@@ -6,9 +6,9 @@ const START_YEAR = 1979;
 const END_YEAR   = 2025;
 
 function iceColor(val) {
-  if (val === 1)  return [255, 255, 255, 255]; // ice — white
-  if (val === 0)  return [10, 35, 70, 220];    // ocean — deep navy
-  return [160, 160, 160, 255];                  // land/coast — grey
+  if (val === 1) return [255, 255, 255, 255];
+  if (val === 0) return [10, 35, 70, 220];
+  return [160, 160, 160, 255];
 }
 
 async function decodeIceTif(url) {
@@ -46,7 +46,6 @@ export default function IceExtentMap({ getUrl, onYearChange }) {
   const [hasDragged, setHasDragged] = useState(false);
   const sliderProgress = ((year - START_YEAR) / (END_YEAR - START_YEAR)) * 100;
 
-  // Pre-decode all years in the background
   useEffect(() => {
     const cache = cacheRef.current;
     let cancelled = false;
@@ -85,8 +84,6 @@ export default function IceExtentMap({ getUrl, onYearChange }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-
-      {/* Canvas — circular clip makes it look like a globe from above */}
       <div style={{ position: 'relative', width: '100%', paddingBottom: '100%' }}>
         <canvas
           ref={canvasRef}
@@ -99,7 +96,6 @@ export default function IceExtentMap({ getUrl, onYearChange }) {
             transition: 'opacity 1000ms',
           }}
         />
-        {/* Year label centred over the canvas */}
         <div style={{
           position: 'absolute', bottom: '8%', left: 0, right: 0,
           textAlign: 'center',
@@ -113,7 +109,6 @@ export default function IceExtentMap({ getUrl, onYearChange }) {
         </div>
       </div>
 
-      {/* Year slider */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ fontSize: '1rem', color: '#000000ff', flexShrink: 0 }}>{START_YEAR}</span>
         <input

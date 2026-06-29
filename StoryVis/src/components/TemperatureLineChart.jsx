@@ -176,7 +176,6 @@ export default memo(function TemperatureLineChart({ step, currentYear, startYear
     });
   }, [startYear, endYear]);
 
-  // Smoothly animate the dot between year steps
   useEffect(() => {
     if (!currentYear) return;
     const from = prevYearRef.current ?? currentYear;
@@ -303,7 +302,6 @@ export default memo(function TemperatureLineChart({ step, currentYear, startYear
           }}
           config={{ displayModeBar: false, responsive: false, staticPlot: true }}
         />
-        {/* Draggable year indicator line */}
         {lineX != null && (
           <div
             onPointerDown={handleDragStart}
@@ -365,7 +363,6 @@ export default memo(function TemperatureLineChart({ step, currentYear, startYear
               opacity: isDragging ? 1 : 0.75,
               animation: !hasDragged ? 'dragPulse 1.45s ease-in-out infinite' : 'none',
             }} />
-            {/* Visible line */}
             <div style={{
               width: isDragging ? 7 : 5,
               height: '100%',
@@ -379,7 +376,6 @@ export default memo(function TemperatureLineChart({ step, currentYear, startYear
             }} />
           </div>
         )}
-        {/* Capture drag events across the full chart area */}
         {isDragging && (
           <div style={{ position: 'absolute', inset: 0, cursor: 'ew-resize', touchAction: 'none' }} />
         )}

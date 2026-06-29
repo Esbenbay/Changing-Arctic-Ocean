@@ -1,5 +1,3 @@
-/* --- NYT-style scrollytelling layout --- */
-
 @import "mapbox-gl/dist/mapbox-gl.css";
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -88,8 +86,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: 100;
-  background-color: #07111c; /* covers story while satellite image loads */
-  /* background-image set inline in FrontPage.jsx */
+  background-color: #07111c;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -376,7 +373,6 @@ body {
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* Whole page scrolls, so NO overflow: hidden here */
 .scrolly-layout.is-intro {
   background: transparent;
   justify-content: flex-end;
@@ -386,7 +382,7 @@ body {
   width: 100%;
   padding: var(--page-pad);
   display: flex;
-  justify-content: center; /* centers the 50%-wide text column when left panel is hidden */
+  justify-content: center;
   gap: var(--col-gap);
   align-items: flex-start;
 
@@ -394,9 +390,7 @@ body {
   background: #f6f6f6;
 }
 
-/* ---------- Left sticky column — collapses to 0 when hidden ---------- */
 .scrolly-left {
-  /* Hidden: zero width, clipped, invisible */
   flex: 0 0 0;
   overflow: hidden;
   opacity: 0;
@@ -409,10 +403,9 @@ body {
 
   display: flex;
   flex-direction: column;
-  justify-content: center; /* center map vertically when no bottom panel */
+  justify-content: center;
   gap: var(--row-gap);
 
-  /* Animate width and fade together */
   transition: flex-basis 900ms ease, opacity 900ms ease;
   will-change: flex-basis, opacity;
 }
@@ -423,14 +416,12 @@ body {
   pointer-events: auto;
 }
 
-/* ---------- Right column — always 50%, centered via justify-content ---------- */
 .scrolly-right {
   flex: 0 0 calc(40% - (var(--col-gap) / 2));
   min-height: 100%;
   padding: 14px 20px 68px 24px;
 }
 .left-bottom {
-  /* In the flex flow — physically pushes the map up when visible */
   max-height: 0;
   overflow: hidden;
   opacity: 0;
@@ -438,26 +429,23 @@ body {
   font-size: 0.95rem;
   line-height: 1.45;
 
-  /* Closing: fade content out first, then collapse height */
   transition:
     opacity 600ms ease,
     max-height 500ms ease-in-out 400ms;
 }
 
 .left-bottom.visible {
-  max-height: 37vh; /* 55vh map + 12px gap + 37vh panel ≈ fits the column */
+  max-height: 37vh;
   overflow-y: auto;
   padding: 14px;
   opacity: 1;
   pointer-events: auto;
 
-  /* Opening: expand height first, then fade content in */
   transition:
     max-height 400ms ease-in-out,
     opacity 500ms ease 500ms;
 }
 
-/* ---------- Scroll indicator ---------- */
 @keyframes scrollBounce {
   0%, 100% { transform: translateY(0); }
   50%       { transform: translateY(10px); }
@@ -495,7 +483,6 @@ body {
   animation: scrollBounce 0.85s ease-in-out infinite;
 }
 
-/* ---------- Interactive controls ---------- */
 .story-range {
   --range-progress: 0%;
   appearance: none;
@@ -575,7 +562,6 @@ body {
     0 3px 10px rgba(0,0,0,0.22);
 }
 
-/* ---------- CTA ---------- */
 .captive-cta {
   padding: 1.1rem 2rem;
   font-size: 1.2rem;
@@ -604,20 +590,17 @@ body {
   outline: 4px solid #cbd5ff;
 }
 
-/* Left rows: 60/40 via 3:2 ratio */
 .left-top, .left-bottom { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06); }
 
 .left-top {
-  /* Fixed height — map canvas never resizes when bottom panel opens/closes */
   flex: none;
   height: calc(95vh - var(--timeline-h) - 10px);
   position: relative;
-  overflow: hidden;     /* clips the map canvas */
+  overflow: hidden;
   border-radius: 12px;
-  display: flex;        /* so child can stretch */
+  display: flex;
 }
 
-/* Force the direct child (NewMap root) to fill the box */
 .left-top > * {
   position: absolute;
   inset: 0;
@@ -634,21 +617,8 @@ body {
   display: block;
 }
 
-/* .left-bottom {
-  flex: 2;
-  min-height: 0;
-  overflow-y: auto; 
-  padding: 14px;
-  font-size: 0.95rem;
-  line-height: 1.45;
-} */
-
-
-
-/* Hide SVG bubble-anchor markers — visible in Inkscape, invisible in browser */
 [inkscape\:label="bubble_anchor"] { opacity: 0 !important; pointer-events: none; }
 
-/* --- Mobile: stack columns --- */
 @media (max-width: 900px) {
   :root {
     --story-step-title-size: clamp(1rem, 0.88rem + 0.85vw, 1.32rem);
