@@ -5,10 +5,10 @@ const FRAMES = FRONT_FRAMES;
 
 const FRAME_TEXTS = [
   '',
-  'Every spring, the Arctic sea breaks up',
-  'Every summer, the sea ice retreats from the Arctic coast',
-  'Every decade, less sea ice remains in the Arctic Ocean',
-  'How does life on seafloor adapt to a changing Arctic Ocean?',
+  'Every spring, the Arctic sea ice breaks up',
+  'In late spring and summer, sea ice begins to melt, exposing vast expanses of the Arctic Ocean to sunlight',
+  'Over the last decades, sea ice is increasingly lost from the Arctic Ocean, permitting more sunlight to enter',
+  'How is the Arctic’s marine life affected by these changes?',
 ];
 
 const EXIT_FADE_MS = 1000;
@@ -214,7 +214,7 @@ export default function FrontPage({ progress = 0, fading, imageSequenceEnd = IMA
           A Changing Arctic Ocean
         </h1>
         <p className="story-body-text front-hero-subtitle" style={{ margin: 0 }}>
-          Explore the Arctic Ocean through our interactive storytelling visualization.
+          Explore the Arctic Ocean through an interactive storytelling visualization.
           Dive into the unique features, ecosystems, and challenges of this remote
           and captivating region.
         </p>
